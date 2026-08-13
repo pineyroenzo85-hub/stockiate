@@ -17,9 +17,9 @@
  * styles.css (.panel, .kpi-card, etc. se reutilizan en otras pantallas).
  */
 
-const URL_CONSULTAR_INVENTARIO = "http://localhost/stockiate/tesis_enzo/consultar_inventario.php";
-const URL_ACTUALIZAR_STOCK = "http://localhost/stockiate/tesis_enzo/actualizar_stock.php";
-const URL_ELIMINAR_PRODUCTO = "http://localhost/stockiate/tesis_enzo/eliminar_producto.php";
+const URL_CONSULTAR_INVENTARIO = "https://atrium-overtime-deluxe.ngrok-free.dev/stockiate/tesis_enzo/consultar_inventario.php";
+const URL_ACTUALIZAR_STOCK = "https://atrium-overtime-deluxe.ngrok-free.dev/stockiate/tesis_enzo/actualizar_stock.php";
+const URL_ELIMINAR_PRODUCTO = "https://atrium-overtime-deluxe.ngrok-free.dev/stockiate/tesis_enzo/eliminar_producto.php";
 
 const INVT_ESTILOS_ID = "invt-estilos";
 const INVT_CSS = `
