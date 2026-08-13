@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+requests
+python-dotenv
+python-multipart
+inference-sdk==1.2.0
+pillow
+groq

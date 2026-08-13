@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>stockIAte — Carga de mercadería</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <div>
+       <div class="marca" id="btn-inicio" style="cursor:pointer;">
+        stock<em>IA</em>te
+       </div>
+      <div class="modulo-tag">Módulo Repositor</div>
+    </div>
+  
+    <div class="menu-container">
+      <button id="btn-ver-inventario" class="btn-menu" title="Ver inventario">📦</button>
+      <button id="btn-menu" class="btn-menu">⋯</button>
+
+      <div id="menu-desplegable" class="menu-desplegable">
+        <button type="button">Inicio</button>
+        <button type="button">Repositor</button>
+        <button type="button">Cajero</button>
+        <button type="button">Administrador</button>
+        <button type="button">Cerrar sesión</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ================= PANTALLA 1: CAPTURA ================= -->
+    <section class="pantalla activa" id="pantalla-captura">
+      <div>
+        <h1>Fotografiá el lote</h1>
+        <p class="sub">Apoyá los productos sobre una superficie plana y sacá una sola foto general. La IA cuenta y clasifica todo por vos.</p>
+      </div>
+
+      <div id="banner-offline" class="banner-offline">
+        Sin conexión con el motor de IA. Podés cargar el lote manualmente sin perder el trabajo.
+      </div>
+
+      <label class="zona-captura" id="zona-captura">
+        <div class="zona-captura-contenido" id="zona-captura-vacia">
+          <div class="icono-camara">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c9a24b" stroke-width="1.6">
+              <path d="M4 8a2 2 0 0 1 2-2h1.5l1-1.6h7l1 1.6H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8Z"/>
+              <circle cx="12" cy="13" r="3.4"/>
+            </svg>
+          </div>
+          <p>Tocá para tomar o elegir una foto<br>del lote de mercadería</p>
+        </div>
+        <img id="preview-imagen" style="display:none;">
+        <input type="file" id="input-imagen" accept="image/*" capture="environment">
+      </label>
+
+      <button class="btn btn-primario" id="btn-procesar" disabled>Analizar con IA</button>
+      <button class="btn btn-texto" id="btn-manual">Prefiero cargar manualmente</button>
+    </section>
+
+    <!-- ================= PANTALLA 2: PROCESANDO ================= -->
+    <section class="pantalla" id="pantalla-procesando">
+      <div class="procesando-wrap">
+        <div class="barrido"></div>
+        <div>
+          <h2>Contando productos…</h2>
+          <p>Roboflow está identificando cada variante del lote</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PANTALLA 3: RED DE SEGURIDAD ================= -->
+    <section class="pantalla" id="pantalla-validacion">
+      <div>
+        <h1>Revisá antes de guardar</h1>
+        <p class="sub">La IA detectó lo siguiente. Ajustá cualquier variante que no coincida — vos tenés la última palabra.</p>
+      </div>
+
+      <div class="banner-info">
+        <div class="punto"></div>
+        <p><strong>Red de Seguridad activa.</strong> Los envases idénticos con distinta fragancia pueden confundirse: revisá antes de confirmar.</p>
+      </div>
+
+      <div class="lista-items" id="lista-items">
+        <!-- Los ítems detectados se insertan acá por JS -->
+      </div>
+
+      <button class="btn btn-secundario" id="btn-agregar-item" type="button">+ Agregar producto no detectado</button>
+
+      <div class="resumen-total">
+        <span>Total de unidades a cargar</span>
+        <span id="resumen-cantidad">0</span>
+      </div>
+
+      <button class="btn btn-primario" id="btn-confirmar">Confirmar y guardar stock</button>
+    </section>
+
+    <!-- ================= PANTALLA 4: CONFIRMACIÓN ================= -->
+    <section class="pantalla" id="pantalla-confirmacion">
+      <div class="confirmacion-wrap">
+        <div class="check-circulo">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6fae7c" stroke-width="2">
+            <path d="M4 12.5l5 5L20 6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <h2 style="font-family:'Fraunces',serif; font-weight:600; font-size:20px; margin:0 0 6px;">Stock actualizado</h2>
+          <p class="sub" id="texto-confirmacion">El lote se guardó correctamente en el inventario.</p>
+        </div>
+        <button class="btn btn-primario" id="btn-nueva-carga" style="margin-top:10px;">Cargar otro lote</button>
+      </div>
+    </section>
+
+    <!-- ================= PANTALLA 5: INVENTARIO ================= -->
+    <section class="pantalla" id="pantalla-inventario">
+      <div>
+        <h1>Inventario</h1>
+        <p class="sub">Stock real del catálogo, actualizado al instante.</p>
+      </div>
+      <button class="btn btn-texto" id="btn-volver-captura">← Volver a cargar mercadería</button>
+      <div id="inventarioContenedor"></div>
+    </section>
+
+  </main>
+
+  <footer>stockIAte · Carga inteligente de mercadería</footer>
+</div>
+
+<div id="toast-container" class="toast-container"></div>
+
+<script src="inventario_tabla.js"></script>
+<script>
+  const URL_BACKEND_IA = "http://localhost:8000/procesar-imagen";
+  const URL_GUARDAR_STOCK = "http://localhost/stockiate/tesis_enzo/guardar_stock.php";
+  const URL_CONSULTAR_PRODUCTOS = "http://localhost/stockiate/tesis_enzo/consultar_productos.php";
+  const URL_REGISTRAR_CORRECCION = "http://localhost:8000/registrar-correccion";
+  const URL_CREAR_PRODUCTO = "http://localhost/stockiate/tesis_enzo/crear_producto.php";
+
+  function mostrarToast(mensaje, tipo = "exito") {
+    const cont = document.getElementById("toast-container");
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${tipo}`;
+    toast.textContent = mensaje;
+    cont.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add("visible"));
+    setTimeout(() => {
+      toast.classList.remove("visible");
+      setTimeout(() => toast.remove(), 300);
+    }, 3500);
+  }
+
+  // Catálogo real de productos (MySQL vía consultar_productos.php), en vez
+  // de una lista hardcodeada: así el <select> siempre ofrece IDs que existen
+  // de verdad en la base y guardar_stock.php no falla por FK inexistente.
+  let CATALOGO = [];
+  const catalogoListo = fetch(URL_CONSULTAR_PRODUCTOS, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({}),
+  })
+    .then(resp => resp.json())
+    .then(data => { CATALOGO = data.productos || []; })
+    .catch(() => {
+      CATALOGO = [];
+      mostrarToast("No se pudo cargar el catálogo de productos.", "error");
+    });
+
+  // Fuzzy matching contra el catálogo real: partimos el texto ya sanitizado
+  // (ver ocr_parser.py en el backend) en palabras clave y las comparamos
+  // contra nombre/marca de cada producto, tolerando errores típicos de OCR
+  // (letras confundidas, acentos perdidos) vía distancia de Levenshtein.
+  function tokenizar(texto) {
+    return (texto || "")
+      .toLowerCase()
+      .normalize("NFD").replace(/[̀-ͯ]/g, "") // saca acentos
+      .split(/[^a-z0-9]+/)
+      .filter(t => t.length >= 3);
+  }
+
+  function distanciaLevenshtein(a, b) {
+    const m = a.length, n = b.length;
+    if (m === 0) return n;
+    if (n === 0) return m;
+    const fila = new Array(n + 1);
+    for (let j = 0; j <= n; j++) fila[j] = j;
+    for (let i = 1; i <= m; i++) {
+      let anterior = fila[0];
+      fila[0] = i;
+      for (let j = 1; j <= n; j++) {
+        const temp = fila[j];
+        fila[j] = a[i - 1] === b[j - 1] ? anterior : 1 + Math.min(anterior, fila[j], fila[j - 1]);
+        anterior = temp;
+      }
+    }
+    return fila[n];
+  }
+
+  function tokensSimilares(a, b) {
+    if (a === b || a.includes(b) || b.includes(a)) return true;
+    const distancia = distanciaLevenshtein(a, b);
+    return distancia / Math.max(a.length, b.length) <= 0.25; // tolera errores menores de OCR
+  }
+
+  function buscarProductoPorTexto(texto) {
+    const tokensTexto = tokenizar(texto);
+    if (tokensTexto.length === 0) return null;
+
+    let mejor = null;
+    let mejorPuntaje = 0;
+    for (const p of CATALOGO) {
+      const marcaValida = p.marca && p.marca.toLowerCase() !== "demo" ? p.marca : "";
+      const tokensProducto = tokenizar(`${p.nombre || ""} ${marcaValida}`);
+      let puntaje = 0;
+      for (const tp of tokensProducto) {
+        if (tokensTexto.some(tt => tokensSimilares(tp, tt))) puntaje++;
+      }
+      if (puntaje > mejorPuntaje) {
+        mejorPuntaje = puntaje;
+        mejor = p;
+      }
+    }
+    return mejorPuntaje > 0 ? mejor : null;
+  }
+
+  const pantallas = {
+    captura: document.getElementById("pantalla-captura"),
+    procesando: document.getElementById("pantalla-procesando"),
+    validacion: document.getElementById("pantalla-validacion"),
+    confirmacion: document.getElementById("pantalla-confirmacion"),
+    inventario: document.getElementById("pantalla-inventario"),
+  };
+
+  function mostrarPantalla(nombre) {
+    Object.values(pantallas).forEach(p => p.classList.remove("activa"));
+    pantallas[nombre].classList.add("activa");
+  }
+
+  const inputImagen = document.getElementById("input-imagen");
+  const zonaCaptura = document.getElementById("zona-captura");
+  const zonaVacia = document.getElementById("zona-captura-vacia");
+  const previewImagen = document.getElementById("preview-imagen");
+  const btnProcesar = document.getElementById("btn-procesar");
+  const bannerOffline = document.getElementById("banner-offline");
+
+  let archivoSeleccionado = null;
+
+  inputImagen.addEventListener("change", (e) => {
+    const archivo = e.target.files[0];
+    if (!archivo) return;
+    archivoSeleccionado = archivo;
+
+    const lector = new FileReader();
+    lector.onload = (ev) => {
+      previewImagen.src = ev.target.result;
+      previewImagen.style.display = "block";
+      zonaVacia.style.display = "none";
+    };
+    lector.readAsDataURL(archivo);
+
+    btnProcesar.disabled = false;
+  });
+
+  document.getElementById("btn-manual").addEventListener("click", () => {
+    irAValidacionManual();
+  });
+
+  btnProcesar.addEventListener("click", async () => {
+    if (!archivoSeleccionado) return;
+    mostrarPantalla("procesando");
+    bannerOffline.classList.remove("activo");
+
+    const formData = new FormData();
+    formData.append("imagen", archivoSeleccionado);
+
+    try {
+      const resp = await fetch(URL_BACKEND_IA, { method: "POST", body: formData });
+      const data = await resp.json();
+
+      if (data.modo_offline) {
+        bannerOffline.classList.add("activo");
+        mostrarPantalla("captura");
+        return;
+      }
+
+      await renderizarValidacion(data.detecciones || []);
+      mostrarPantalla("validacion");
+    } catch (err) {
+      bannerOffline.classList.add("activo");
+      mostrarPantalla("captura");
+    }
+  });
+
+  const listaItems = document.getElementById("lista-items");
+  const resumenCantidad = document.getElementById("resumen-cantidad");
+  let contadorItems = 0;
+
+  function claseConfianza(conf) {
+    if (conf >= 0.85) return { clase: "conf-alta", texto: "Alta confianza" };
+    if (conf >= 0.6) return { clase: "conf-media", texto: "Revisar" };
+    return { clase: "conf-baja", texto: "Baja confianza" };
+  }
+
+  function opcionesCatalogo(seleccionadoId) {
+    const opciones = CATALOGO.map(p =>
+      `<option value="${p.id}" ${p.id === seleccionadoId ? "selected" : ""}>${p.nombre}</option>`
+    ).join("");
+    return opciones + `<option value="__nuevo__">+ Crear producto nuevo</option>`;
+  }
+
+  function crearItemCard({ productoDetectadoId = null, confianza = null, cantidad = 1, esIA = false, textoDetectado = "", huboOCR = false, volumenDetectado = "" }) {
+    contadorItems++;
+    const id = `item-${contadorItems}`;
+    const conf = confianza !== null ? claseConfianza(confianza) : null;
+
+    const card = document.createElement("div");
+    card.className = "item-card";
+    card.dataset.id = id;
+    card.dataset.esIa = esIA ? "1" : "0";
+    card.dataset.productoDetectadoId = productoDetectadoId ?? "";
+    card.dataset.cantidadDetectada = cantidad;
+    card.dataset.confianzaIa = confianza ?? "";
+    card.innerHTML = `
+      <div class="item-card-top">
+  <label style="margin:0;">Producto detectado</label>
+
+  <div style="display:flex;align-items:center;gap:10px;">
+    ${conf
+      ? `<span class="item-confianza ${conf.clase}">${conf.texto}</span>`
+      : `<span class="item-confianza conf-media">Manual</span>`
+    }
+
+    <button
+      type="button"
+      class="btn-eliminar-producto"
+      title="Eliminar producto"
+    >
+      ✕
+    </button>
+  </div>
+</div>
+      ${esIA && textoDetectado ? `<p class="item-hint-ia">${huboOCR ? "La IA leyó" : "IA detectó"}: <strong>${textoDetectado}</strong>${volumenDetectado ? ` · ${volumenDetectado}` : ""}</p>` : ""}
+      <select class="select-producto">
+        ${opcionesCatalogo(productoDetectadoId)}
+      </select>
+      <div class="form-nuevo-producto" style="display:none;">
+        <div class="fila-doble">
+          <div>
+            <label>Nombre</label>
+            <input type="text" class="input-nuevo-nombre" placeholder="Ej: Rexona Men Active">
+          </div>
+          <div>
+            <label>Marca <span class="campo-opcional-tag">opcional</span></label>
+            <input type="text" class="input-nuevo-marca" placeholder="Ej: Rexona">
+          </div>
+        </div>
+        <div class="fila-doble">
+          <div>
+            <label>SKU</label>
+            <input type="text" class="input-nuevo-sku" placeholder="Ej: REX-001">
+          </div>
+          <div>
+            <label>Precio de venta <span class="campo-opcional-tag">opcional</span></label>
+            <input type="number" class="input-nuevo-precio" min="0" step="0.01" placeholder="0">
+          </div>
+        </div>
+        <button type="button" class="btn btn-secundario btn-crear-producto">Crear y usar este producto</button>
+      </div>
+      <div class="fila-doble">
+        <div>
+          <label>Cantidad</label>
+          <input type="number" class="input-cantidad" value="${cantidad}" min="1">
+        </div>
+        <div>
+          <label>Vencimiento <span class="campo-opcional-tag">opcional</span></label>
+          <input type="date" class="input-vencimiento">
+        </div>
+      </div>
+    `;
+    listaItems.appendChild(card);
+    const btnEliminar = card.querySelector(".btn-eliminar-producto");
+
+btnEliminar.addEventListener("click", () => {
+  card.remove();
+  actualizarResumen();
+});
+    card.querySelector(".input-cantidad").addEventListener("input", actualizarResumen);
+
+    const selectProducto = card.querySelector(".select-producto");
+    const formNuevo = card.querySelector(".form-nuevo-producto");
+
+    selectProducto.addEventListener("change", () => {
+      formNuevo.style.display = selectProducto.value === "__nuevo__" ? "flex" : "none";
+    });
+
+    // Si la IA detectó algo que no matcheó con el catálogo, precargamos el
+    // formulario de alta con lo que leyó, para que el repositor solo tenga
+    // que confirmar/completar en vez de tipear todo de cero.
+    if (esIA && !productoDetectadoId && textoDetectado) {
+      card.querySelector(".input-nuevo-nombre").value = volumenDetectado ? `${textoDetectado} ${volumenDetectado}` : textoDetectado;
+      if (huboOCR) card.querySelector(".input-nuevo-marca").value = textoDetectado;
+    }
+
+    card.querySelector(".btn-crear-producto").addEventListener("click", async () => {
+      const nombreNuevo = card.querySelector(".input-nuevo-nombre").value.trim();
+      const marcaNueva = card.querySelector(".input-nuevo-marca").value.trim();
+      const skuNuevo = card.querySelector(".input-nuevo-sku").value.trim();
+      const precioNuevo = parseFloat(card.querySelector(".input-nuevo-precio").value || "0");
+
+      if (!nombreNuevo || !skuNuevo) {
+        mostrarToast("Completá nombre y SKU para crear el producto.", "error");
+        return;
+      }
+
+      try {
+        const resp = await fetch(URL_CREAR_PRODUCTO, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sku: skuNuevo,
+            nombre: nombreNuevo,
+            marca: marcaNueva || null,
+            precio_venta: precioNuevo,
+          }),
+        });
+        const data = await resp.json();
+
+        if (!resp.ok || !data.ok) {
+          mostrarToast(data.mensaje || "No se pudo crear el producto.", "error");
+          return;
+        }
+
+        CATALOGO.push(data.producto);
+        selectProducto.innerHTML = opcionesCatalogo(data.producto.id);
+        formNuevo.style.display = "none";
+        mostrarToast("Producto creado y seleccionado.", "exito");
+      } catch (err) {
+        mostrarToast("No se pudo conectar con el servidor local (XAMPP).", "error");
+      }
+    });
+  }
+
+  async function renderizarValidacion(detecciones) {
+    await catalogoListo;
+    listaItems.innerHTML = "";
+    contadorItems = 0;
+
+    if (detecciones.length === 0) {
+      crearItemCard({});
+    } else {
+      const agrupado = {};
+      detecciones.forEach(d => {
+        agrupado[d.clase] = agrupado[d.clase] || { cantidad: 0, confianza: d.confianza, marca: d.marca, volumen: d.volumen };
+        agrupado[d.clase].cantidad++;
+        agrupado[d.clase].confianza = Math.min(agrupado[d.clase].confianza, d.confianza);
+      });
+      Object.entries(agrupado).forEach(([clase, info]) => {
+        const match = buscarProductoPorTexto(clase);
+        crearItemCard({
+          productoDetectadoId: match ? match.id : null,
+          confianza: info.confianza,
+          cantidad: info.cantidad,
+          esIA: true,
+          textoDetectado: clase,
+          huboOCR: !!info.marca,
+          volumenDetectado: info.volumen || "",
+        });
+      });
+    }
+    actualizarResumen();
+  }
+
+  async function irAValidacionManual() {
+    await renderizarValidacion([]);
+    mostrarPantalla("validacion");
+  }
+
+  document.getElementById("btn-agregar-item").addEventListener("click", () => {
+    crearItemCard({});
+    actualizarResumen();
+  });
+
+  function actualizarResumen() {
+    let total = 0;
+    document.querySelectorAll(".input-cantidad").forEach(inp => {
+      total += parseInt(inp.value || "0", 10);
+    });
+    resumenCantidad.textContent = total;
+  }
+
+  // Feedback loop: registra en correcciones_ia lo que la IA detectó vs. lo
+  // que finalmente quedó confirmado, para ítems que vinieron de una
+  // detección real (no de "+ Agregar producto no detectado"). Best-effort:
+  // si falla, no debe interrumpir el guardado de stock, que ya se hizo.
+  function registrarCorreccion(payload) {
+    fetch(URL_REGISTRAR_CORRECCION, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }).catch(err => console.warn("No se pudo registrar la corrección de IA:", err));
+  }
+
+  document.getElementById("btn-confirmar").addEventListener("click", async () => {
+    const cards = document.querySelectorAll(".item-card");
+    const usuarioId = 1;
+
+    const huboPendiente = Array.from(cards).some(card => card.querySelector(".select-producto").value === "__nuevo__");
+    if (huboPendiente) {
+      mostrarToast("Terminá de crear el producto pendiente (o elegí uno del catálogo) antes de confirmar.", "error");
+      return;
+    }
+
+    const pedidos = Array.from(cards).map(card => {
+      const productoId = parseInt(card.querySelector(".select-producto").value, 10);
+      const cantidad = parseInt(card.querySelector(".input-cantidad").value || "0", 10);
+      const vencimiento = card.querySelector(".input-vencimiento").value || null;
+      return {
+        producto_id: productoId,
+        cantidad,
+        fecha_vencimiento: vencimiento,
+        usuario_id: usuarioId,
+        esIA: card.dataset.esIa === "1",
+        productoDetectadoId: card.dataset.productoDetectadoId ? parseInt(card.dataset.productoDetectadoId, 10) : null,
+        cantidadDetectada: parseInt(card.dataset.cantidadDetectada || "0", 10),
+        confianzaIa: card.dataset.confianzaIa ? parseFloat(card.dataset.confianzaIa) : null,
+      };
+    });
+
+    let huboError = false;
+
+    for (const pedido of pedidos) {
+      try {
+        const resp = await fetch(URL_GUARDAR_STOCK, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            producto_id: pedido.producto_id,
+            cantidad: pedido.cantidad,
+            fecha_vencimiento: pedido.fecha_vencimiento,
+            usuario_id: pedido.usuario_id,
+          }),
+        });
+        const data = await resp.json();
+
+        if (!resp.ok || !data.ok) {
+          huboError = true;
+          mostrarToast(data.mensaje || "No se pudo guardar un producto del lote.", "error");
+          continue;
+        }
+
+        if (pedido.esIA) {
+          registrarCorreccion({
+            producto_detectado_id: pedido.productoDetectadoId,
+            producto_corregido_id: pedido.producto_id,
+            cantidad_detectada: pedido.cantidadDetectada,
+            cantidad_corregida: pedido.cantidad,
+            confianza_ia: pedido.confianzaIa,
+            usuario_id: pedido.usuario_id,
+          });
+        }
+      } catch (err) {
+        huboError = true;
+        mostrarToast("No se pudo conectar con el servidor local (XAMPP).", "error");
+      }
+    }
+
+    if (!huboError) {
+      mostrarToast("Stock actualizado correctamente.", "exito");
+      document.getElementById("texto-confirmacion").textContent =
+        `Se cargaron ${resumenCantidad.textContent} unidades en ${pedidos.length} producto(s).`;
+      mostrarPantalla("confirmacion");
+    }
+  });
+
+  document.getElementById("btn-inicio").addEventListener("click", () => {
+  window.location.href = "landing_page.html";
+});
+
+let inventarioTablaInstancia = null;
+document.getElementById("btn-ver-inventario").addEventListener("click", () => {
+  if (!inventarioTablaInstancia) {
+    inventarioTablaInstancia = initInventarioTabla(document.getElementById("inventarioContenedor"));
+  } else {
+    inventarioTablaInstancia.recargar();
+  }
+  mostrarPantalla("inventario");
+});
+
+document.getElementById("btn-volver-captura").addEventListener("click", () => {
+  mostrarPantalla("captura");
+});
+
+const btnMenu = document.getElementById("btn-menu");
+const menuDesplegable = document.getElementById("menu-desplegable");
+
+btnMenu.addEventListener("click", () => {
+  menuDesplegable.classList.toggle("activo");
+});
+
+document.addEventListener("click", (e) => {
+
+  if (
+    !btnMenu.contains(e.target) &&
+    !menuDesplegable.contains(e.target)
+  ) {
+    menuDesplegable.classList.remove("activo");
+  }
+
+});
+</script>
+
+<script src="chatbot_widget.js" data-rol="repositor" data-usuario-id="1"></script>
+
+</body>
+</html>

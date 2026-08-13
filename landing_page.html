@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>stockIAte</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+
+<div class="app">
+
+<header>
+    <div>
+        <div class="marca" id="btn-inicio" style="cursor:pointer;">
+         stock<em>IA</em>te
+         </div>
+        <div class="modulo-tag">Plataforma de Gestión</div>
+    </div>
+</header>
+
+<main>
+<section class="landing">
+
+    <h1>Gestión inteligente para tu negocio</h1>
+
+    <p>
+        Controlá stock, ventas y administración desde un solo lugar.
+    </p>
+
+    <!-- ===== Elegir Rol: paneles Tailwind con estado activo ===== -->
+    <div id="elegir-rol" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 max-w-2xl">
+
+        <button
+            type="button"
+            class="rol-panel group relative flex flex-col items-start gap-3 rounded-2xl border border-white/10 bg-[#1e293b] p-5 text-left shadow-sm transition hover:border-blue-400/50 focus:outline-none"
+            data-rol="repositor"
+            data-href="repositor.html"
+        >
+            <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500/15 text-blue-400">
+                <i data-lucide="package" class="h-6 w-6"></i>
+            </span>
+            <div>
+                <h2 class="text-base font-semibold text-white">Módulo Repositor</h2>
+                <p class="mt-1 text-sm text-slate-400">Carga de stock con foto + IA</p>
+            </div>
+            <span class="rol-check absolute top-4 right-4 hidden h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-white">
+                <i data-lucide="check" class="h-3.5 w-3.5"></i>
+            </span>
+        </button>
+
+        <button
+            type="button"
+            class="rol-panel group relative flex flex-col items-start gap-3 rounded-2xl border border-white/10 bg-[#1e293b] p-5 text-left shadow-sm transition hover:border-blue-400/50 focus:outline-none"
+            data-rol="cajero"
+            data-href="cajero.html"
+        >
+            <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500/15 text-blue-400">
+                <i data-lucide="shopping-cart" class="h-6 w-6"></i>
+            </span>
+            <div>
+                <h2 class="text-base font-semibold text-white">Módulo Caja / Ventas</h2>
+                <p class="mt-1 text-sm text-slate-400">Ventas con foto + IA</p>
+            </div>
+            <span class="rol-check absolute top-4 right-4 hidden h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-white">
+                <i data-lucide="check" class="h-3.5 w-3.5"></i>
+            </span>
+        </button>
+
+    </div>
+
+    <button
+        id="btn-continuar-rol"
+        type="button"
+        disabled
+        class="mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-500 px-5 py-3 text-sm font-semibold text-white opacity-40 pointer-events-none transition disabled:opacity-40 hover:bg-blue-600"
+    >
+        Continuar <i data-lucide="arrow-right" class="h-4 w-4"></i>
+    </button>
+
+    <div class="cards-modulos" style="margin-top:28px;">
+
+        <a href="administrador.html" class="card-modulo">
+            <span>⚙️</span>
+            <h2>Administrador</h2>
+            <p>Panel y estadísticas</p>
+        </a>
+
+    </div>
+
+</section>
+</main>
+
+</div>
+
+<script>
+if (window.lucide) lucide.createIcons();
+
+document.getElementById("btn-inicio").addEventListener("click", () => {
+    window.location.href = "landing_page.html";
+});
+
+// ===== Selección de rol (estado activo entre los dos paneles) =====
+const panelesRol = document.querySelectorAll(".rol-panel");
+const btnContinuar = document.getElementById("btn-continuar-rol");
+let rolSeleccionado = null;
+
+panelesRol.forEach(panel => {
+    panel.addEventListener("click", () => {
+        panelesRol.forEach(p => {
+            p.classList.remove("ring-2", "ring-blue-500", "border-blue-400");
+            p.querySelector(".rol-check").classList.add("hidden");
+            p.querySelector(".rol-check").classList.remove("flex");
+        });
+
+        panel.classList.add("ring-2", "ring-blue-500", "border-blue-400");
+        const check = panel.querySelector(".rol-check");
+        check.classList.remove("hidden");
+        check.classList.add("flex");
+
+        rolSeleccionado = panel.dataset.href;
+        btnContinuar.disabled = false;
+        btnContinuar.classList.remove("opacity-40", "pointer-events-none");
+    });
+});
+
+btnContinuar.addEventListener("click", () => {
+    if (rolSeleccionado) window.location.href = rolSeleccionado;
+});
+</script>
+
+</body>
+</html>

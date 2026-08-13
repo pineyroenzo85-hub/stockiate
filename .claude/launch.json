@@ -1,0 +1,16 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "stockiate-ia",
+      "runtimeExecutable": "C:\\xampp\\htdocs\\stockiate\\tesis_enzo\\venv\\Scripts\\python.exe",
+      "runtimeArgs": ["-m", "uvicorn", "main:app", "--reload"],
+      "port": 8000,
+      "autoPort": false
+    },
+    {
+      "name": "stockiate-frontend",
+      "url": "http://localhost/stockiate/tesis_enzo/landing_page.html"
+    }
+  ]
+}

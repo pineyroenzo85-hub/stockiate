@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>stockIAte — Carga de mercadería</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <div>
+      <div class="marca">stock<em>IA</em>te</div>
+      <div class="modulo-tag">Módulo Repositor</div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ================= PANTALLA 1: CAPTURA ================= -->
+    <section class="pantalla activa" id="pantalla-captura">
+      <div>
+        <h1>Fotografiá el lote</h1>
+        <p class="sub">Apoyá los productos sobre una superficie plana y sacá una sola foto general. La IA cuenta y clasifica todo por vos.</p>
+      </div>
+
+      <div id="banner-offline" class="banner-offline">
+        Sin conexión con el motor de IA. Podés cargar el lote manualmente sin perder el trabajo.
+      </div>
+
+      <label class="zona-captura" id="zona-captura">
+        <div class="zona-captura-contenido" id="zona-captura-vacia">
+          <div class="icono-camara">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c9a24b" stroke-width="1.6">
+              <path d="M4 8a2 2 0 0 1 2-2h1.5l1-1.6h7l1 1.6H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8Z"/>
+              <circle cx="12" cy="13" r="3.4"/>
+            </svg>
+          </div>
+          <p>Tocá para tomar o elegir una foto<br>del lote de mercadería</p>
+        </div>
+        <img id="preview-imagen" style="display:none;">
+        <input type="file" id="input-imagen" accept="image/*" capture="environment">
+      </label>
+
+      <button class="btn btn-primario" id="btn-procesar" disabled>Analizar con IA</button>
+      <button class="btn btn-texto" id="btn-manual">Prefiero cargar manualmente</button>
+    </section>
+
+    <!-- ================= PANTALLA 2: PROCESANDO ================= -->
+    <section class="pantalla" id="pantalla-procesando">
+      <div class="procesando-wrap">
+        <div class="barrido"></div>
+        <div>
+          <h2>Contando productos…</h2>
+          <p>Roboflow está identificando cada variante del lote</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PANTALLA 3: RED DE SEGURIDAD ================= -->
+    <section class="pantalla" id="pantalla-validacion">
+      <div>
+        <h1>Revisá antes de guardar</h1>
+        <p class="sub">La IA detectó lo siguiente. Ajustá cualquier variante que no coincida — vos tenés la última palabra.</p>
+      </div>
+
+      <div class="banner-info">
+        <div class="punto"></div>
+        <p><strong>Red de Seguridad activa.</strong> Los envases idénticos con distinta fragancia pueden confundirse: revisá antes de confirmar.</p>
+      </div>
+
+      <div class="lista-items" id="lista-items">
+        <!-- Los ítems detectados se insertan acá por JS -->
+      </div>
+
+      <button class="btn btn-secundario" id="btn-agregar-item" type="button">+ Agregar producto no detectado</button>
+
+      <div class="resumen-total">
+        <span>Total de unidades a cargar</span>
+        <span id="resumen-cantidad">0</span>
+      </div>
+
+      <button class="btn btn-primario" id="btn-confirmar">Confirmar y guardar stock</button>
+    </section>
+
+    <!-- ================= PANTALLA 4: CONFIRMACIÓN ================= -->
+    <section class="pantalla" id="pantalla-confirmacion">
+      <div class="confirmacion-wrap">
+        <div class="check-circulo">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6fae7c" stroke-width="2">
+            <path d="M4 12.5l5 5L20 6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <h2 style="font-family:'Fraunces',serif; font-weight:600; font-size:20px; margin:0 0 6px;">Stock actualizado</h2>
+          <p class="sub" id="texto-confirmacion">El lote se guardó correctamente en el inventario.</p>
+        </div>
+        <button class="btn btn-primario" id="btn-nueva-carga" style="margin-top:10px;">Cargar otro lote</button>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>stockIAte · Carga inteligente de mercadería</footer>
+</div>
+
+<!-- Vinculación limpia con el archivo de lógica -->
+<script src="script.js"></script>
+</body>
+</html>

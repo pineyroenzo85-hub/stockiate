@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(\"C:/xampp/mysql/bin/mysql.exe\" -u root stockiate -e \"DELETE FROM correcciones_ia WHERE id=2;\")",
+      "Bash(\"C:/xampp/mysql/bin/mysql.exe\" -u root stockiate -e \"SELECT id, sku, nombre, marca, variante, categoria, precio_venta, stock_actual FROM productos;\")",
+      "Bash(\"C:/xampp/mysql/bin/mysql.exe\" -u root stockiate -e \"SELECT id, nombre, stock_actual FROM productos WHERE id=14; SELECT * FROM lotes_stock ORDER BY id DESC LIMIT 3; SELECT * FROM correcciones_ia;\")",
+      "Bash(\"C:/xampp/mysql/bin/mysql.exe\" -u root stockiate -e \"DELETE FROM lotes_stock WHERE id=27; UPDATE productos SET stock_actual = stock_actual - 1 WHERE id=14;\")",
+      "Bash(\"C:/xampp/mysql/bin/mysql.exe\" -u root stockiate -e \"SELECT id, nombre, stock_actual FROM productos WHERE id=14;\")",
+      "Bash(\"C:/xampp/mysql/bin/mysql.exe\" -u root stockiate -e \"DELETE FROM ventas WHERE id=56; UPDATE productos SET stock_actual = stock_actual + 1 WHERE id=12;\")",
+      "Bash(\"C:/xampp/mysql/bin/mysql.exe\" -u root stockiate -e \"SELECT id, nombre, stock_actual FROM productos WHERE id=12;\")",
+      "Bash(\"C:/xampp/mysql/bin/mysql.exe\" -u root stockiate -e \"SELECT * FROM correcciones_ia; SELECT id, producto_id, cantidad FROM ventas ORDER BY id DESC LIMIT 2; SELECT id, stock_actual FROM productos WHERE id=12;\")",
+      "Bash(\"C:/xampp/mysql/bin/mysql.exe\" -u root stockiate -e \"DELETE FROM correcciones_ia WHERE id=3; DELETE FROM ventas WHERE id=57; UPDATE productos SET stock_actual = stock_actual + 2 WHERE id=12;\")",
+      "Bash(\"C:/xampp/mysql/bin/mysql.exe\" -u root stockiate -e \"SELECT id, stock_actual FROM productos WHERE id=12; SELECT COUNT\\(*\\) FROM correcciones_ia;\")",
+      "Bash(\"C:/xampp/mysql/bin/mysql.exe\" -u root stockiate -e \"SELECT * FROM correcciones_ia; SELECT id, producto_id, cantidad FROM lotes_stock ORDER BY id DESC LIMIT 2; SELECT id, stock_actual FROM productos WHERE id=13;\")",
+      "Bash(\"C:/xampp/mysql/bin/mysql.exe\" -u root stockiate -e \"DELETE FROM correcciones_ia WHERE id=4; DELETE FROM lotes_stock WHERE id=28; UPDATE productos SET stock_actual = stock_actual - 3 WHERE id=13;\")",
+      "Bash(\"C:/xampp/mysql/bin/mysql.exe\" -u root stockiate -e \"SELECT id, stock_actual FROM productos WHERE id=13; SELECT COUNT\\(*\\) FROM correcciones_ia;\")",
+      "Bash(\"C:/xampp/mysql/bin/mysql.exe\" -u root stockiate -e \"SELECT id, sku, nombre, marca FROM productos; SELECT * FROM correcciones_ia ORDER BY id DESC LIMIT 5; SELECT * FROM lotes_stock ORDER BY id DESC LIMIT 5;\")",
+      "Bash(\"C:/xampp/mysql/bin/mysql.exe\" -u root stockiate -e \"SELECT id, nombre, stock_actual FROM productos WHERE id=16; SELECT * FROM lotes_stock WHERE producto_id=16; SELECT * FROM correcciones_ia;\")",
+      "Bash(C:/xampp/mysql/bin/mysql.exe -u root stockiate -e ' *)",
+      "Bash(\"C:/xampp/mysql/bin/mysql.exe\" -u root stockiate -e \"SELECT id, nombre FROM productos; SELECT COUNT\\(*\\) AS correcciones FROM correcciones_ia;\")",
+      "Bash(\"C:/xampp/mysql/bin/mysql.exe\" -u root stockiate -e \"SELECT id, nombre, stock_actual FROM productos WHERE id=17; SELECT * FROM ventas WHERE producto_id=17; SELECT * FROM correcciones_ia WHERE producto_corregido_id=17;\")",
+      "Bash(venv/Scripts/python.exe -c ' *)",
+      "Bash(venv/Scripts/python.exe -c \"import roboflow_workflow, main; print\\('OK imports'\\)\")",
+      "Bash(venv/Scripts/python.exe smoke_test_roboflow.py \"images/5rexonasiguales.png\")",
+      "Bash(curl -s http://localhost:8000/)",
+      "Bash(curl -s -X POST http://localhost:8000/procesar-imagen -F \"imagen=@images/5rexonasiguales.png\")",
+      "Bash(curl -s -m 3 http://localhost:8000/)",
+      "Bash(cat /c/Users/mateo/AppData/Local/Temp/claude/C--xampp-htdocs-stockiate-tesis-enzo/87b933b1-1d82-4d67-ab58-e2a01325b989/scratchpad/uvicorn.log 2>&1)",
+      "Bash(pip install *)",
+      "Bash(py -0)",
+      "Bash(where python *)",
+      "Read(//c/Users/mateo/AppData/Local/Python//**)",
+      "Bash(py -3.12 -m venv venv)",
+      "Bash(venv/Scripts/python.exe -m pip install -r requirements.txt)",
+      "Bash(curl -s -m 5 http://localhost:8000/)"
+    ]
+  }
+}
