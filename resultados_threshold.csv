@@ -1,0 +1,121 @@
+foto,variante,threshold,cantidad_detecciones,indice_deteccion,confianza,marca_ocr,ocr_exitoso,tiempo_respuesta_seg,tamano_bytes
+5rexonasiguales.png,original,0.5,5,0,0.832,Dove original SERUM INDIA-ICERAMICOS,True,8.09,231613
+5rexonasiguales.png,original,0.5,5,1,0.6753,Dove original DHA PAO-CERAMIDE,True,8.09,231613
+5rexonasiguales.png,original,0.5,5,2,0.6615,Dove original JUNI PÃO-CERAMON,True,8.09,231613
+5rexonasiguales.png,original,0.5,5,3,0.64,Dove origina SERUM PRO-ICERAM,True,8.09,231613
+5rexonasiguales.png,original,0.5,5,4,0.447,Dove origina SERUM PRO-CEARAN,True,8.09,231613
+5rexonasiguales.png,original,0.4,5,0,0.832,Dove original SERUM INDIA-ICERAMICOS,True,6.92,231613
+5rexonasiguales.png,original,0.4,5,1,0.6753,Dove original DHA PAO-CERAMIDE,True,6.92,231613
+5rexonasiguales.png,original,0.4,5,2,0.6615,Dove original JUNI PÃO-CERAMON,True,6.92,231613
+5rexonasiguales.png,original,0.4,5,3,0.64,Dove origina SERUM PRO-ICERAM,True,6.92,231613
+5rexonasiguales.png,original,0.4,5,4,0.447,Dove origina SERUM PRO-CEARAN,True,6.92,231613
+5rexonasiguales.png,original,0.3,5,0,0.832,Dove original SERUM INDIA-ICERAMICOS,True,6.5,231613
+5rexonasiguales.png,original,0.3,5,1,0.6753,Dove original DHA PAO-CERAMIDE,True,6.5,231613
+5rexonasiguales.png,original,0.3,5,2,0.6615,Dove original JUNI PÃO-CERAMON,True,6.5,231613
+5rexonasiguales.png,original,0.3,5,3,0.64,Dove origina SERUM PRO-ICERAM,True,6.5,231613
+5rexonasiguales.png,original,0.3,5,4,0.447,Dove origina SERUM PRO-CEARAN,True,6.5,231613
+5rexonasiguales.png,original,0.2,5,0,0.832,Dove original SERUM INDIA-ICERAMICOS,True,6.72,231613
+5rexonasiguales.png,original,0.2,5,1,0.6753,Dove original DHA PAO-CERAMIDE,True,6.72,231613
+5rexonasiguales.png,original,0.2,5,2,0.6615,Dove original JUNI PÃO-CERAMON,True,6.72,231613
+5rexonasiguales.png,original,0.2,5,3,0.64,Dove origina SERUM PRO-ICERAM,True,6.72,231613
+5rexonasiguales.png,original,0.2,5,4,0.447,Dove origina SERUM PRO-CEARAN,True,6.72,231613
+5rexonasiguales.png,comprimida,0.5,3,0,0.865,Dove origina SERUM PRO,True,3.91,41548
+5rexonasiguales.png,comprimida,0.5,3,1,0.8535,Dove original PRO-CEMIONI FIFA,True,3.91,41548
+5rexonasiguales.png,comprimida,0.5,3,2,0.7954,Dove original IERMÁN PRO-CERAMICOS,True,3.91,41548
+5rexonasiguales.png,comprimida,0.4,3,0,0.865,Dove origina SERUM PRO,True,4.45,41548
+5rexonasiguales.png,comprimida,0.4,3,1,0.8535,Dove original PRO-CEMIONI FIFA,True,4.45,41548
+5rexonasiguales.png,comprimida,0.4,3,2,0.7954,Dove original IERMÁN PRO-CERAMICOS,True,4.45,41548
+5rexonasiguales.png,comprimida,0.3,3,0,0.865,Dove origina SERUM PRO,True,5.67,41548
+5rexonasiguales.png,comprimida,0.3,3,1,0.8535,Dove original PRO-CEMIONI FIFA,True,5.67,41548
+5rexonasiguales.png,comprimida,0.3,3,2,0.7954,Dove original IERMÁN PRO-CERAMICOS,True,5.67,41548
+5rexonasiguales.png,comprimida,0.2,3,0,0.865,Dove origina SERUM PRO,True,3.77,41548
+5rexonasiguales.png,comprimida,0.2,3,1,0.8535,Dove original PRO-CEMIONI FIFA,True,3.77,41548
+5rexonasiguales.png,comprimida,0.2,3,2,0.7954,Dove original IERMÁN PRO-CERAMICOS,True,3.77,41548
+Captura de pantalla 2026-07-14 002256.png,original,0.5,1,0,0.9334,Rexona HIDRATA DE PROTEcción,True,1.81,63527
+Captura de pantalla 2026-07-14 002256.png,original,0.4,1,0,0.9334,Rexona HIDRATA DE PROTEcción,True,1.94,63527
+Captura de pantalla 2026-07-14 002256.png,original,0.3,1,0,0.9334,Rexona HIDRATA DE PROTEcción,True,3.31,63527
+Captura de pantalla 2026-07-14 002256.png,original,0.2,1,0,0.9334,Rexona HIDRATA DE PROTEcción,True,1.8,63527
+Captura de pantalla 2026-07-14 002256.png,comprimida,0.5,1,0,0.9494,Rexona INSTALLED APPEARANCE INSTALLED,True,1.81,11987
+Captura de pantalla 2026-07-14 002256.png,comprimida,0.4,1,0,0.9494,Rexona INSTALLED APPEARANCE INSTALLED,True,4.5,11987
+Captura de pantalla 2026-07-14 002256.png,comprimida,0.3,1,0,0.9494,Rexona INSTALLED APPEARANCE INSTALLED,True,1.83,11987
+Captura de pantalla 2026-07-14 002256.png,comprimida,0.2,1,0,0.9494,Rexona INSTALLED APPEARANCE INSTALLED,True,1.78,11987
+Captura de pantalla 2026-07-14 014347.png,original,0.5,2,0,0.9166,Saphirus HOME GARDEN Rug,True,1.94,144482
+Captura de pantalla 2026-07-14 014347.png,original,0.5,2,1,0.8811,Saphins HOME SPRAY Vanilla,True,1.94,144482
+Captura de pantalla 2026-07-14 014347.png,original,0.4,2,0,0.9166,Saphirus HOME GARDEN Rug,True,2.8,144482
+Captura de pantalla 2026-07-14 014347.png,original,0.4,2,1,0.8811,Saphins HOME SPRAY Vanilla,True,2.8,144482
+Captura de pantalla 2026-07-14 014347.png,original,0.3,2,0,0.9166,Saphirus HOME GARDEN Rug,True,4.44,144482
+Captura de pantalla 2026-07-14 014347.png,original,0.3,2,1,0.8811,Saphins HOME SPRAY Vanilla,True,4.44,144482
+Captura de pantalla 2026-07-14 014347.png,original,0.2,2,0,0.9166,Saphirus HOME GARDEN Rug,True,3.16,144482
+Captura de pantalla 2026-07-14 014347.png,original,0.2,2,1,0.8811,Saphins HOME SPRAY Vanilla,True,3.16,144482
+Captura de pantalla 2026-07-14 014347.png,comprimida,0.5,2,0,0.9172,Saphins HONEY SAND Hydrating,True,2.01,16949
+Captura de pantalla 2026-07-14 014347.png,comprimida,0.5,2,1,0.8325,Sophins HOME SPRAY Vanilla,True,2.01,16949
+Captura de pantalla 2026-07-14 014347.png,comprimida,0.4,2,0,0.9172,Saphins HONEY SAND Hydrating,True,2.02,16949
+Captura de pantalla 2026-07-14 014347.png,comprimida,0.4,2,1,0.8325,Sophins HOME SPRAY Vanilla,True,2.02,16949
+Captura de pantalla 2026-07-14 014347.png,comprimida,0.3,2,0,0.9172,Saphins HONEY SAND Hydrating,True,1.95,16949
+Captura de pantalla 2026-07-14 014347.png,comprimida,0.3,2,1,0.8325,Sophins HOME SPRAY Vanilla,True,1.95,16949
+Captura de pantalla 2026-07-14 014347.png,comprimida,0.2,2,0,0.9172,Saphins HONEY SAND Hydrating,True,2.02,16949
+Captura de pantalla 2026-07-14 014347.png,comprimida,0.2,2,1,0.8325,Sophins HOME SPRAY Vanilla,True,2.02,16949
+Captura de pantalla 2026-08-12 154413.png,original,0.5,1,0,0.863,natura KAIAK,True,1.5,165079
+Captura de pantalla 2026-08-12 154413.png,original,0.4,1,0,0.863,natura KAIAK,True,1.59,165079
+Captura de pantalla 2026-08-12 154413.png,original,0.3,1,0,0.863,natura KAIAK,True,1.49,165079
+Captura de pantalla 2026-08-12 154413.png,original,0.2,1,0,0.863,natura KAIAK,True,1.67,165079
+Captura de pantalla 2026-08-12 154413.png,comprimida,0.5,1,0,0.8277,natura KAIAK,True,1.42,18301
+Captura de pantalla 2026-08-12 154413.png,comprimida,0.4,1,0,0.8277,natura KAIAK,True,1.58,18301
+Captura de pantalla 2026-08-12 154413.png,comprimida,0.3,1,0,0.8277,natura KAIAK,True,1.41,18301
+Captura de pantalla 2026-08-12 154413.png,comprimida,0.2,1,0,0.8277,natura KAIAK,True,1.33,18301
+hawas.png,original,0.5,1,0,0.4241,HAWAS For Him BLACK,True,1.58,180787
+hawas.png,original,0.4,1,0,0.4241,HAWAS For Him BLACK,True,1.49,180787
+hawas.png,original,0.3,1,0,0.4241,HAWAS For Him BLACK,True,1.58,180787
+hawas.png,original,0.2,1,0,0.4241,HAWAS For Him BLACK,True,1.61,180787
+hawas.png,comprimida,0.5,0,,,,,1.55,22683
+hawas.png,comprimida,0.4,0,,,,,1.36,22683
+hawas.png,comprimida,0.3,0,,,,,2.8,22683
+hawas.png,comprimida,0.2,0,,,,,2.0,22683
+local.jpeg,original,0.5,5,0,0.9525,WET EFFECT EFEÇO HUMIDO,True,6.98,383771
+local.jpeg,original,0.5,5,1,0.9239,OPCIÓN LINEA TOUCH FINAL,True,6.98,383771
+local.jpeg,original,0.5,5,2,0.8929,Preal GEL FUJADOR SIN,True,6.98,383771
+local.jpeg,original,0.5,5,3,0.8918,OPCIÓN LINEA TOUCH FINAL,True,6.98,383771
+local.jpeg,original,0.5,5,4,0.7938,NOV FIX GEL GEL,True,6.98,383771
+local.jpeg,original,0.4,5,0,0.9525,WET EFFECT EFEÇO HUMIDO,True,6.42,383771
+local.jpeg,original,0.4,5,1,0.9239,OPCIÓN LINEA TOUCH FINAL,True,6.42,383771
+local.jpeg,original,0.4,5,2,0.8929,Preal GEL FUJADOR SIN,True,6.42,383771
+local.jpeg,original,0.4,5,3,0.8918,OPCIÓN LINEA TOUCH FINAL,True,6.42,383771
+local.jpeg,original,0.4,5,4,0.7938,NOV FIX GEL GEL,True,6.42,383771
+local.jpeg,original,0.3,5,0,0.9525,WET EFFECT EFEÇO HUMIDO,True,7.44,383771
+local.jpeg,original,0.3,5,1,0.9239,OPCIÓN LINEA TOUCH FINAL,True,7.44,383771
+local.jpeg,original,0.3,5,2,0.8929,Preal GEL FUJADOR SIN,True,7.44,383771
+local.jpeg,original,0.3,5,3,0.8918,OPCIÓN LINEA TOUCH FINAL,True,7.44,383771
+local.jpeg,original,0.3,5,4,0.7938,NOV FIX GEL GEL,True,7.44,383771
+local.jpeg,original,0.2,5,0,0.9525,WET EFFECT EFEÇO HUMIDO,True,6.44,383771
+local.jpeg,original,0.2,5,1,0.9239,OPCIÓN LINEA TOUCH FINAL,True,6.44,383771
+local.jpeg,original,0.2,5,2,0.8929,Preal GEL FUJADOR SIN,True,6.44,383771
+local.jpeg,original,0.2,5,3,0.8918,OPCIÓN LINEA TOUCH FINAL,True,6.44,383771
+local.jpeg,original,0.2,5,4,0.7938,NOV FIX GEL GEL,True,6.44,383771
+local.jpeg,comprimida,0.5,5,0,0.9542,WET FLEXIBLE FIXED HUMIDO,True,5.55,324128
+local.jpeg,comprimida,0.5,5,1,0.9284,OPCIÓN LINEA TOUCH FINAL,True,5.55,324128
+local.jpeg,comprimida,0.5,5,2,0.8988,Preal GEL FLUIDO MAR,True,5.55,324128
+local.jpeg,comprimida,0.5,5,3,0.8888,OPCIÓN LINEA TOUCH FINAL,True,5.55,324128
+local.jpeg,comprimida,0.5,5,4,0.7738,NOV FIX GEL GEL,True,5.55,324128
+local.jpeg,comprimida,0.4,5,0,0.9542,WET FLEXIBLE FIXED HUMIDO,True,6.56,324128
+local.jpeg,comprimida,0.4,5,1,0.9284,OPCIÓN LINEA TOUCH FINAL,True,6.56,324128
+local.jpeg,comprimida,0.4,5,2,0.8988,Preal GEL FLUIDO MAR,True,6.56,324128
+local.jpeg,comprimida,0.4,5,3,0.8888,OPCIÓN LINEA TOUCH FINAL,True,6.56,324128
+local.jpeg,comprimida,0.4,5,4,0.7738,NOV FIX GEL GEL,True,6.56,324128
+local.jpeg,comprimida,0.3,5,0,0.9542,WET FLEXIBLE FIXED HUMIDO,True,5.78,324128
+local.jpeg,comprimida,0.3,5,1,0.9284,OPCIÓN LINEA TOUCH FINAL,True,5.78,324128
+local.jpeg,comprimida,0.3,5,2,0.8988,Preal GEL FLUIDO MAR,True,5.78,324128
+local.jpeg,comprimida,0.3,5,3,0.8888,OPCIÓN LINEA TOUCH FINAL,True,5.78,324128
+local.jpeg,comprimida,0.3,5,4,0.7738,NOV FIX GEL GEL,True,5.78,324128
+local.jpeg,comprimida,0.2,5,0,0.9542,WET FLEXIBLE FIXED HUMIDO,True,5.97,324128
+local.jpeg,comprimida,0.2,5,1,0.9284,OPCIÓN LINEA TOUCH FINAL,True,5.97,324128
+local.jpeg,comprimida,0.2,5,2,0.8988,Preal GEL FLUIDO MAR,True,5.97,324128
+local.jpeg,comprimida,0.2,5,3,0.8888,OPCIÓN LINEA TOUCH FINAL,True,5.97,324128
+local.jpeg,comprimida,0.2,5,4,0.7738,NOV FIX GEL GEL,True,5.97,324128
+sauvage.png,original,0.5,1,0,0.9243,SAUVAGE EAU DE PARFUM,True,2.99,202703
+sauvage.png,original,0.4,1,0,0.9243,SAUVAGE EAU DE PARFUM,True,1.36,202703
+sauvage.png,original,0.3,1,0,0.9243,SAUVAGE EAU DE PARFUM,True,1.55,202703
+sauvage.png,original,0.2,1,0,0.9243,SAUVAGE EAU DE PARFUM,True,1.47,202703
+sauvage.png,comprimida,0.5,1,0,0.9232,SAUVAGE EAU DE PARFUM,True,1.45,18969
+sauvage.png,comprimida,0.4,1,0,0.9232,SAUVAGE EAU DE PARFUM,True,1.61,18969
+sauvage.png,comprimida,0.3,1,0,0.9232,SAUVAGE EAU DE PARFUM,True,1.42,18969
+sauvage.png,comprimida,0.2,1,0,0.9232,SAUVAGE EAU DE PARFUM,True,1.86,18969

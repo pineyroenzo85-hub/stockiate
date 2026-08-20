@@ -18,7 +18,9 @@
   var rol = (scriptTag && scriptTag.dataset.rol) || "dueño";
   var usuarioId = scriptTag && scriptTag.dataset.usuarioId ? Number(scriptTag.dataset.usuarioId) : null;
 
-  var API_URL = "http://localhost:8000/chatbot";
+  var API_URL = "https://atrium-overtime-deluxe.ngrok-free.dev/chatbot";
+  // Evita la página de advertencia HTML de ngrok free tier en vez de la respuesta JSON real.
+  var HEADERS_NGROK = { "ngrok-skip-browser-warning": "true" };
   var MAX_HISTORIAL = 10; // últimos N turnos (5 intercambios) para no mandar contexto infinito
 
   var ROLE_INFO = {
@@ -182,7 +184,7 @@
 
     fetch(API_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { ...HEADERS_NGROK, "Content-Type": "application/json" },
       body: JSON.stringify({
         pregunta: texto,
         rol: rol,

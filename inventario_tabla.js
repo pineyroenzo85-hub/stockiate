@@ -21,6 +21,11 @@ const URL_CONSULTAR_INVENTARIO = "https://atrium-overtime-deluxe.ngrok-free.dev/
 const URL_ACTUALIZAR_STOCK = "https://atrium-overtime-deluxe.ngrok-free.dev/stockiate/tesis_enzo/actualizar_stock.php";
 const URL_ELIMINAR_PRODUCTO = "https://atrium-overtime-deluxe.ngrok-free.dev/stockiate/tesis_enzo/eliminar_producto.php";
 
+// Evita la página de advertencia HTML de ngrok free tier en vez de la respuesta JSON real.
+// Prefijo INVT_ porque este archivo se carga junto a otro <script> que ya
+// declara su propio HEADERS_NGROK en el scope global de la página.
+const INVT_HEADERS_NGROK = { "ngrok-skip-browser-warning": "true" };
+
 const INVT_ESTILOS_ID = "invt-estilos";
 const INVT_CSS = `
 .invt-panel{ background:#161b29; border:1px solid #252b3d; border-radius:18px; overflow:hidden; color:#e8eaf2; font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
@@ -43,6 +48,7 @@ const INVT_CSS = `
 .invt-badge.ok{ background:rgba(61,220,132,0.12); color:#3ddc84; }
 .invt-badge.low{ background:rgba(255,181,71,0.12); color:#ffb547; }
 .invt-badge.critical{ background:rgba(255,92,114,0.14); color:#ff5c72; }
+.invt-badge.unavailable{ background:rgba(154,161,181,0.16); color:#9aa1b5; }
 .invt-stock-controls{ display:flex; align-items:center; gap:8px; }
 .invt-stock-controls button{ width:26px; height:26px; border-radius:7px; border:1px solid #252b3d; background:#1e2436; color:#e8eaf2; cursor:pointer; font-size:15px; font-weight:700; line-height:1; display:flex; align-items:center; justify-content:center; transition:all .15s; }
 .invt-stock-controls button:hover:not(:disabled){ background:#7c5cff; border-color:#7c5cff; }
@@ -64,13 +70,14 @@ function asegurarEstilosInventario() {
   document.head.appendChild(style);
 }
 
-// Sin columna de umbral "bajo" propia en el esquema (productos solo tiene
-// stock_minimo): "bajo" es un aviso temprano a 2x el umbral crítico real,
-// "crítico" es el mismo corte que ya usa el backend (stock_actual <= stock_minimo).
+// Stock en 0 es "No disponible" (no queda nada para vender), "Crítico" es
+// por debajo de 5 unidades (umbral fijo, de momento), y "Stock Bajo" es un
+// aviso temprano a 2x el stock_minimo configurado por producto.
 function estadoDeProducto(p) {
   const stock = Number(p.stock_actual);
   const minimo = Number(p.stock_minimo);
-  if (stock <= minimo) return { key: "critical", label: "Crítico" };
+  if (stock === 0) return { key: "unavailable", label: "No disponible" };
+  if (stock < 5) return { key: "critical", label: "Crítico" };
   if (stock <= minimo * 2) return { key: "low", label: "Stock Bajo" };
   return { key: "ok", label: "Disponible" };
 }
@@ -115,8 +122,11 @@ function initInventarioTabla(contenedor, opciones = {}) {
   let datosCompletos = null;
 
   function renderSubtitulo() {
-    const criticos = productos.filter(p => estadoDeProducto(p).key === "critical").length;
-    subtitulo.textContent = `${productos.length} productos · ${criticos} en estado crítico`;
+    const requierenAtencion = productos.filter(p => {
+      const key = estadoDeProducto(p).key;
+      return key === "critical" || key === "unavailable";
+    }).length;
+    subtitulo.textContent = `${productos.length} productos · ${requierenAtencion} requieren atención (crítico o sin stock)`;
   }
 
   function renderTabla(filtro = "") {
@@ -181,7 +191,7 @@ function initInventarioTabla(contenedor, opciones = {}) {
     try {
       const resp = await fetch(URL_ACTUALIZAR_STOCK, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...INVT_HEADERS_NGROK, "Content-Type": "application/json" },
         body: JSON.stringify({ producto_id: id, delta, usuario_id: 1 }),
       });
       const data = await resp.json();
@@ -215,7 +225,7 @@ function initInventarioTabla(contenedor, opciones = {}) {
     try {
       const resp = await fetch(URL_ELIMINAR_PRODUCTO, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...INVT_HEADERS_NGROK, "Content-Type": "application/json" },
         body: JSON.stringify({ producto_id: id }),
       });
       const data = await resp.json();
@@ -255,7 +265,7 @@ function initInventarioTabla(contenedor, opciones = {}) {
 
   async function cargar() {
     try {
-      const resp = await fetch(URL_CONSULTAR_INVENTARIO, { method: "POST" });
+      const resp = await fetch(URL_CONSULTAR_INVENTARIO, { method: "POST", headers: { ...INVT_HEADERS_NGROK } });
       const data = await resp.json();
 
       if (!resp.ok || !data.ok) {

@@ -46,6 +46,7 @@ ajustar `_extraer_texto` a la forma exacta que devuelve glm_ocr.
 from __future__ import annotations
 
 import base64
+import logging
 import os
 import time
 from dataclasses import dataclass
@@ -53,6 +54,8 @@ from dataclasses import dataclass
 from inference_sdk import InferenceHTTPClient
 
 from ocr_parser import parsear_texto_ocr
+
+logger = logging.getLogger("stockiate.roboflow")
 
 WORKSPACE_NAME = os.getenv("ROBOFLOW_WORKSPACE_NAME", "cooppers-workspace")
 WORKFLOW_ID = os.getenv("ROBOFLOW_WORKFLOW_ID", "text-recognition")
@@ -109,18 +112,51 @@ def ejecutar_workflow_stock(
     parametros = {"confidence": confidence} if confidence is not None else None
 
     ultimo_error: Exception | None = None
+    t_inicio = time.monotonic()
 
     for intento in range(_MAX_REINTENTOS + 1):
+        t_intento = time.monotonic()
         try:
             resultado = cliente.run_workflow(
                 workspace_name=WORKSPACE_NAME,
                 workflow_id=WORKFLOW_ID,
                 images={"image": imagen_b64},
                 parameters=parametros,
+                # use_cache=True (default del SDK) cachea la definición del
+                # workflow del lado de Roboflow: si editás el workflow en el
+                # dashboard, las llamadas normales pueden seguir corriendo la
+                # versión vieja por un rato. El proyecto todavía está en
+                # ajuste activo del workflow, así que preferimos correr
+                # siempre la versión viva aunque sea un poco más lento.
+                use_cache=False,
+            )
+            logger.info(
+                "intento %d/%d OK en %.2fs (total %.2fs)",
+                intento + 1, _MAX_REINTENTOS + 1,
+                time.monotonic() - t_intento, time.monotonic() - t_inicio,
             )
             return _parsear_resultado(resultado)
 
         except Exception as e:  # noqa: BLE001 - inference-sdk no expone jerarquía propia de excepciones
+            # Best-effort: si `.json()` de la respuesta de Roboflow falló al
+            # parsear (ej. llegó HTML en vez de JSON), `.doc` trae el texto
+            # crudo completo (viene de json.JSONDecodeError, que
+            # RequestsJSONDecodeError hereda). `.response` es un intento
+            # secundario, sin garantía en esta versión de requests/inference-sdk
+            # (no siempre viene seteado).
+            cuerpo_crudo = getattr(e, "doc", None)
+            resp = getattr(e, "response", None)
+            detalle = ""
+            if cuerpo_crudo:
+                detalle = f" | cuerpo crudo (300 chars): {cuerpo_crudo[:300]!r}"
+            elif resp is not None:
+                detalle = f" | status={getattr(resp, 'status_code', '?')} body={getattr(resp, 'text', '')[:300]!r}"
+            logger.warning(
+                "intento %d/%d falló en %.2fs: %s: %s%s",
+                intento + 1, _MAX_REINTENTOS + 1,
+                time.monotonic() - t_intento, type(e).__name__, e, detalle,
+            )
+
             mensaje = str(e).lower()
             if "unauthorized" in mensaje or "401" in mensaje or "api key" in mensaje:
                 raise RoboflowWorkflowAuthError(
@@ -132,6 +168,10 @@ def ejecutar_workflow_stock(
                 time.sleep(_ESPERA_BASE_SEGUNDOS * (2**intento))
                 continue
 
+    logger.error(
+        "workflow falló tras %d intento(s), %.2fs total: %s",
+        _MAX_REINTENTOS + 1, time.monotonic() - t_inicio, ultimo_error,
+    )
     raise RoboflowWorkflowConnectionError(
         f"No se pudo ejecutar el workflow tras {_MAX_REINTENTOS + 1} intento(s): {ultimo_error}"
     ) from ultimo_error

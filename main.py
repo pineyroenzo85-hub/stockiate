@@ -14,8 +14,21 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
+from PIL import Image
 import requests
+import io
+import logging
 import os
+import time
+
+# Logging de diagnóstico (timestamp, tamaño/dimensiones de imagen, timing de
+# Roboflow) para poder correlacionar una prueba real desde el celular con lo
+# que pasa en el pipeline, sin depender de la config propia de uvicorn.
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+logger = logging.getLogger("stockiate.main")
 
 # Carga las variables definidas en el archivo .env (debe estar en la misma
 # carpeta que este main.py) hacia el entorno del proceso. Tiene que correr
@@ -60,6 +73,15 @@ if not os.getenv("ROBOFLOW_API_KEY"):
         "Falta ROBOFLOW_API_KEY. Definila en el archivo .env (mismo directorio que main.py)."
     )
 
+# Bajado desde el default del Workflow (~0.4) porque en el local real
+# (mano tapando el producto, ángulos raros, luz distinta a la de
+# entrenamiento) el threshold alto estaba descartando detecciones válidas.
+# Elegido a mano tras comparar con test_threshold.py -- si en los logs de
+# /procesar-imagen la cantidad de detecciones no cambia respecto al
+# default, es señal de que el Workflow no tiene este parámetro wireado y
+# hay que bajarlo también en el editor visual de Roboflow.
+CONFIDENCE_THRESHOLD = 0.2
+
 
 
 class Deteccion(BaseModel):
@@ -88,17 +110,29 @@ async def procesar_imagen(imagen: UploadFile = File(...)):
     Recibe la foto plana del lote de productos, la manda a Roboflow
     y devuelve el conteo por clase detectada (ej: 5x "Fragancia A 100ml").
     """
+    t0 = time.monotonic()
     try:
         contenido = await imagen.read()
     except Exception:
         raise HTTPException(status_code=400, detail="No se pudo leer la imagen")
 
     try:
-        detecciones_workflow = ejecutar_workflow_stock(contenido)
+        ancho, alto = Image.open(io.BytesIO(contenido)).size
+    except Exception:
+        ancho, alto = None, None
+    logger.info(
+        "procesar-imagen: recibida (%d bytes, %sx%s)", len(contenido), ancho, alto
+    )
+
+    try:
+        detecciones_workflow = ejecutar_workflow_stock(contenido, confidence=CONFIDENCE_THRESHOLD)
     except RoboflowWorkflowConnectionError:
         # --- MODO OFFLINE-FIRST ---
         # No hay conexión con el Workflow de Roboflow: el frontend debe
         # caer a carga manual sin romper el flujo.
+        logger.warning(
+            "procesar-imagen: modo offline tras %.2fs", time.monotonic() - t0
+        )
         return RespuestaProcesamiento(
             ok=False,
             modo_offline=True,
@@ -108,9 +142,24 @@ async def procesar_imagen(imagen: UploadFile = File(...)):
         # Esto no es "sin conexión": la key está mal o no tiene acceso al
         # workflow. Mejor cortar acá con un 502 claro que caer a offline
         # silenciosamente y esconder un problema de configuración.
+        logger.error("procesar-imagen: error de autenticación: %s", e)
         raise HTTPException(status_code=502, detail=f"Error de autenticación con Roboflow: {e}")
     except RoboflowWorkflowError as e:
+        logger.error("procesar-imagen: error del workflow: %s", e)
         raise HTTPException(status_code=502, detail=f"Error del Workflow de Roboflow: {e}")
+
+    # Diagnóstico de threshold: lo que llega acá ya viene filtrado
+    # server-side con CONFIDENCE_THRESHOLD (si el Workflow tiene ese
+    # parámetro wireado -- ver el comentario junto a CONFIDENCE_THRESHOLD).
+    # "Cuántas entraron" y "cuántas pasaron el threshold" coinciden porque
+    # ya mandamos el threshold nosotros. Para comparar contra otros
+    # thresholds sobre las mismas fotos, usar test_threshold.py.
+    logger.info(
+        "procesar-imagen: confidence=%.2f, %d detecciones del workflow, confidences=%s",
+        CONFIDENCE_THRESHOLD,
+        len(detecciones_workflow),
+        [round(d.confianza, 3) for d in detecciones_workflow],
+    )
 
     detecciones = [
         Deteccion(
@@ -122,6 +171,10 @@ async def procesar_imagen(imagen: UploadFile = File(...)):
         for d in detecciones_workflow
     ]
 
+    logger.info(
+        "procesar-imagen: OK, %d detecciones, %.2fs total",
+        len(detecciones), time.monotonic() - t0,
+    )
     return RespuestaProcesamiento(
         ok=True,
         modo_offline=False,

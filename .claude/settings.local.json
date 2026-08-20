@@ -32,7 +32,17 @@
       "Read(//c/Users/mateo/AppData/Local/Python//**)",
       "Bash(py -3.12 -m venv venv)",
       "Bash(venv/Scripts/python.exe -m pip install -r requirements.txt)",
-      "Bash(curl -s -m 5 http://localhost:8000/)"
+      "Bash(curl -s -m 5 http://localhost:8000/)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(\"C:/xampp/apache/bin/httpd.exe\" -t)",
+      "Read(//c/Users/**)",
+      "Bash(/c/xampp/htdocs/stockiate/tesis_enzo/venv/Scripts/python.exe -c ' *)",
+      "Bash(\"/c/xampp/htdocs/stockiate/tesis_enzo/venv/Scripts/python.exe\" -c \"import dotenv; print\\(dotenv.__version__ if hasattr\\(dotenv,'__version__'\\) else 'no version attr'\\); print\\(dotenv.__file__\\)\")",
+      "Bash(./venv/Scripts/python.exe -c ' *)",
+      "Bash(\"C:/xampp/apache_start.bat\")",
+      "Bash(tasklist //FI \"IMAGENAME eq httpd.exe\")"
     ]
   }
 }

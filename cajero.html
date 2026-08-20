@@ -121,14 +121,17 @@
 <!-- ===== Toasts ===== -->
 <div id="toast-container" class="toast-container"></div>
 
+<script src="image_utils.js?v=1"></script>
 <script>
 if (window.lucide) lucide.createIcons();
 
-const URL_BACKEND_IA = "http://localhost:8000/procesar-imagen";
+const URL_BACKEND_IA = "https://atrium-overtime-deluxe.ngrok-free.dev/procesar-imagen";
 const URL_REGISTRAR_VENTA = "https://atrium-overtime-deluxe.ngrok-free.dev/stockiate/tesis_enzo/registrar_venta.php";
 const URL_CONSULTAR_PRODUCTOS = "https://atrium-overtime-deluxe.ngrok-free.dev/stockiate/tesis_enzo/consultar_productos.php";
-const URL_REGISTRAR_CORRECCION = "http://localhost:8000/registrar-correccion";
+const URL_REGISTRAR_CORRECCION = "https://atrium-overtime-deluxe.ngrok-free.dev/registrar-correccion";
 const URL_CREAR_PRODUCTO = "https://atrium-overtime-deluxe.ngrok-free.dev/stockiate/tesis_enzo/crear_producto.php";
+// Evita la página de advertencia HTML de ngrok free tier en vez de la respuesta JSON real.
+const HEADERS_NGROK = { "ngrok-skip-browser-warning": "true" };
 
 function mostrarToast(mensaje, tipo = "exito") {
   const cont = document.getElementById("toast-container");
@@ -149,7 +152,7 @@ function mostrarToast(mensaje, tipo = "exito") {
 let CATALOGO = [];
 const catalogoListo = fetch(URL_CONSULTAR_PRODUCTOS, {
   method: "POST",
-  headers: { "Content-Type": "application/json" },
+  headers: { ...HEADERS_NGROK, "Content-Type": "application/json" },
   body: JSON.stringify({}),
 })
   .then(resp => resp.json())
@@ -236,10 +239,9 @@ const bannerOffline = document.getElementById("banner-offline");
 
 let archivoSeleccionado = null;
 
-inputImagen.addEventListener("change", (e) => {
+inputImagen.addEventListener("change", async (e) => {
   const archivo = e.target.files[0];
   if (!archivo) return;
-  archivoSeleccionado = archivo;
 
   const lector = new FileReader();
   lector.onload = (ev) => {
@@ -249,6 +251,8 @@ inputImagen.addEventListener("change", (e) => {
   };
   lector.readAsDataURL(archivo);
 
+  btnProcesar.disabled = true;
+  archivoSeleccionado = await redimensionarImagen(archivo);
   btnProcesar.disabled = false;
 });
 
@@ -263,10 +267,10 @@ btnProcesar.addEventListener("click", async () => {
   bannerOffline.classList.remove("activo");
 
   const formData = new FormData();
-  formData.append("imagen", archivoSeleccionado);
+  formData.append("imagen", archivoSeleccionado, "captura.jpg");
 
   try {
-    const resp = await fetch(URL_BACKEND_IA, { method: "POST", body: formData });
+    const resp = await fetch(URL_BACKEND_IA, { method: "POST", headers: { ...HEADERS_NGROK }, body: formData });
     if (!resp.ok) throw new Error("Error en el servidor de IA");
 
     const data = await resp.json();
@@ -402,7 +406,7 @@ function crearItemCard({ productoDetectadoId = null, confianza = null, cantidad 
     try {
       const resp = await fetch(URL_CREAR_PRODUCTO, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...HEADERS_NGROK, "Content-Type": "application/json" },
         body: JSON.stringify({
           sku: skuNuevo,
           nombre: nombreNuevo,
@@ -486,7 +490,7 @@ function actualizarResumen() {
 function registrarCorreccion(payload) {
   fetch(URL_REGISTRAR_CORRECCION, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { ...HEADERS_NGROK, "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   }).catch(err => console.warn("No se pudo registrar la corrección de IA:", err));
 }
@@ -529,7 +533,7 @@ document.getElementById("btn-confirmar").addEventListener("click", async () => {
     try {
       const resp = await fetch(URL_REGISTRAR_VENTA, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...HEADERS_NGROK, "Content-Type": "application/json" },
         body: JSON.stringify({
           producto_id: pedido.producto_id,
           cantidad: pedido.cantidad,
@@ -595,7 +599,7 @@ document.addEventListener("click", (e) => {
 });
 </script>
 
-<script src="chatbot_widget.js" data-rol="cajero" data-usuario-id="1"></script>
+<script src="chatbot_widget.js?v=2" data-rol="cajero" data-usuario-id="1"></script>
 
 </body>
 </html>
