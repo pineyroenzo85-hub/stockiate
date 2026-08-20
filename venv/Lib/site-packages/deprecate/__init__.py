@@ -84,6 +84,13 @@ from deprecate.audit import (
     validate_deprecation_chains,
     validate_deprecation_expiry,
     validate_deprecation_wrapper,
+    validate_mapping_compatibility,
+)
+
+# Opt-in strict ``property`` replacement: ``from deprecate import property`` shadows the builtin
+# in the importing module only, rejecting inner-order ``@property @deprecated`` at class-body time.
+from deprecate.deprecation import (
+    _StrictProperty as property,  # noqa: F401 # intentional: explicit-import only; excluded from __all__ to prevent star-import from silently enabling strict mode
 )
 from deprecate.deprecation import deprecated
 from deprecate.proxy import deprecated_class, deprecated_instance
@@ -95,8 +102,8 @@ from deprecate.utils import (
 
 __all__ = [
     "ChainType",
-    "DeprecationWrapperInfo",
     "DeprecationStatus",
+    "DeprecationWrapperInfo",
     "TableStyle",
     "TargetMode",
     "assert_no_warnings",
@@ -108,5 +115,6 @@ __all__ = [
     "validate_deprecation_chains",
     "validate_deprecation_expiry",
     "validate_deprecation_wrapper",
+    "validate_mapping_compatibility",
     "void",
 ]
