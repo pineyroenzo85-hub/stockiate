@@ -1,0 +1,11 @@
+# Entornos virtuales de Python
+venv/
+.venv/
+
+# Variables de entorno: contienen API keys, nunca a git.
+# La plantilla sin valores está versionada como .env.example
+.env
+
+# Cache de Python
+__pycache__/
+*.pyc

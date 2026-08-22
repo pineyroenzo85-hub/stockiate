@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Resumen del proyecto
 
 stockIAte es un proyecto de tesis: un sistema de gestión de inventario asistido
-por IA para un comercio minorista (perfumería). No es un repositorio git. Está
+por IA para un comercio minorista (perfumería). Está
 compuesto por tres capas que colaboran pero **no comparten código ni
 framework**: persistencia en PHP plano (PDO/MySQL), un microservicio Python
 (FastAPI) que orquesta la detección por imagen vía Roboflow, y un frontend
@@ -27,7 +27,8 @@ todo:
    uvicorn main:app --reload
    ```
    (o `python main.py`). Escucha en el puerto 8000. Requiere un archivo
-   `.env` en la raíz del proyecto con `ROBOFLOW_API_KEY` — `main.py` lanza
+   `.env` en la raíz del proyecto (copiar `.env.example` y completar los
+   valores; el `.env` real está gitignoreado) con `ROBOFLOW_API_KEY` — `main.py` lanza
    un error al arrancar si falta. El chatbot IA (`/chatbot`) además necesita
    `GROQ_API_KEY` en ese mismo `.env` (se consigue gratis en
    [console.groq.com/keys](https://console.groq.com/keys)), pero a
@@ -100,10 +101,10 @@ el esquema de base de datos tabla por tabla, y las convenciones de nombres.
 
 ## Cosas para tener en cuenta
 
-- `registrar_correccion.php` **no existe** en el repo, pero `main.py` lo
-  llama desde `/registrar-correccion` (y encima con una URL sin el segmento
-  `/tesis_enzo`) — ese tramo del feedback loop de correcciones está roto/sin
-  implementar.
+- **Nunca commitear el `.env`**: contiene las API keys de Roboflow y Groq.
+  El repo tiene remoto público en GitHub. Está cubierto por `.gitignore`
+  junto con `venv/`, `.venv/` y `__pycache__/`; la plantilla sin valores,
+  que sí va a git, es `.env.example`.
 - `index.html` + `script.js` es un prototipo viejo del flujo repositor,
   superado por `repositor.html`. Su URL a `guardar_stock.php` también le
   falta `/tesis_enzo` y da 404 — no editar este par pensando que es la
