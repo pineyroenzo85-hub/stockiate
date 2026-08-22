@@ -82,7 +82,7 @@
 
     <div class="cards-modulos" style="margin-top:28px;">
 
-        <a href="administrador.html" class="card-modulo">
+        <a href="administrador.html" class="card-modulo" id="card-administrador">
             <span>⚙️</span>
             <h2>Administrador</h2>
             <p>Panel y estadísticas</p>
@@ -90,13 +90,35 @@
 
     </div>
 
+    <div class="user-chip-sesion">
+        <span>Sesión: <strong id="texto-usuario-sesion"></strong></span>
+        <button type="button" id="btn-cerrar-sesion" class="btn-texto">Cerrar sesión</button>
+    </div>
+
 </section>
 </main>
 
 </div>
 
+<script src="auth.js"></script>
+<script>
+const usuarioSesion = exigirSesion();
+</script>
 <script>
 if (window.lucide) lucide.createIcons();
+
+document.getElementById("texto-usuario-sesion").textContent =
+    `${usuarioSesion.nombre} ${usuarioSesion.apellido} (${STOCKIATE_ETIQUETA_ROL[usuarioSesion.rol]})`;
+document.getElementById("btn-cerrar-sesion").addEventListener("click", cerrarSesion);
+
+// Repositor y cajero sólo ven su propio módulo; el administrador (rol
+// "dueño") puede entrar a los tres.
+if (usuarioSesion.rol !== "dueño") {
+    document.querySelectorAll(".rol-panel").forEach(panel => {
+        if (panel.dataset.rol !== usuarioSesion.rol) panel.style.display = "none";
+    });
+    document.getElementById("card-administrador").style.display = "none";
+}
 
 document.getElementById("btn-inicio").addEventListener("click", () => {
     window.location.href = "landing_page.html";

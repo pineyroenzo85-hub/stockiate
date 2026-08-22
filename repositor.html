@@ -7,6 +7,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <script src="auth.js"></script>
+    <script>
+      // Sincrónico y en <head> a propósito: corta el render de la página
+      // antes de mostrar nada si no hay sesión válida para este módulo.
+      var usuarioSesion = exigirSesion(["repositor", "dueño"]);
+    </script>
 </head>
 <body>
 
@@ -24,11 +30,11 @@
       <button id="btn-menu" class="btn-menu">⋯</button>
 
       <div id="menu-desplegable" class="menu-desplegable">
-        <button type="button">Inicio</button>
-        <button type="button">Repositor</button>
-        <button type="button">Cajero</button>
-        <button type="button">Administrador</button>
-        <button type="button">Cerrar sesión</button>
+        <button type="button" onclick="window.location.href='landing_page.html'">Inicio</button>
+        <button type="button" onclick="window.location.href='repositor.html'">Repositor</button>
+        <button type="button" id="btn-menu-cajero" onclick="window.location.href='cajero.html'">Cajero</button>
+        <button type="button" id="btn-menu-administrador" onclick="window.location.href='administrador.html'">Administrador</button>
+        <button type="button" id="btn-menu-cerrar-sesion">Cerrar sesión</button>
       </div>
     </div>
   </header>
@@ -511,7 +517,7 @@ btnEliminar.addEventListener("click", () => {
 
   document.getElementById("btn-confirmar").addEventListener("click", async () => {
     const cards = document.querySelectorAll(".item-card");
-    const usuarioId = 1;
+    const usuarioId = usuarioSesion.id;
 
     const huboPendiente = Array.from(cards).some(card => card.querySelector(".select-producto").value === "__nuevo__");
     if (huboPendiente) {
@@ -606,6 +612,14 @@ btnMenu.addEventListener("click", () => {
   menuDesplegable.classList.toggle("activo");
 });
 
+document.getElementById("btn-menu-cerrar-sesion").addEventListener("click", cerrarSesion);
+
+// Sólo el administrador (rol "dueño") puede saltar a los otros módulos.
+if (usuarioSesion.rol !== "dueño") {
+  document.getElementById("btn-menu-cajero").style.display = "none";
+  document.getElementById("btn-menu-administrador").style.display = "none";
+}
+
 document.addEventListener("click", (e) => {
 
   if (
@@ -618,7 +632,7 @@ document.addEventListener("click", (e) => {
 });
 </script>
 
-<script src="chatbot_widget.js?v=2" data-rol="repositor" data-usuario-id="1"></script>
+<script>insertarChatbotWidget(usuarioSesion);</script>
 
 </body>
 </html>

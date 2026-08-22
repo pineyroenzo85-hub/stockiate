@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>stockIAte | Iniciar sesión</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="app">
+
+<header>
+    <div>
+        <div class="marca" id="btn-inicio" style="cursor:pointer;">
+         stock<em>IA</em>te
+         </div>
+        <div class="modulo-tag">Iniciar sesión</div>
+    </div>
+</header>
+
+<main>
+<section class="landing" style="text-align:left;">
+
+    <h1>Bienvenido de vuelta</h1>
+    <p class="sub">Ingresá con tu email y contraseña.</p>
+
+    <div id="mensaje" class="auth-mensaje"></div>
+
+    <form id="form-login" class="auth-form" novalidate>
+        <div>
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" autocomplete="email" required>
+        </div>
+        <div>
+            <label for="password">Contraseña</label>
+            <input type="password" id="password" name="password" autocomplete="current-password" required>
+        </div>
+        <button type="submit" id="btn-submit" class="btn btn-primario">Ingresar</button>
+    </form>
+
+    <p class="auth-footer">¿No tenés cuenta? <a href="registro.html">Registrate</a></p>
+
+</section>
+</main>
+
+</div>
+
+<script src="auth.js"></script>
+<script>
+if (obtenerUsuarioSesion()) {
+    window.location.href = rutaParaRol(obtenerUsuarioSesion().rol);
+}
+
+document.getElementById("btn-inicio").addEventListener("click", () => {
+    window.location.href = "landing_page.html";
+});
+
+const URL_BASE = "https://atrium-overtime-deluxe.ngrok-free.dev/stockiate/tesis_enzo";
+const HEADERS_NGROK = { "ngrok-skip-browser-warning": "true" };
+
+const form = document.getElementById("form-login");
+const mensaje = document.getElementById("mensaje");
+const btnSubmit = document.getElementById("btn-submit");
+
+function mostrarMensaje(texto, tipo) {
+    mensaje.textContent = texto;
+    mensaje.className = `auth-mensaje activo ${tipo}`;
+}
+
+form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    mensaje.className = "auth-mensaje";
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = "Ingresando...";
+
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    try {
+        const resp = await fetch(`${URL_BASE}/iniciar_sesion.php`, {
+            method: "POST",
+            headers: { ...HEADERS_NGROK, "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+        });
+        const data = await resp.json();
+
+        if (!resp.ok || !data.ok) {
+            mostrarMensaje(data.mensaje || "No se pudo iniciar sesión.", "error");
+            return;
+        }
+
+        guardarUsuarioSesion(data.usuario);
+        window.location.href = rutaParaRol(data.usuario.rol);
+    } catch (err) {
+        mostrarMensaje("No se pudo conectar con el servidor.", "error");
+    } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = "Ingresar";
+    }
+});
+</script>
+
+</body>
+</html>

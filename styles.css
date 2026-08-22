@@ -288,7 +288,8 @@ input[type="file"] { display: none; }
 .conf-media  { background: rgba(245, 158, 11, 0.15); color: var(--alerta); }
 .conf-baja   { background: rgba(239, 68, 68, 0.15); color: var(--error); }
 
-select, input[type="number"], input[type="date"] {
+select, input[type="number"], input[type="date"],
+input[type="text"], input[type="email"], input[type="password"] {
   width: 100%;
   background: var(--azul-input);
   border: 1px solid rgba(255,255,255,0.05);
@@ -424,6 +425,55 @@ footer {
     text-align:center;
     padding:40px 20px;
 }
+
+/* ---------- Login / Registro ---------- */
+.auth-form{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    margin-top:8px;
+}
+.auth-mensaje{
+    font-size:13px;
+    padding:10px 12px;
+    border-radius:var(--radio-chico);
+    display:none;
+}
+.auth-mensaje.activo{ display:block; }
+.auth-mensaje.error{
+    background:rgba(239, 68, 68, 0.1);
+    border:1px solid rgba(239, 68, 68, 0.2);
+    color:var(--error);
+}
+.auth-mensaje.exito{
+    background:rgba(16, 185, 129, 0.1);
+    border:1px solid rgba(16, 185, 129, 0.2);
+    color:var(--ok);
+}
+.auth-footer{
+    text-align:center;
+    font-size:13px;
+    color:var(--gris-tenue);
+    margin-top:4px;
+}
+.auth-footer a{
+    color:var(--azul-glow);
+    text-decoration:underline;
+    text-underline-offset:3px;
+}
+.user-chip-sesion{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    background:var(--azul-card);
+    border-radius:var(--radio-chico);
+    padding:10px 12px;
+    font-size:13px;
+    margin-top:18px;
+}
+.user-chip-sesion span{ color:var(--gris-tenue); }
+.user-chip-sesion strong{ color:var(--crema-clean); }
 
 .cards-modulos{
     display:grid;

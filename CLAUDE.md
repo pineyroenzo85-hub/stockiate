@@ -76,9 +76,9 @@ Puntos importantes de este diseño:
   es**: fue reemplazado por un asistente real (Groq, inferencia gratuita
   con límites de uso) que responde con datos reales de la base.
 - **Chatbot IA**: widget flotante compartido (`chatbot_widget.js`), incluido
-  igual en `repositor.html`, `cajero.html` y `administrador.html` con un
-  `data-rol` distinto por página (no hay login, el rol se infiere por la
-  página igual que el resto del frontend). El frontend le pega a
+  igual en `repositor.html`, `cajero.html` y `administrador.html`, inyectado
+  dinámicamente por `auth.js` con el `rol`/`usuario_id` de la sesión real
+  (login) en vez de un `data-rol` fijo por página. El frontend le pega a
   `POST http://localhost:8000/chatbot` (`main.py`), que usa Groq (API
   compatible con el formato de tool-calling de OpenAI) con **tool-use sobre
   un set fijo de herramientas** (no texto-a-SQL libre) — `chatbot_ia.py`
@@ -109,14 +109,24 @@ el esquema de base de datos tabla por tabla, y las convenciones de nombres.
   falta `/tesis_enzo` y da 404 — no editar este par pensando que es la
   versión vigente.
 - `stockiate-panel-admin.html` está vacío (0 bytes), sin usar.
-- No hay autenticación ni manejo de sesión en ningún lado, pese a que la
-  tabla `usuarios` tiene `password_hash` y `rol` en el schema. El frontend
-  hardcodea `usuarioId = 1` al enviar datos, y el ítem "Cerrar sesión" del
-  menú no tiene handler. Esto también limita al chatbot: `/chatbot` recibe
-  el `rol` como un campo más del body y confía en él para decidir qué
-  herramientas habilitar — sin auth real, cualquiera que le pegue directo al
-  endpoint puede mandar `rol: "dueño"` y saltarse la restricción pensada
-  para la UI.
+- **Hay registro y login** (`registro.html`, `login.html` +
+  `registrar_usuario.php`/`iniciar_sesion.php`), con contraseñas hasheadas
+  (`password_hash`/`password_verify`) y `usuarios.rol` en
+  `{repositor, cajero, dueño}` (`dueño` se muestra como "Administrador" en
+  la UI). Pero **sigue sin haber sesión de servidor**: todo vive en
+  `localStorage` (`auth.js`, clave `stockiate_usuario`), y cada página de
+  rol (`repositor.html`, `cajero.html`, `administrador.html`,
+  `landing_page.html`) exige esa sesión y filtra por rol del lado
+  frontend (`exigirSesion()`) — no hay cookies, tokens ni
+  `session_start()`. `usuarioId = 1` ya no está hardcodeado: sale de la
+  sesión real. Esto también limita al chatbot: `/chatbot` sigue recibiendo
+  `rol` y `usuario_id` como campos del body (ahora poblados desde la
+  sesión del frontend en vez de hardcodeados) y confía en ellos para
+  decidir qué herramientas habilitar — sin sesión validada del lado
+  servidor, cualquiera que le pegue directo al endpoint puede mandar
+  `rol: "dueño"` y saltarse la restricción pensada para la UI. Ver
+  [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), sección "Flujo login /
+  registro", para el detalle.
 - `detector.py` es un script de debug suelto (no lo importa `main.py`) que
   tiene una API key de Roboflow hardcodeada en el código, duplicando el uso
   correcto vía `.env` que sí hace `roboflow_workflow.py`.

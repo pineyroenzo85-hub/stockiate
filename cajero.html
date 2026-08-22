@@ -9,6 +9,12 @@
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="auth.js"></script>
+    <script>
+      // Sincrónico y en <head> a propósito: corta el render de la página
+      // antes de mostrar nada si no hay sesión válida para este módulo.
+      var usuarioSesion = exigirSesion(["cajero", "dueño"]);
+    </script>
 </head>
 <body>
 
@@ -26,10 +32,10 @@
 
       <div id="menu-desplegable" class="menu-desplegable">
         <button type="button" onclick="window.location.href='landing_page.html'">Inicio</button>
-        <button type="button" onclick="window.location.href='repositor.html'">Repositor</button>
+        <button type="button" id="btn-menu-repositor" onclick="window.location.href='repositor.html'">Repositor</button>
         <button type="button" onclick="window.location.href='cajero.html'">Cajero</button>
-        <button type="button" onclick="window.location.href='administrador.html'">Administrador</button>
-        <button type="button">Cerrar sesión</button>
+        <button type="button" id="btn-menu-administrador" onclick="window.location.href='administrador.html'">Administrador</button>
+        <button type="button" id="btn-menu-cerrar-sesion">Cerrar sesión</button>
       </div>
     </div>
   </header>
@@ -505,7 +511,7 @@ document.getElementById("btn-confirmar").addEventListener("click", async () => {
     return;
   }
 
-  const usuarioId = 1; // TODO: reemplazar por el usuario logueado real
+  const usuarioId = usuarioSesion.id;
 
   const huboPendiente = Array.from(cards).some(card => card.querySelector(".select-producto").value === "__nuevo__");
   if (huboPendiente) {
@@ -597,9 +603,17 @@ document.addEventListener("click", (e) => {
     menuDesplegable.classList.remove("activo");
   }
 });
+
+document.getElementById("btn-menu-cerrar-sesion").addEventListener("click", cerrarSesion);
+
+// Sólo el administrador (rol "dueño") puede saltar a los otros módulos.
+if (usuarioSesion.rol !== "dueño") {
+  document.getElementById("btn-menu-repositor").style.display = "none";
+  document.getElementById("btn-menu-administrador").style.display = "none";
+}
 </script>
 
-<script src="chatbot_widget.js?v=2" data-rol="cajero" data-usuario-id="1"></script>
+<script>insertarChatbotWidget(usuarioSesion);</script>
 
 </body>
 </html>

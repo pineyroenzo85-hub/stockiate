@@ -82,7 +82,18 @@
     .kpi-grid{ grid-template-columns: 1fr; }
     body{ padding:14px; }
   }
+  .btn-cerrar-sesion{
+    background:none; border:none; color:var(--text-mid); font-size:12.5px;
+    cursor:pointer; text-decoration:underline; text-underline-offset:3px;
+  }
+  .btn-cerrar-sesion:hover{ color:var(--text-hi); }
 </style>
+<script src="auth.js"></script>
+<script>
+  // Sincrónico y a propósito: corta el render de la página antes de mostrar
+  // nada si no hay sesión válida (o si el usuario no es administrador).
+  var usuarioSesion = exigirSesion(["dueño"]);
+</script>
 </head>
 <body>
 <div class="app">
@@ -96,8 +107,9 @@
   </div>
 </div>
     <div class="user-chip">
-      <div class="avatar">D</div>
-      <div class="info"><b>Dueño</b>Perfumería Central</div>
+      <div class="avatar" id="avatar-usuario"></div>
+      <div class="info"><b id="nombre-usuario"></b>Administrador</div>
+      <button type="button" class="btn-cerrar-sesion" id="btn-cerrar-sesion">Cerrar sesión</button>
     </div>
   </div>
 
@@ -163,9 +175,13 @@ initInventarioTabla(document.getElementById('inventarioContenedor'), {
 document.getElementById("btn-inicio").addEventListener("click", () => {
     window.location.href = "landing_page.html";
 });
+
+document.getElementById("nombre-usuario").textContent = usuarioSesion.nombre;
+document.getElementById("avatar-usuario").textContent = usuarioSesion.nombre.charAt(0).toUpperCase();
+document.getElementById("btn-cerrar-sesion").addEventListener("click", cerrarSesion);
 </script>
 
-<script src="chatbot_widget.js?v=2" data-rol="dueño" data-usuario-id="1"></script>
+<script>insertarChatbotWidget(usuarioSesion);</script>
 
 </body>
 </html>

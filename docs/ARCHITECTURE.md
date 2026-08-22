@@ -17,21 +17,27 @@ base de datos y las convenciones del proyecto.
 | `consultar_vencimientos.php` | PHP/persistencia | Endpoint de solo lectura (herramienta del chatbot IA). Devuelve lotes de `lotes_stock` próximos a vencer o ya vencidos. |
 | `consultar_productos.php` | PHP/persistencia | Endpoint de solo lectura (herramienta del chatbot IA). Busca en el catálogo por nombre/marca/sku/categoría. |
 | `registrar_chatbot_log.php` | PHP/persistencia | Inserta cada intercambio pregunta/respuesta del chatbot en `chatbot_conversaciones`. Lo llama `main.py` en modo best-effort. |
+| `registrar_usuario.php` | PHP/persistencia | Endpoint de registro. Valida y hashea la contraseña (`password_hash`, `PASSWORD_DEFAULT`) e inserta en `usuarios`. Devuelve el usuario creado (sin el hash). |
+| `iniciar_sesion.php` | PHP/persistencia | Endpoint de login. Busca por `email`, valida con `password_verify`, y devuelve el usuario (sin el hash) si coincide. Mensaje de error genérico en ambos casos de fallo (email inexistente o contraseña incorrecta) para no filtrar qué emails están registrados. |
 | `schema.sql` | PHP/persistencia | DDL completo: crea la base `stockiate` y sus tablas (incluye `chatbot_conversaciones`). |
+| `migracion_usuarios_apellido.sql` | PHP/persistencia | Migración puntual para bases creadas con un `schema.sql` anterior sin columna `apellido` en `usuarios`. No hace falta si la base se crea desde cero. |
 | `main.py` | Python/IA | App FastAPI ("Motor de IA"). Expone `/`, `/procesar-imagen`, `/registrar-correccion` y `/chatbot`. No accede a MySQL. |
 | `roboflow_workflow.py` | Python/IA | Cliente del Workflow de Roboflow (`inference-sdk`, `InferenceHTTPClient.run_workflow`). Encapsula la llamada, reintentos con backoff, y el parseo de la respuesta (predicciones YOLO + texto OCR de marca). |
 | `chatbot_ia.py` | Python/IA | Cliente de la API de Groq (inferencia gratuita con límites de uso, vía el SDK `groq`, formato de tool-calling compatible con OpenAI) con tool-use. Define las 4 herramientas (`consultar_stock`, `consultar_ventas`, `consultar_vencimientos`, `consultar_productos`), restringe cuáles puede usar cada rol (`ROLE_TOOLS`), corre el loop de tool-use, y llama a `registrar_chatbot_log.php` al final. |
-| `chatbot_widget.js` | Frontend | Widget de chat flotante compartido, autocontenido (inyecta su propio CSS). Se incluye igual en `repositor.html`, `cajero.html` y `administrador.html` con un `data-rol` distinto por página. |
+| `chatbot_widget.js` | Frontend | Widget de chat flotante compartido, autocontenido (inyecta su propio CSS). Se incluye igual en `repositor.html`, `cajero.html` y `administrador.html`, inyectado dinámicamente por `auth.js` (`insertarChatbotWidget()`) con el `rol`/`usuario_id` de la sesión real en vez de un `data-rol` fijo por página. |
 | `detector.py` | Python/IA (script suelto) | Ejemplo standalone de uso del SDK de Roboflow. No lo importa `main.py`. Tiene una API key hardcodeada — no usar como referencia de configuración. |
 | `debug_roboflow_raw.py` | Python/IA (script suelto) | Vuelca la respuesta cruda del workflow para debugging manual. |
 | `smoke_test_roboflow.py` | Python/IA (script suelto) | Test de humo manual (no pytest) para verificar conectividad con Roboflow. |
-| `landing_page.html` | Frontend | Selector de rol — solo navega a la página correspondiente, no autentica. |
-| `repositor.html` | Frontend | Flujo de carga de stock (versión vigente). |
-| `index.html` + `script.js` | Frontend | Prototipo viejo del flujo de carga de stock. Superado por `repositor.html` — ver "Gaps conocidos". |
-| `cajero.html` | Frontend | Flujo de venta. |
-| `administrador.html` | Frontend | Dashboard de admin: KPIs y tabla de inventario siguen mockeados (`localStorage`, ver "Gaps conocidos"), pero el chatbot ya es real (`chatbot_widget.js` con `data-rol="dueño"`, sin restricción de herramientas). |
+| `login.html` | Frontend | Formulario de login (email + contraseña). Pega a `iniciar_sesion.php`, guarda el usuario devuelto en `localStorage` (`auth.js`) y redirige al módulo de su rol. |
+| `registro.html` | Frontend | Formulario de registro (nombre, apellido, email, contraseña, rol). Pega a `registrar_usuario.php`; si sale bien, inicia sesión automáticamente igual que `login.html`. |
+| `auth.js` | Frontend | Sesión de usuario en `localStorage` (sin backend de sesión). Expone `exigirSesion(rolesPermitidos)` — usado como guard sincrónico en `<head>` de cada página protegida —, `cerrarSesion()`, `rutaParaRol()` e `insertarChatbotWidget()`. Lo cargan `landing_page.html`, `login.html`, `registro.html`, `repositor.html`, `cajero.html` y `administrador.html`. |
+| `landing_page.html` | Frontend | Selector de módulo, ahora detrás de `exigirSesion()`: exige sesión iniciada y sólo muestra los paneles que le corresponden al rol logueado (`dueño`/Administrador ve los tres; `repositor`/`cajero` sólo el suyo). |
+| `repositor.html` | Frontend | Flujo de carga de stock (versión vigente). Protegido con `exigirSesion(["repositor", "dueño"])`. |
+| `index.html` + `script.js` | Frontend | Prototipo viejo del flujo de carga de stock. Superado por `repositor.html` — ver "Gaps conocidos". No tiene guard de sesión. |
+| `cajero.html` | Frontend | Flujo de venta. Protegido con `exigirSesion(["cajero", "dueño"])`. |
+| `administrador.html` | Frontend | Dashboard de admin: KPIs y tabla de inventario siguen mockeados (`localStorage`, ver "Gaps conocidos"), pero el chatbot ya es real. Protegido con `exigirSesion(["dueño"])` — sólo el rol Administrador entra. |
 | `stockiate-panel-admin.html` | Frontend | Archivo vacío, sin usar. |
-| `styles.css` | Frontend | Hoja de estilos compartida por `repositor.html`, `cajero.html`, `index.html`, `landing_page.html` (fuentes Fraunces/Inter de Google Fonts). `landing_page.html` y `administrador.html` usan además Tailwind vía CDN. |
+| `styles.css` | Frontend | Hoja de estilos compartida por `repositor.html`, `cajero.html`, `index.html`, `landing_page.html`, `login.html`, `registro.html` (fuentes Fraunces/Inter de Google Fonts). `landing_page.html` y `administrador.html` usan además Tailwind vía CDN. |
 
 ## Flujos paso a paso
 
@@ -104,6 +110,43 @@ confirmar, hace `POST` a
 4. `UPDATE productos SET stock_actual = stock_actual - :cantidad`.
 5. Devuelve `{"ok": true, "subtotal": precio_unitario * cantidad, ...}`.
 
+### Flujo login / registro
+
+1. `registro.html` pide nombre, apellido, email, contraseña (mín. 6
+   caracteres, con confirmación) y rol (`repositor`, `cajero` o `dueño` —
+   este último se etiqueta "Administrador" en la UI, ver más abajo). Hace
+   `POST` a `registrar_usuario.php`, que valida los campos, chequea que el
+   rol esté en la whitelist, hashea la contraseña con
+   `password_hash(..., PASSWORD_DEFAULT)` e inserta en `usuarios`. Un email
+   duplicado responde `409` (constraint `UNIQUE` de MySQL, código `23000`).
+2. `login.html` pide email + contraseña y hace `POST` a
+   `iniciar_sesion.php`, que busca por email y valida con
+   `password_verify()`. Si falla (email inexistente o contraseña
+   incorrecta) devuelve siempre el mismo mensaje genérico, para no revelar
+   qué emails están registrados.
+3. Ambos endpoints devuelven el usuario (sin `password_hash`) en éxito. El
+   frontend (`auth.js`, función `guardarUsuarioSesion()`) lo guarda tal
+   cual en `localStorage` bajo la clave `stockiate_usuario`, y redirige al
+   módulo que le corresponde según `rutaParaRol(usuario.rol)`
+   (`repositor` → `repositor.html`, `cajero` → `cajero.html`, `dueño` →
+   `administrador.html`).
+4. **No hay sesión de servidor** (cookies, tokens, `session_start()`): la
+   sesión vive enteramente en `localStorage` del navegador, igual que el
+   resto del estado de este proyecto (ver "Gaps conocidos" — esto es una
+   limitación conocida, no un descuido de este feature).
+5. Cada página protegida (`landing_page.html`, `repositor.html`,
+   `cajero.html`, `administrador.html`) llama a `exigirSesion(rolesPermitidos)`
+   de forma **sincrónica en el `<head>`**, antes de que se pinte el body:
+   si no hay sesión redirige a `login.html`; si hay sesión pero el rol no
+   está permitido para esa página, redirige a `rutaParaRol()` del usuario
+   (por ejemplo, un `repositor` que entra a `administrador.html` rebota a
+   `repositor.html`) — el `dueño`/Administrador tiene acceso a las tres.
+   El resultado (el objeto `usuario`) queda en la variable global
+   `usuarioSesion`, que cada página usa para reemplazar el
+   `usuarioId = 1` hardcodeado que tenían antes `repositor.html` y
+   `cajero.html`, y para inyectar el widget del chatbot con el `rol` y
+   `usuario_id` reales (`insertarChatbotWidget()`).
+
 ### Flujo administrador (dashboard mockeado, chatbot real)
 
 El dashboard de `administrador.html` (KPIs, tabla de inventario) sigue sin
@@ -117,14 +160,13 @@ abajo.
 ### Flujo chatbot IA
 
 1. `chatbot_widget.js` es un componente compartido (autocontenido, inyecta
-   su propio CSS) incluido igual en las tres pantallas de rol:
-   ```html
-   <script src="chatbot_widget.js" data-rol="repositor" data-usuario-id="1"></script>
-   ```
-   `data-rol` vale `repositor` en `repositor.html`, `cajero` en
-   `cajero.html`, y `dueño` en `administrador.html` — no hay login, el rol
-   se infiere por la página igual que el resto del frontend (mismo patrón
-   que el `usuarioId = 1` hardcodeado).
+   su propio CSS) incluido igual en las tres pantallas de rol, pero ya no
+   como `<script>` estático: `auth.js` lo inyecta dinámicamente después de
+   validar la sesión (`insertarChatbotWidget(usuarioSesion)`), poniendo
+   `data-rol` y `data-usuario-id` con los valores reales del usuario
+   logueado — `chatbot_widget.js` los lee de `document.currentScript` al
+   cargar, por eso el `<script>` se crea recién con esos atributos ya
+   puestos, en vez de editarlos después sobre uno estático.
 2. El widget mantiene un historial corto en memoria (no persiste entre
    recargas) y hace `POST` a `http://localhost:8000/chatbot` con:
    ```json
@@ -166,10 +208,13 @@ abajo.
 
 Definido en `schema.sql`, base `stockiate` (utf8mb4).
 
-- **`usuarios`** — `id`, `nombre`, `email` (único), `password_hash`,
-  `rol ENUM('repositor', 'cajero', 'dueño')`, `creado_en`. Pensada para
-  login diferenciado por rol; no hay código que la use todavía (ver "Gaps
-  conocidos").
+- **`usuarios`** — `id`, `nombre`, `apellido`, `email` (único),
+  `password_hash`, `rol ENUM('repositor', 'cajero', 'dueño')`, `creado_en`.
+  `rol = 'dueño'` es el valor interno (coincide con el ENUM y con
+  `chatbot_ia.py`); en la UI de `registro.html` se etiqueta
+  "Administrador". Se llena a través de `registrar_usuario.php`
+  (`login.html`/`registro.html` — ver "Flujo login / registro"); antes no
+  tenía código que la usara.
 - **`productos`** — catálogo base. `sku` (único), `nombre`, `marca`,
   `variante` (para distinguir variantes con el mismo envase, ej. dos
   fragancias de 100ml), `categoria`, `precio_venta`, `stock_actual`,
@@ -241,20 +286,29 @@ Definido en `schema.sql`, base `stockiate` (utf8mb4).
   tabla de inventario no leen ni escriben en MySQL; todo ese estado vive en
   `localStorage` del navegador. El chatbot de esa misma página, en cambio,
   ya es real (ver "Flujo chatbot IA").
-- **La restricción de herramientas por rol del chatbot no es seguridad
-  real.** `/chatbot` confía en el campo `rol` que manda el frontend — como
-  no hay autenticación en ningún lado del proyecto, cualquiera que le pegue
-  directo al endpoint puede mandar `rol: "dueño"` y usar todas las
-  herramientas. Es una limitación heredada del resto del proyecto, no algo
-  que este feature resuelva.
+- **La restricción de herramientas por rol del chatbot sigue sin ser
+  seguridad real.** Hay login y contraseñas hasheadas ahora, pero
+  `/chatbot` (y en general los endpoints PHP) siguen sin validar ninguna
+  sesión de servidor: `rol` y `usuario_id` llegan como campos del body que
+  manda el frontend (leídos de la sesión en `localStorage`), y cualquiera
+  que le pegue directo al endpoint puede mandar `rol: "dueño"` y
+  `usuario_id` de otra persona sin que nada lo verifique del lado
+  servidor. La sesión en `localStorage` protege la UI (qué páginas se
+  pueden navegar), no los endpoints.
 - **`stockiate-panel-admin.html`** es un archivo vacío (0 bytes), sin
   contenido ni uso actual.
-- **No hay autenticación ni sesión implementada.** La tabla `usuarios`
-  soporta login por rol (`password_hash`, `rol`), pero no existe ningún
-  script de login, ningún `session_start()`, ni hashing de contraseñas en
-  el código. El frontend hardcodea `usuarioId = 1` (o similar) al enviar
-  datos a los endpoints PHP, y el ítem de menú "Cerrar sesión" no tiene
-  handler asociado.
+- **La sesión vive sólo en el navegador (`localStorage`), no en el
+  servidor.** `login.html`/`registro.html` + `iniciar_sesion.php`/
+  `registrar_usuario.php` cubren registro, login con contraseña hasheada
+  (`password_hash`/`password_verify`) y separación de acceso por rol en el
+  frontend (`auth.js`, `exigirSesion()`) — ver "Flujo login / registro".
+  Lo que sigue faltando es lo típico de una sesión real de servidor:
+  cookies, tokens (JWT o similar), `session_start()`, expiración, o
+  invalidación server-side al cerrar sesión. Cualquiera con acceso a la
+  consola del navegador puede escribir un objeto arbitrario en
+  `localStorage['stockiate_usuario']` y pasar los guards de rol del
+  frontend — de nuevo, protege la navegación de la UI, no es un
+  reemplazo de autenticación real del lado servidor.
 - **Credenciales de MySQL hardcodeadas** en `conexion.php` (`root`, sin
   password) — es el default de XAMPP en local, pero no está pensado para
   otro entorno.
