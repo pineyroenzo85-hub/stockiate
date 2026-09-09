@@ -1,0 +1,41 @@
+foto,variante,threshold,cantidad_detecciones,indice_deteccion,confianza,marca_ocr,ocr_exitoso,tiempo_respuesta_seg,tamano_bytes
+5rexonasiguales.png,original,0.5,1,0,0.2852,Dou origina SEBRA PRO,True,3.89,231613
+5rexonasiguales.png,original,0.4,1,0,0.2852,Dou origina SEBRA PRO,True,3.14,231613
+5rexonasiguales.png,original,0.3,1,0,0.2852,Dou origina SEBRA PRO,True,2.12,231613
+5rexonasiguales.png,original,0.2,1,0,0.2852,Dou origina SEBRA PRO,True,2.23,231613
+5rexonasiguales.png,comprimida,0.5,1,0,0.2724,Dou origina STERIL PRO-CERAM,True,2.25,41548
+5rexonasiguales.png,comprimida,0.4,1,0,0.2724,Dou origina STERIL PRO-CERAM,True,2.06,41548
+5rexonasiguales.png,comprimida,0.3,1,0,0.2724,Dou origina STERIL PRO-CERAM,True,2.0,41548
+5rexonasiguales.png,comprimida,0.2,1,0,0.2724,Dou origina STERIL PRO-CERAM,True,2.22,41548
+hawas.png,original,0.5,1,0,0.3295,حسن HAWAS For Him,True,1.86,180787
+hawas.png,original,0.4,1,0,0.3295,حسن HAWAS For Him,True,1.84,180787
+hawas.png,original,0.3,1,0,0.3295,حسن HAWAS For Him,True,1.88,180787
+hawas.png,original,0.2,1,0,0.3295,حسن HAWAS For Him,True,2.0,180787
+hawas.png,comprimida,0.5,1,0,0.3404,HAWAS For Him BLACK,True,1.75,22683
+hawas.png,comprimida,0.4,1,0,0.3404,HAWAS For Him BLACK,True,1.66,22683
+hawas.png,comprimida,0.3,1,0,0.3404,HAWAS For Him BLACK,True,1.58,22683
+hawas.png,comprimida,0.2,1,0,0.3404,HAWAS For Him BLACK,True,1.64,22683
+local.jpeg,original,0.5,0,,,,,3.45,383771
+local.jpeg,original,0.4,0,,,,,1.67,383771
+local.jpeg,original,0.3,0,,,,,1.66,383771
+local.jpeg,original,0.2,0,,,,,1.61,383771
+local.jpeg,comprimida,0.5,0,,,,,1.44,324128
+local.jpeg,comprimida,0.4,0,,,,,1.62,324128
+local.jpeg,comprimida,0.3,0,,,,,1.55,324128
+local.jpeg,comprimida,0.2,0,,,,,1.59,324128
+rasta.png,original,0.5,1,0,0.6909,,False,1.74,254442
+rasta.png,original,0.4,1,0,0.6909,,False,1.53,254442
+rasta.png,original,0.3,1,0,0.6909,,False,1.42,254442
+rasta.png,original,0.2,1,0,0.6909,,False,1.62,254442
+rasta.png,comprimida,0.5,1,0,0.6461,NICE,True,1.64,25929
+rasta.png,comprimida,0.4,1,0,0.6461,NICE,True,1.42,25929
+rasta.png,comprimida,0.3,1,0,0.6461,NICE,True,1.55,25929
+rasta.png,comprimida,0.2,1,0,0.6461,NICE,True,1.5,25929
+sauvage.png,original,0.5,1,0,0.2671,SAUVAGE EAU DE PARFUM,True,1.62,202703
+sauvage.png,original,0.4,1,0,0.2671,SAUVAGE EAU DE PARFUM,True,1.69,202703
+sauvage.png,original,0.3,1,0,0.2671,SAUVAGE EAU DE PARFUM,True,1.64,202703
+sauvage.png,original,0.2,1,0,0.2671,SAUVAGE EAU DE PARFUM,True,1.74,202703
+sauvage.png,comprimida,0.5,1,0,0.2994,SAUVAGE EAU DE PARFUM,True,1.66,18969
+sauvage.png,comprimida,0.4,1,0,0.2994,SAUVAGE EAU DE PARFUM,True,1.58,18969
+sauvage.png,comprimida,0.3,1,0,0.2994,SAUVAGE EAU DE PARFUM,True,1.56,18969
+sauvage.png,comprimida,0.2,1,0,0.2994,SAUVAGE EAU DE PARFUM,True,1.64,18969

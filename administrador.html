@@ -239,6 +239,9 @@
     <div id="prediccionContenedor"></div>
     <!-- Costos y márgenes: carga rápida de precio de costo / proveedor -->
     <div id="costosContenedor"></div>
+    <!-- Rendimiento del modelo de IA: lo que la Red de Seguridad viene
+         guardando en correcciones_ia desde que arrancó el piloto -->
+    <div id="metricasIaContenedor"></div>
     <!-- Las preferencias del negocio ya no son un card de esta grilla: se abren
          desde el chip de la topbar (menu_negocio.js). -->
   </div>
@@ -250,6 +253,7 @@
 <script src="inventario_tabla.js?v=6"></script>
 <script src="prediccion_tabla.js?v=1"></script>
 <script src="costos_tabla.js?v=2"></script>
+<script src="metricas_ia.js?v=3"></script>
 <script src="graficos.js?v=5"></script>
 <script src="preferencias.js?v=2"></script>
 <script src="menu_negocio.js?v=1"></script>
@@ -308,6 +312,9 @@ const costosTabla = initCostosTabla(document.getElementById('costosContenedor'),
   onDatos: (datos) => graficos.actualizarRentabilidad(datos),
 });
 const prediccionQuiebre = initPrediccionQuiebre(document.getElementById('prediccionContenedor'));
+// Plegable como los otros paneles grandes: plegado queda a la vista el acierto
+// exacto con su n, que es el número que se mira de un vistazo.
+initMetricasIA(document.getElementById('metricasIaContenedor'), { plegable: true });
 // Las preferencias dejaron de ser un card de la grilla: viven adentro del panel
 // que abre el chip de la topbar, y initMenuNegocio() monta initPreferencias()
 // recién la primera vez que alguien lo abre.

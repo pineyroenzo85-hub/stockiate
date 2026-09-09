@@ -355,6 +355,28 @@ Puntos importantes de este diseño:
   WhatsApp usen la misma función es lo que evita que se contradigan.
   (`inventario_tabla.js` **sigue** pintando sus badges con otro criterio, un
   `< 5` fijo: es una diferencia preexistente, del lado del cliente.)
+- **Métricas del modelo** (`consultar_metricas_ia.php` + `metricas_ia.js`,
+  prefijo `mia-`, sólo `dueño`): el panel que lee `correcciones_ia`, la tabla
+  que la Red de Seguridad viene llenando desde que arrancó el piloto y que
+  hasta ahora nadie leía. Cuatro cosas para saber antes de tocarlo:
+  **son CUATRO categorías, no dos** — acierto, error de producto, error de
+  cantidad y **no reconocido** (`producto_detectado_id` NULL: el modelo vio un
+  envase pero el OCR no leyó la etiqueta). La última no es un error del
+  clasificador y meterla en la bolsa de los errores hunde el acierto por algo
+  que el sistema maneja bien; los dos errores del medio se separan porque uno
+  es el OCR y el otro es el detector contando cajas, y se arreglan distinto.
+  **Un registro puede ser los dos errores a la vez**, así que los conteos de
+  error no suman el total.
+  **Todo porcentaje viaja con su `n`**, y abajo de 30 registros la respuesta
+  trae `muestra_insuficiente: true` y la pantalla muestra conteos en vez de un
+  porcentaje grande: un 100% sobre 3 casos no es un 100%, y el número grande es
+  justo lo que alguien recorta para una presentación.
+  **Los gráficos son SVG a mano, no Chart.js**, y a propósito: un SVG inline
+  hereda el CSS y se adapta solo al tema: nada del `getComputedStyle` +
+  `MutationObserver` que necesita el `<canvas>` de `graficos.js`.
+  Los colores de las categorías (`MIA_COLORES`) **no son** los de estado del
+  proyecto: acá "error de producto" es una categoría de un gráfico, no una
+  alarma, y pintarla de rojo hace leer el panel como si algo estuviera roto.
 - **Chatbot IA**: widget flotante compartido (`chatbot_widget.js`), incluido
   igual en `repositor.html`, `cajero.html` y `administrador.html`, inyectado
   dinámicamente por `auth.js`. El frontend le pega a `POST /chatbot`
@@ -522,8 +544,12 @@ el esquema de base de datos tabla por tabla, y las convenciones de nombres.
   campo `specification.steps[0].model_id`), o te fijás en el `clase_yolo` que
   llega al frontend: si son las 80 clases de COCO (`remote`, `cell phone`,
   `person`…) es un YOLO de fábrica; si son `shampoo`/`makeup`/`perfume`/`Soin`
-  es el modelo del proyecto (`products-vweue-1d62m-1-yolov8n-t1`, el que corre
-  hoy).
+  es el modelo del proyecto (`products-vweue-1d62m-1-yolov8n-t1`).
+  **Verificado el 09/09/2026: hoy NO está corriendo el modelo del proyecto.**
+  La definición viva dice `model_id: "yolo26n-640"`, un YOLO genérico de COCO.
+  Alguien lo cambió en el editor de Roboflow, y todo lo que dice esta guía
+  sobre tasas de detección se midió con el otro modelo. Antes de citar
+  cualquier número de detección, chequear el `model_id`.
   **La diferencia entre uno y otro es enorme** — medido sobre `images/`:
 
   | foto | COCO (`yolov8n-640`) | modelo del proyecto |
@@ -563,6 +589,27 @@ el esquema de base de datos tabla por tabla, y las convenciones de nombres.
   `cell phone` 0.44). Si "antes andaba y ahora no", no es azar del modelo —
   buscá un cambio en el workflow, en el pipeline de imagen del cliente
   (ver `image_utils.js`) o en la foto.
+- **El `confidence` que se manda por código NO llega al modelo.** Medido el
+  09/09/2026 con `test_threshold.py` sobre las 5 fotos de `images/`: en las 10
+  combinaciones foto/variante la cantidad de detecciones fue **idéntica** con
+  `confidence` en 0.5, 0.4, 0.3 y 0.2, y **16 de las 32 detecciones volvieron
+  con una confianza MENOR al umbral pedido** (una de 0.267 con el umbral en
+  0.5). Si el filtro se aplicara, eso sería imposible.
+  La causa está en la definición del workflow: el step del modelo no tiene su
+  campo `confidence` enlazado a ningún input, y el único input del workflow es
+  `image`. O sea que `ejecutar_workflow_stock(..., confidence=X)` y
+  `CONFIDENCE_THRESHOLD` en `main.py` **aparentan** configurar algo y no lo
+  hacen; el umbral hay que cambiarlo a mano en el editor de Roboflow y
+  publicar. El experimento completo, con tabla y gráfico listos para el
+  informe, está en [docs/umbral_confianza.md](docs/umbral_confianza.md); se
+  rehace con `python test_threshold.py <carpeta>` y después
+  `python analizar_threshold.py`.
+- **`resultados_threshold.csv` no tiene verdad de referencia.** Guarda qué
+  detectó el modelo y con qué confianza, pero no qué producto era realmente
+  cada foto, así que de ahí NO salen "aciertos" ni "falsos positivos". Esos
+  números salen de `correcciones_ia` (el panel de métricas del modelo), que es
+  la única fuente del proyecto que tiene el dato corregido por una persona al
+  lado del detectado.
 - **El modelo tiene una tasa alta de "no detecta nada", y eso NO es un bug
   del código.** Medido sobre las 5 fotos de `images/`: `local.jpeg` y
   `hawas.png` detectan; `5rexonasiguales.png`, `sauvage.png` y `rasta.png`
