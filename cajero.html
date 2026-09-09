@@ -7,9 +7,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <script src="tema.js?v=1"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-    <script src="auth.js"></script>
+    <script src="config.js?v=1"></script>
+    <script src="auth.js?v=4"></script>
     <script>
       // Sincrónico y en <head> a propósito: corta el render de la página
       // antes de mostrar nada si no hay sesión válida para este módulo.
@@ -27,6 +29,12 @@
       <div class="modulo-tag">Módulo Caja / Ventas</div>
     </div>
 
+    <div style="display:flex; align-items:center; gap:8px;">
+    <button type="button" class="toggle-tema" onclick="window.stockiateTema.alternar()" title="Cambiar tema" aria-label="Cambiar tema claro/oscuro">
+      <span class="toggle-tema-knob">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#F0EAF7" stroke-width="2.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"></path></svg>
+      </span>
+    </button>
     <div class="menu-container">
       <button id="btn-menu" class="btn-menu">⋯</button>
 
@@ -37,6 +45,7 @@
         <button type="button" id="btn-menu-administrador" onclick="window.location.href='administrador.html'">Administrador</button>
         <button type="button" id="btn-menu-cerrar-sesion">Cerrar sesión</button>
       </div>
+    </div>
     </div>
   </header>
 
@@ -125,19 +134,22 @@
 </div>
 
 <!-- ===== Toasts ===== -->
+<datalist id="lista-proveedores"></datalist>
 <div id="toast-container" class="toast-container"></div>
 
-<script src="image_utils.js?v=1"></script>
+<script src="image_utils.js?v=2"></script>
+<script src="recorte_imagen.js?v=3"></script>
 <script>
 if (window.lucide) lucide.createIcons();
 
-const URL_BACKEND_IA = "https://atrium-overtime-deluxe.ngrok-free.dev/procesar-imagen";
-const URL_REGISTRAR_VENTA = "https://atrium-overtime-deluxe.ngrok-free.dev/stockiate/tesis_enzo/registrar_venta.php";
-const URL_CONSULTAR_PRODUCTOS = "https://atrium-overtime-deluxe.ngrok-free.dev/stockiate/tesis_enzo/consultar_productos.php";
-const URL_REGISTRAR_CORRECCION = "https://atrium-overtime-deluxe.ngrok-free.dev/registrar-correccion";
-const URL_CREAR_PRODUCTO = "https://atrium-overtime-deluxe.ngrok-free.dev/stockiate/tesis_enzo/crear_producto.php";
+const URL_BACKEND_IA = URL_IA_PROCESAR_IMAGEN;
+const URL_REGISTRAR_VENTA = "registrar_venta.php";
+const URL_CONSULTAR_PRODUCTOS = "consultar_productos.php";
+const URL_REGISTRAR_CORRECCION = URL_IA_REGISTRAR_CORRECCION;
+const URL_CREAR_PRODUCTO = "crear_producto.php";
+const URL_CONSULTAR_PROVEEDORES = "consultar_proveedores.php";
 // Evita la página de advertencia HTML de ngrok free tier en vez de la respuesta JSON real.
-const HEADERS_NGROK = { "ngrok-skip-browser-warning": "true" };
+const HEADERS_NGROK = STOCKIATE_HEADERS; // definido en config.js
 
 function mostrarToast(mensaje, tipo = "exito") {
   const cont = document.getElementById("toast-container");
@@ -156,7 +168,7 @@ function mostrarToast(mensaje, tipo = "exito") {
 // de una lista hardcodeada: así el <select> siempre ofrece IDs que existen
 // de verdad en la base y registrar_venta.php no falla por FK inexistente.
 let CATALOGO = [];
-const catalogoListo = fetch(URL_CONSULTAR_PRODUCTOS, {
+const catalogoListo = fetchApi(URL_CONSULTAR_PRODUCTOS, {
   method: "POST",
   headers: { ...HEADERS_NGROK, "Content-Type": "application/json" },
   body: JSON.stringify({}),
@@ -167,6 +179,25 @@ const catalogoListo = fetch(URL_CONSULTAR_PRODUCTOS, {
     CATALOGO = [];
     mostrarToast("No se pudo cargar el catálogo de productos.", "error");
   });
+
+// Proveedores ya cargados, para el <datalist> del alta de producto. El campo
+// es opcional y de texto libre: si esto falla, se puede escribir igual y
+// crear_producto.php da de alta el proveedor nuevo.
+let PROVEEDORES = [];
+
+function refrescarDatalistProveedores() {
+  const datalist = document.getElementById("lista-proveedores");
+  if (!datalist) return;
+  datalist.innerHTML = PROVEEDORES.map(p => `<option value="${p.nombre}"></option>`).join("");
+}
+
+fetchApi(URL_CONSULTAR_PROVEEDORES, { headers: { ...HEADERS_NGROK } })
+  .then(resp => resp.json())
+  .then(data => {
+    PROVEEDORES = data.proveedores || [];
+    refrescarDatalistProveedores();
+  })
+  .catch(() => console.warn("No se pudo cargar la lista de proveedores."));
 
 // Fuzzy matching contra el catálogo real: partimos el texto ya sanitizado
 // (ver ocr_parser.py en el backend) en palabras clave y las comparamos
@@ -198,8 +229,18 @@ function distanciaLevenshtein(a, b) {
   return fila[n];
 }
 
+// La inclusión sólo cuenta si el token más corto tiene al menos 5 letras.
+// Con el mínimo de 3 de tokenizar(), "pro" era substring de "producto" y
+// hacía matchear un OCR que decía "Dou origina SEBRA PRO" contra un producto
+// llamado "Producto Prueba Costo". Con 5, "iceram" ⊂ "iceramicos" sigue
+// funcionando, que es el caso real que la inclusión existe para cubrir.
+const LARGO_MINIMO_INCLUSION = 5;
+
 function tokensSimilares(a, b) {
-  if (a === b || a.includes(b) || b.includes(a)) return true;
+  if (a === b) return true;
+  const corto = a.length <= b.length ? a : b;
+  const largo = corto === a ? b : a;
+  if (corto.length >= LARGO_MINIMO_INCLUSION && largo.includes(corto)) return true;
   const distancia = distanciaLevenshtein(a, b);
   return distancia / Math.max(a.length, b.length) <= 0.25; // tolera errores menores de OCR
 }
@@ -210,9 +251,12 @@ function buscarProductoPorTexto(texto) {
 
   let mejor = null;
   let mejorPuntaje = 0;
+  let mejorTokens = 0;
   for (const p of CATALOGO) {
     const marcaValida = p.marca && p.marca.toLowerCase() !== "demo" ? p.marca : "";
-    const tokensProducto = tokenizar(`${p.nombre || ""} ${marcaValida}`);
+    // Sin duplicados: "Prueba" repetido en nombre y marca contaba dos veces y
+    // ensuciaba la proporción de abajo.
+    const tokensProducto = [...new Set(tokenizar(`${p.nombre || ""} ${marcaValida}`))];
     let puntaje = 0;
     for (const tp of tokensProducto) {
       if (tokensTexto.some(tt => tokensSimilares(tp, tt))) puntaje++;
@@ -220,9 +264,78 @@ function buscarProductoPorTexto(texto) {
     if (puntaje > mejorPuntaje) {
       mejorPuntaje = puntaje;
       mejor = p;
+      mejorTokens = tokensProducto.length;
     }
   }
-  return mejorPuntaje > 0 ? mejor : null;
+
+  // Se exige que coincida al menos la MITAD de las palabras del producto, no
+  // un número fijo. Con un mínimo fijo de 2, "Sauvage" (cuyos tokens son
+  // [sauvage, dior] porque la marca suma) dejaba de matchear "SAUVAGE EAU DE
+  // PARFUM", que es un match obvio. Con proporción:
+  //   [sauvage, dior]            + 1 coincidencia -> 0.50  matchea
+  //   [producto, prueba, costo]  + 1 coincidencia -> 0.33  NO matchea
+  // Ese segundo caso es el que preseleccionaba el producto equivocado en la
+  // Red de Seguridad, con cara de confianza.
+  return mejorTokens > 0 && mejorPuntaje / mejorTokens >= 0.5 ? mejor : null;
+}
+
+// Dos lecturas de OCR son "el mismo producto" si comparten la mayoría de sus
+// palabras clave. Hace falta porque el OCR lee distinto el MISMO envase en
+// cada detección: los cinco Dove de una foto salieron como
+// "SERUM INDIA-ICERAMICOS", "DHA PAO-CERAMIDE", "SERUM PRO-ICERAM"...
+// Comparando strings exactas eso daba cinco tarjetas del mismo producto, y
+// si no está en el catálogo el repositor terminaba dando de alta cinco
+// productos distintos.
+// El umbral es deliberadamente flojo (50 %): pasarse de merge cuesta corregir
+// una cantidad, quedarse corto cuesta repetir el alta cinco veces.
+function mismaLectura(a, b) {
+  const ta = tokenizar(a), tb = tokenizar(b);
+  if (ta.length === 0 || tb.length === 0) return false;
+  let comunes = 0;
+  for (const t of ta) if (tb.some(o => tokensSimilares(t, o))) comunes++;
+  // Dos tokens en común alcanzan, aunque la proporción sea baja: las cinco
+  // lecturas del mismo Dove comparten [dove, original] y difieren en la cola,
+  // que es ruido del OCR ("DHA PAO-CERAMIDE", "JUNI PAO-CERAMON"...). Eso da
+  // 2/5 = 0.40, por debajo de cualquier proporción razonable.
+  // Se prefiere agrupar de más: este camino sólo corre para detecciones que
+  // NO matchearon el catálogo, o sea que el repositor va a dar de alta un
+  // producto nuevo. Agrupar de menos le hace crear cinco productos duplicados;
+  // agrupar de más le hace corregir una cantidad. El aviso de la Red de
+  // Seguridad ("los envases idénticos con distinta fragancia pueden
+  // confundirse") cubre justamente este caso.
+  return comunes >= 2 || comunes / Math.min(ta.length, tb.length) >= 0.5;
+}
+
+// Pasa a mayúscula inicial lo que leyó el OCR ("REXONA MEN" -> "Rexona
+// Men"), así el nombre autocompletado no queda gritado en mayúsculas.
+function capitalizarPalabras(texto) {
+  return (texto || "").toLowerCase().replace(/(^|\s)(\S)/g, (m, sep, letra) => sep + letra.toUpperCase());
+}
+
+// Prefijo del SKU: mismas reglas que crear_producto.php (3 alfanuméricos en
+// mayúscula, sin acentos, fallback "PRD"), para que lo que se muestra en
+// pantalla coincida con lo que termina guardando el servidor.
+function prefijoSku(base) {
+  const limpio = (base || "")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^A-Za-z0-9]/g, "")
+    .toUpperCase();
+  const prefijo = limpio.slice(0, 3);
+  return prefijo.length >= 2 ? prefijo : "PRD";
+}
+
+// Sugerencia de SKU: PREFIJO-NNN con el primer número libre según el catálogo
+// que ya tenemos en memoria. La unicidad real la garantiza crear_producto.php,
+// que reintenta con el siguiente número si otra carga se le adelantó.
+function sugerirSku(base) {
+  const prefijo = prefijoSku(base);
+  let maximo = 0;
+  for (const p of CATALOGO) {
+    const m = /^(.+)-(\d+)$/.exec(p.sku || "");
+    // Case-insensitive, igual que la constraint UNIQUE de MySQL.
+    if (m && m[1].toUpperCase() === prefijo) maximo = Math.max(maximo, parseInt(m[2], 10));
+  }
+  return `${prefijo}-${String(maximo + 1).padStart(3, "0")}`;
 }
 
 const pantallas = {
@@ -258,7 +371,20 @@ inputImagen.addEventListener("change", async (e) => {
   lector.readAsDataURL(archivo);
 
   btnProcesar.disabled = true;
-  archivoSeleccionado = await redimensionarImagen(archivo);
+
+  // Antes de mandar la foto al detector, la persona encuadra los productos.
+  // Recortar el fondo sube la tasa de acierto y limpia el OCR (medido en
+  // recorte_imagen.js). Si toca "Usar toda la foto" o el recortador falla,
+  // `abrirRecortador` devuelve el archivo original y el flujo sigue igual.
+  //
+  // El recorte ya sale escalado al límite de image_utils.js, así que
+  // `redimensionarImagen` lo deja pasar tal cual: un solo re-encode.
+  const encuadrada = await abrirRecortador(archivo);
+
+  // El preview de la pantalla muestra lo que realmente se va a analizar.
+  previewImagen.src = URL.createObjectURL(encuadrada);
+
+  archivoSeleccionado = await redimensionarImagen(encuadrada);
   btnProcesar.disabled = false;
 });
 
@@ -276,7 +402,7 @@ btnProcesar.addEventListener("click", async () => {
   formData.append("imagen", archivoSeleccionado, "captura.jpg");
 
   try {
-    const resp = await fetch(URL_BACKEND_IA, { method: "POST", headers: { ...HEADERS_NGROK }, body: formData });
+    const resp = await fetchApi(URL_BACKEND_IA, { method: "POST", headers: { ...HEADERS_NGROK }, body: formData });
     if (!resp.ok) throw new Error("Error en el servidor de IA");
 
     const data = await resp.json();
@@ -288,7 +414,7 @@ btnProcesar.addEventListener("click", async () => {
       return;
     }
 
-    await renderizarValidacion(data.detecciones || []);
+    await renderizarValidacion(data.detecciones || [], { desdeFoto: true });
     mostrarPantalla("validacion");
   } catch (err) {
     console.error(err);
@@ -308,20 +434,31 @@ function claseConfianza(conf) {
   return { clase: "conf-baja", texto: "Baja confianza" };
 }
 
+// Cuando no hay producto preseleccionado, la primera opción es un
+// placeholder vacío y deshabilitado. Sin él, el navegador auto-selecciona la
+// primera opción del <select>: una detección que no matcheó con el catálogo
+// quedaba apuntando al primer producto de la lista, y confirmar cobraba y
+// descontaba stock del producto equivocado sin que nadie lo notara.
 function opcionesCatalogo(seleccionadoId) {
+  const placeholder = seleccionadoId
+    ? ""
+    : `<option value="" disabled selected>— Elegí el producto —</option>`;
   const opciones = CATALOGO.map(p =>
     `<option value="${p.id}" data-precio="${p.precio_venta}" ${p.id === seleccionadoId ? "selected" : ""}>${p.nombre} · $${Number(p.precio_venta).toLocaleString("es-AR")}</option>`
   ).join("");
-  return opciones + `<option value="__nuevo__">+ Crear producto nuevo</option>`;
+  return placeholder + opciones + `<option value="__nuevo__">+ Crear producto nuevo</option>`;
 }
 
-function crearItemCard({ productoDetectadoId = null, confianza = null, cantidad = 1, esIA = false, textoDetectado = "", huboOCR = false, volumenDetectado = "" }) {
+// `identificado: false` = la IA contó el envase pero el OCR no pudo leer la
+// etiqueta. La tarjeta arranca marcada en rojo, sin producto elegido y sin
+// prellenar nada: la resuelve una persona o no entra al ticket.
+function crearItemCard({ productoDetectadoId = null, confianza = null, cantidad = 1, esIA = false, textoDetectado = "", huboOCR = false, volumenDetectado = "", marcaDetectada = "", identificado = true, claseYolo = "" }) {
   contadorItems++;
   const id = `item-${contadorItems}`;
   const conf = confianza !== null ? claseConfianza(confianza) : null;
 
   const card = document.createElement("div");
-  card.className = "item-card";
+  card.className = identificado ? "item-card" : "item-card item-card-error";
   card.dataset.id = id;
   card.dataset.esIa = esIA ? "1" : "0";
   card.dataset.productoDetectadoId = productoDetectadoId ?? "";
@@ -331,14 +468,21 @@ function crearItemCard({ productoDetectadoId = null, confianza = null, cantidad 
     <div class="item-card-top">
       <label style="margin:0;">Producto detectado</label>
       <div style="display:flex;align-items:center;gap:10px;">
-        ${conf
-          ? `<span class="item-confianza ${conf.clase}">${conf.texto}</span>`
-          : `<span class="item-confianza conf-media">Manual</span>`
+        ${!identificado
+          ? `<span class="item-confianza conf-baja">Sin identificar</span>`
+          : conf
+            ? `<span class="item-confianza ${conf.clase}">${conf.texto}</span>`
+            : `<span class="item-confianza conf-media">Manual</span>`
         }
         <button type="button" class="btn-eliminar-producto" title="Quitar del ticket">✕</button>
       </div>
     </div>
-    ${esIA && textoDetectado ? `<p class="item-hint-ia">${huboOCR ? "La IA leyó" : "IA detectó"}: <strong>${textoDetectado}</strong>${volumenDetectado ? ` · ${volumenDetectado}` : ""}</p>` : ""}
+    ${esIA && !identificado
+      ? `<p class="item-hint-ia">La IA contó el envase pero <strong>no pudo leer la etiqueta</strong>. Elegí el producto a mano o quitá la tarjeta.</p>`
+      : esIA && textoDetectado
+        ? `<p class="item-hint-ia">${huboOCR ? "La IA leyó" : "IA detectó"}: <strong>${textoDetectado}</strong>${volumenDetectado ? ` · ${volumenDetectado}` : ""}</p>`
+        : ""}
+    ${esIA && claseYolo ? `<p class="item-clase-yolo">clase YOLO: ${claseYolo}</p>` : ""}
     <select class="select-producto">
       ${opcionesCatalogo(productoDetectadoId)}
     </select>
@@ -355,12 +499,23 @@ function crearItemCard({ productoDetectadoId = null, confianza = null, cantidad 
       </div>
       <div class="fila-doble">
         <div>
-          <label>SKU</label>
-          <input type="text" class="input-nuevo-sku" placeholder="Ej: REX-001">
+          <label>SKU <span class="campo-opcional-tag">automático</span></label>
+          <input type="text" class="input-nuevo-sku" placeholder="Se genera solo">
+          <p class="campo-hint">Se arma con la marca/nombre y el primer número libre. Podés editarlo.</p>
         </div>
         <div>
-          <label>Precio de venta</label>
+          <label>Precio de venta <span class="campo-opcional-tag">opcional</span></label>
           <input type="number" class="input-nuevo-precio" min="0" step="0.01" placeholder="0">
+        </div>
+      </div>
+      <div class="fila-doble">
+        <div>
+          <label>Proveedor <span class="campo-opcional-tag">opcional</span></label>
+          <input type="text" class="input-nuevo-proveedor" list="lista-proveedores" placeholder="Ej: Distribuidora Sur">
+        </div>
+        <div>
+          <label>Precio de costo <span class="campo-opcional-tag">opcional</span></label>
+          <input type="number" class="input-nuevo-costo" min="0" step="0.01" placeholder="0">
         </div>
       </div>
       <button type="button" class="btn btn-secundario btn-crear-producto">Crear y usar este producto</button>
@@ -387,37 +542,71 @@ function crearItemCard({ productoDetectadoId = null, confianza = null, cantidad 
 
   selectProducto.addEventListener("change", () => {
     formNuevo.style.display = selectProducto.value === "__nuevo__" ? "flex" : "none";
+    if (selectProducto.value === "__nuevo__") precargarDesdeIA();
     actualizarResumen();
   });
 
-  // Si la IA detectó algo que no matcheó con el catálogo, precargamos el
-  // formulario de alta con lo que leyó, para que el cajero solo tenga que
-  // confirmar/completar en vez de tipear todo de cero.
-  if (esIA && !productoDetectadoId && textoDetectado) {
-    card.querySelector(".input-nuevo-nombre").value = volumenDetectado ? `${textoDetectado} ${volumenDetectado}` : textoDetectado;
-    if (huboOCR) card.querySelector(".input-nuevo-marca").value = textoDetectado;
+  const inputNombreNuevo = card.querySelector(".input-nuevo-nombre");
+  const inputMarcaNueva = card.querySelector(".input-nuevo-marca");
+  const inputSkuNuevo = card.querySelector(".input-nuevo-sku");
+
+  // El SKU se sugiere solo mientras el usuario no lo toque; si lo edita a mano,
+  // dejamos de pisárselo (y crear_producto.php lo respeta tal cual, avisando si
+  // ese SKU ya existe en vez de duplicar el producto).
+  inputSkuNuevo.addEventListener("input", () => { inputSkuNuevo.dataset.manual = "1"; });
+
+  function refrescarSkuSugerido() {
+    if (inputSkuNuevo.dataset.manual === "1") return;
+    const base = inputMarcaNueva.value.trim() || inputNombreNuevo.value.trim();
+    inputSkuNuevo.value = base ? sugerirSku(base) : "";
+  }
+  inputNombreNuevo.addEventListener("input", refrescarSkuSugerido);
+  inputMarcaNueva.addEventListener("input", refrescarSkuSugerido);
+
+  // Autocompletado con lo que leyó la IA: nombre = texto leído + volumen,
+  // marca = primera palabra de ese texto (donde suele estar la marca), y el SKU
+  // sale de ahí. Se aplica tanto cuando la detección no matcheó con el catálogo
+  // como cuando el usuario elige "crear producto nuevo" a mano.
+  function precargarDesdeIA() {
+    // Sin OCR no hay nada que prellenar: antes se usaba la clase cruda de
+    // YOLO y salían productos nuevos llamados "person" o "marker".
+    if (!identificado || !textoDetectado || inputNombreNuevo.value.trim() !== "") return;
+    const nombreLeido = capitalizarPalabras(textoDetectado);
+    inputNombreNuevo.value = volumenDetectado ? `${nombreLeido} ${volumenDetectado}` : nombreLeido;
+    const marcaLeida = capitalizarPalabras((marcaDetectada || textoDetectado).trim().split(/\s+/)[0] || "");
+    if (huboOCR && marcaLeida) inputMarcaNueva.value = marcaLeida;
+    refrescarSkuSugerido();
   }
 
-  card.querySelector(".btn-crear-producto").addEventListener("click", async () => {
-    const nombreNuevo = card.querySelector(".input-nuevo-nombre").value.trim();
-    const marcaNueva = card.querySelector(".input-nuevo-marca").value.trim();
-    const skuNuevo = card.querySelector(".input-nuevo-sku").value.trim();
-    const precioNuevo = parseFloat(card.querySelector(".input-nuevo-precio").value || "0");
+  if (esIA && !productoDetectadoId) precargarDesdeIA();
 
-    if (!nombreNuevo || !skuNuevo) {
-      mostrarToast("Completá nombre y SKU para crear el producto.", "error");
+  card.querySelector(".btn-crear-producto").addEventListener("click", async () => {
+    const nombreNuevo = inputNombreNuevo.value.trim();
+    const marcaNueva = inputMarcaNueva.value.trim();
+    const skuNuevo = inputSkuNuevo.value.trim();
+    const precioNuevo = parseFloat(card.querySelector(".input-nuevo-precio").value || "0");
+    const costoNuevo = card.querySelector(".input-nuevo-costo").value.trim();
+    const proveedorNuevo = card.querySelector(".input-nuevo-proveedor").value.trim();
+
+    if (!nombreNuevo) {
+      mostrarToast("Completá el nombre para crear el producto.", "error");
       return;
     }
 
     try {
-      const resp = await fetch(URL_CREAR_PRODUCTO, {
+      const resp = await fetchApi(URL_CREAR_PRODUCTO, {
         method: "POST",
         headers: { ...HEADERS_NGROK, "Content-Type": "application/json" },
         body: JSON.stringify({
           sku: skuNuevo,
+          // Si el SKU quedó como lo sugerimos, manda el del servidor: lo regenera si
+          // alguien más ya se quedó con ese número.
+          sku_auto: inputSkuNuevo.dataset.manual !== "1",
           nombre: nombreNuevo,
           marca: marcaNueva || null,
           precio_venta: precioNuevo,
+          precio_costo: costoNuevo === "" ? null : parseFloat(costoNuevo),
+          proveedor: proveedorNuevo || null,
         }),
       });
       const data = await resp.json();
@@ -428,40 +617,92 @@ function crearItemCard({ productoDetectadoId = null, confianza = null, cantidad 
       }
 
       CATALOGO.push(data.producto);
+      // Un proveedor recién creado queda disponible en el datalist por el resto de la sesión.
+      if (data.producto.proveedor && !PROVEEDORES.some(p => p.nombre === data.producto.proveedor)) {
+        PROVEEDORES.push({ id: data.producto.proveedor_id, nombre: data.producto.proveedor });
+        refrescarDatalistProveedores();
+      }
       selectProducto.innerHTML = opcionesCatalogo(data.producto.id);
       formNuevo.style.display = "none";
       actualizarResumen();
-      mostrarToast("Producto creado y seleccionado.", "exito");
+      mostrarToast(`Producto creado con SKU ${data.producto.sku}.`, "exito");
     } catch (err) {
-      mostrarToast("No se pudo conectar con el servidor local (XAMPP).", "error");
+      mostrarToast(mensajeDeError(err), "error");
     }
   });
 }
 
-async function renderizarValidacion(detecciones) {
+// `desdeFoto` distingue "el modelo no encontró nada en la foto" de "el
+// usuario eligió cargar a mano". Los dos terminan en una tarjeta vacía, pero
+// sólo el primero necesita explicar por qué está vacía: sin el aviso parecía
+// que la app había fallado.
+async function renderizarValidacion(detecciones, { desdeFoto = false } = {}) {
   await catalogoListo;
   listaItems.innerHTML = "";
   contadorItems = 0;
 
   if (detecciones.length === 0) {
+    if (desdeFoto) {
+      const aviso = document.createElement("div");
+      aviso.className = "aviso-sin-detecciones";
+      aviso.innerHTML = `<strong>La IA no reconoció ningún envase en esta foto.</strong><span>Cargá el producto a mano acá abajo, o volvé y sacá otra: el modelo funciona mejor con el envase completo en cuadro, buena luz y un fondo que contraste (un producto claro sobre fondo blanco es el caso que más se le escapa).</span>`;
+      listaItems.appendChild(aviso);
+    }
     crearItemCard({});
   } else {
-    const agrupado = {};
+    // Agrupado en tres niveles, de más confiable a menos:
+    //   1. Si dos detecciones matchean el MISMO producto del catálogo, son ese
+    //      producto: se juntan sin discusión.
+    //   2. Si ninguna matcheó, se comparan las lecturas del OCR entre sí
+    //      (ver mismaLectura) para no repetir el alta del mismo producto nuevo.
+    //   3. Sin OCR se agrupa por la clase de YOLO, así un envase y una mano en
+    //      la misma foto quedan en tarjetas separadas.
+    // `d.identificado === false` y no `!d.identificado`: si el backend es viejo
+    // y no manda el campo, la detección se trata como identificada.
+    const grupos = [];
     detecciones.forEach(d => {
-      agrupado[d.clase] = agrupado[d.clase] || { cantidad: 0, confianza: d.confianza, marca: d.marca, volumen: d.volumen };
-      agrupado[d.clase].cantidad++;
-      agrupado[d.clase].confianza = Math.min(agrupado[d.clase].confianza, d.confianza);
+      const identificado = d.identificado !== false;
+      const claseYolo = d.clase_yolo || "";
+      const match = identificado ? buscarProductoPorTexto(d.clase) : null;
+
+      const grupo = grupos.find(g => {
+        if (g.identificado !== identificado) return false;
+        if (!identificado) return g.claseYolo === claseYolo;
+        if (g.match && match) return g.match.id === match.id;
+        if (g.match || match) return false;
+        return mismaLectura(g.texto, d.clase);
+      });
+
+      if (grupo) {
+        grupo.cantidad++;
+        grupo.confianza = Math.min(grupo.confianza, d.confianza);
+        // Nos quedamos con la lectura más larga del grupo: suele ser la más
+        // completa, y es la que prellena el alta de producto nuevo.
+        if (identificado && (d.clase || "").length > (grupo.texto || "").length) {
+          grupo.texto = d.clase;
+          grupo.marca = d.marca;
+        }
+        grupo.volumen = grupo.volumen || d.volumen;
+      } else {
+        grupos.push({
+          cantidad: 1, confianza: d.confianza, marca: d.marca, volumen: d.volumen,
+          texto: identificado ? d.clase : "", identificado, claseYolo, match,
+        });
+      }
     });
-    Object.entries(agrupado).forEach(([clase, info]) => {
-      const match = buscarProductoPorTexto(clase);
+
+    grupos.forEach(g => {
       crearItemCard({
-        productoDetectadoId: match ? match.id : null,
-        confianza: info.confianza,
-        cantidad: info.cantidad,
+        productoDetectadoId: g.match ? g.match.id : null,
+        confianza: g.confianza,
+        cantidad: g.cantidad,
         esIA: true,
-        textoDetectado: clase,
-        huboOCR: !!info.marca,
-        volumenDetectado: info.volumen || "",
+        identificado: g.identificado,
+        textoDetectado: g.texto,
+        huboOCR: !!g.marca,
+        marcaDetectada: g.marca || "",
+        volumenDetectado: g.volumen || "",
+        claseYolo: g.claseYolo,
       });
     });
   }
@@ -494,91 +735,119 @@ function actualizarResumen() {
 // detección real (no de "+ Agregar producto no detectado"). Best-effort:
 // si falla, no debe interrumpir el registro de la venta, que ya se hizo.
 function registrarCorreccion(payload) {
-  fetch(URL_REGISTRAR_CORRECCION, {
+  fetchApi(URL_REGISTRAR_CORRECCION, {
     method: "POST",
     headers: { ...HEADERS_NGROK, "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   }).catch(err => console.warn("No se pudo registrar la corrección de IA:", err));
 }
 
-// Confirmar venta: pega a registrar_venta.php por cada producto del ticket
-// (resta stock_actual en MySQL). Igual patrón que guardar_stock.php en el
-// repositor, pero restando en vez de sumando.
+// Confirmar venta: manda el ticket COMPLETO en un solo POST a
+// registrar_venta.php, que valida el stock de todos los productos y recién
+// ahí escribe (o no escribe ninguno). Antes se mandaba un request por
+// producto: si a un renglón le faltaba stock, los otros ya habían quedado
+// cobrados y descontados, y el ticket se veía como si no se hubiera
+// registrado nada.
 document.getElementById("btn-confirmar").addEventListener("click", async () => {
-  const cards = document.querySelectorAll(".item-card");
+  const cards = Array.from(document.querySelectorAll(".item-card"));
   if (cards.length === 0) {
     mostrarToast("No hay productos en el ticket.", "error");
     return;
   }
 
-  const usuarioId = usuarioSesion.id;
 
-  const huboPendiente = Array.from(cards).some(card => card.querySelector(".select-producto").value === "__nuevo__");
+  const huboPendiente = cards.some(card => card.querySelector(".select-producto").value === "__nuevo__");
   if (huboPendiente) {
     mostrarToast("Terminá de crear el producto pendiente (o elegí uno del catálogo) antes de confirmar.", "error");
     return;
   }
 
-  const pedidos = Array.from(cards).map(card => {
-    const productoId = parseInt(card.querySelector(".select-producto").value, 10);
-    const cantidad = parseInt(card.querySelector(".input-cantidad").value || "0", 10);
-    return {
-      producto_id: productoId,
-      cantidad,
-      usuario_id: usuarioId,
-      esIA: card.dataset.esIa === "1",
-      productoDetectadoId: card.dataset.productoDetectadoId ? parseInt(card.dataset.productoDetectadoId, 10) : null,
-      cantidadDetectada: parseInt(card.dataset.cantidadDetectada || "0", 10),
-      confianzaIa: card.dataset.confianzaIa ? parseFloat(card.dataset.confianzaIa) : null,
-    };
-  });
-
-  let huboError = false;
-
-  for (const pedido of pedidos) {
-    try {
-      const resp = await fetch(URL_REGISTRAR_VENTA, {
-        method: "POST",
-        headers: { ...HEADERS_NGROK, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          producto_id: pedido.producto_id,
-          cantidad: pedido.cantidad,
-          usuario_id: pedido.usuario_id,
-        }),
-      });
-      const data = await resp.json();
-
-      if (!resp.ok || !data.ok) {
-        huboError = true;
-        mostrarToast(data.mensaje || "No se pudo registrar la venta de un producto.", "error");
-        continue;
-      }
-
-      if (pedido.esIA) {
-        registrarCorreccion({
-          producto_detectado_id: pedido.productoDetectadoId,
-          producto_corregido_id: pedido.producto_id,
-          cantidad_detectada: pedido.cantidadDetectada,
-          cantidad_corregida: pedido.cantidad,
-          confianza_ia: pedido.confianzaIa,
-          usuario_id: pedido.usuario_id,
-        });
-      }
-    } catch (err) {
-      huboError = true;
-      mostrarToast("No se pudo conectar con el servidor local (XAMPP).", "error");
-    }
+  // Candado de la Red de Seguridad: una tarjeta sin producto elegido (la
+  // detección que el OCR no pudo identificar, o un renglón manual recién
+  // agregado) NO entra al ticket. Antes el <select> auto-seleccionaba el
+  // primer producto del catálogo y se cobraba eso.
+  // Va ANTES del reset de `item-card-error` para no borrar la marca roja con
+  // la que ya nació la tarjeta sin identificar.
+  const sinProducto = cards.find(card => card.querySelector(".select-producto").value === "");
+  if (sinProducto) {
+    sinProducto.classList.add("item-card-error");
+    sinProducto.scrollIntoView({ behavior: "smooth", block: "center" });
+    mostrarToast("Hay una tarjeta sin producto elegido. Elegí uno del catálogo o quitala.", "error");
+    return;
   }
 
-  if (!huboError) {
+  cards.forEach(card => card.classList.remove("item-card-error"));
+
+  const renglones = cards.map(card => ({
+    card,
+    producto_id: parseInt(card.querySelector(".select-producto").value, 10),
+    cantidad: parseInt(card.querySelector(".input-cantidad").value || "0", 10),
+    esIA: card.dataset.esIa === "1",
+    productoDetectadoId: card.dataset.productoDetectadoId ? parseInt(card.dataset.productoDetectadoId, 10) : null,
+    cantidadDetectada: parseInt(card.dataset.cantidadDetectada || "0", 10),
+    confianzaIa: card.dataset.confianzaIa ? parseFloat(card.dataset.confianzaIa) : null,
+  }));
+
+  const sinCantidad = renglones.find(r => !r.cantidad || r.cantidad < 1);
+  if (sinCantidad) {
+    sinCantidad.card.classList.add("item-card-error");
+    mostrarToast("Hay un producto con cantidad vacía o en cero.", "error");
+    return;
+  }
+
+  const btnConfirmar = document.getElementById("btn-confirmar");
+  btnConfirmar.disabled = true;
+
+  try {
+    const resp = await fetchApi(URL_REGISTRAR_VENTA, {
+      method: "POST",
+      headers: { ...HEADERS_NGROK, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        items: renglones.map(r => ({ producto_id: r.producto_id, cantidad: r.cantidad })),
+      }),
+    });
+    const data = await resp.json();
+
+    if (!resp.ok || !data.ok) {
+      // Nada quedó registrado: marcamos los renglones que fallaron para que
+      // el cajero los corrija y vuelva a confirmar el mismo ticket.
+      (data.errores || []).forEach(error => {
+        renglones
+          .filter(r => r.producto_id === error.producto_id)
+          .forEach(r => r.card.classList.add("item-card-error"));
+        mostrarToast(error.mensaje, "error");
+      });
+      if (!data.errores) {
+        mostrarToast(data.mensaje || "No se pudo registrar la venta.", "error");
+      }
+      return;
+    }
+
+    // Feedback loop de la IA: recién cuando la venta entera quedó registrada.
+    renglones.filter(r => r.esIA).forEach(r => {
+      registrarCorreccion({
+        producto_detectado_id: r.productoDetectadoId,
+        producto_corregido_id: r.producto_id,
+        cantidad_detectada: r.cantidadDetectada,
+        cantidad_corregida: r.cantidad,
+        confianza_ia: r.confianzaIa,
+      });
+    });
+
     mostrarToast("Venta registrada y stock actualizado.", "exito");
     document.getElementById("texto-confirmacion").textContent =
-      `Se cobraron ${resumenTotalDinero.textContent} en ${pedidos.length} producto(s).`;
+      `Se cobraron $${Number(data.total).toLocaleString("es-AR")} · ${data.unidades} unidad(es) en ${data.cantidad_productos} producto(s).`;
     mostrarPantalla("confirmacion");
+  } catch (err) {
+    mostrarToast(mensajeDeError(err), "error");
+  } finally {
+    btnConfirmar.disabled = false;
   }
 });
 
 document.getElementById("btn-nueva-venta").addEventListener("click", () => {
+  listaItems.innerHTML = "";
+  actualizarResumen();
   archivoSeleccionado = null;
   previewImagen.style.display = "none";
   zonaVacia.style.display = "block";
@@ -613,7 +882,10 @@ if (usuarioSesion.rol !== "dueño") {
 }
 </script>
 
-<script>insertarChatbotWidget(usuarioSesion);</script>
+<script>
+  confirmarSesion(["cajero", "dueño"]);
+  insertarChatbotWidget(usuarioSesion);
+</script>
 
 </body>
 </html>

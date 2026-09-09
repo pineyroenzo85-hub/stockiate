@@ -4,70 +4,178 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>stockIAte | Panel de Administrador</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<script src="tema.js?v=1"></script>
 <style>
-  :root{
-    --bg-0:#0b0e14;
-    --bg-1:#111520;
-    --bg-2:#161b29;
-    --bg-3:#1e2436;
-    --border:#252b3d;
-    --text-hi:#e8eaf2;
-    --text-mid:#9aa1b5;
-    --text-low:#5c6480;
-    --accent:#7c5cff;
-    --accent-2:#4dd0e1;
-    --ok:#3ddc84;
-    --warn:#ffb547;
-    --danger:#ff5c72;
-    --font: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  /* Mismas variables que styles.css (mismos nombres, mismos valores), pero
+     NO se incluye styles.css acá a propósito: sus selectores genéricos
+     (input[type="text"], select, etc.) tienen más especificidad que las
+     clases invt-/cst-/prf- de los componentes de este panel y les pisarían
+     ancho/padding/tamaño de fuente. Ver la nota de "Clases con prefijo" en
+     inventario_tabla.js / costos_tabla.js / preferencias.js. */
+  :root {
+    --fondo-grad:   linear-gradient(135deg, #F3E9FA 0%, #F7F4FA 30%, #EFF9F1 65%, #FBF6E9 100%);
+    --superficie:   #F3EFF7;
+    --glass-bg:     rgba(255, 255, 255, 0.55);
+    --glass-border: rgba(255, 255, 255, 0.75);
+    --glass-shadow: 0 10px 34px rgba(139, 122, 168, 0.16);
+    --divisor:      rgba(139, 122, 168, 0.12);
+    --blanco-puro:  #453B5C;
+    --gris-tenue:   #8B7FA3;
+    --ok: #3E7A5C; --alerta: #8A6D1F; --error: #B4636F;
+    --neu-sombra:       6px 6px 14px rgba(163, 150, 190, 0.22), -6px -6px 14px rgba(255, 255, 255, 0.9);
+    --neu-sombra-chica: 4px 4px 10px rgba(163, 150, 190, 0.22), -4px -4px 10px rgba(255, 255, 255, 0.9);
+    --neu-inset:        inset 3px 3px 6px rgba(163, 150, 190, 0.22), inset -3px -3px 6px rgba(255, 255, 255, 0.9);
+    --lila: #D9BFEA; --lila-dark: #B87FD9; --lila-shadow: rgba(184, 127, 217, 0.4);
+    --menta: #B8E8CE; --menta-dark: #8FD9B0;
+    --dorado: #F5E3AE; --dorado-dark: #E8C468;
+    --coral: #F2BFC4; --coral-dark: #E88A93;
+    --ok-bg: rgba(184, 232, 206, 0.6); --ok-border: rgba(111, 203, 159, 0.4);
+    --alerta-bg: rgba(245, 227, 174, 0.6);
+    --error-bg: rgba(242, 191, 196, 0.6); --error-border: rgba(242, 191, 196, 0.65);
+    --lila-tenue: rgba(217, 191, 234, 0.35);
+    --gris-tenue-bg: rgba(139, 122, 168, 0.14);
+    --texto-sobre-acento: #2F5C42;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-tema="claro"]) {
+      --fondo-grad:   linear-gradient(135deg, #241D33 0%, #1E1B2E 30%, #1A2620 65%, #241C15 100%);
+      --superficie:   #241F30;
+      --glass-bg:     rgba(42, 36, 58, 0.55);
+      --glass-border: rgba(255, 255, 255, 0.09);
+      --glass-shadow: 0 10px 34px rgba(0, 0, 0, 0.4);
+      --divisor:      rgba(255, 255, 255, 0.07);
+      --blanco-puro:  #F2EDF9;
+      --gris-tenue:   #A99BC0;
+      --ok: #8FE0B8; --alerta: #E8C468; --error: #F0A0A8;
+      --neu-sombra:       6px 6px 14px rgba(0, 0, 0, 0.5), -6px -6px 14px rgba(255, 255, 255, 0.035);
+      --neu-sombra-chica: 4px 4px 10px rgba(0, 0, 0, 0.5), -4px -4px 10px rgba(255, 255, 255, 0.035);
+      --neu-inset:        inset 3px 3px 6px rgba(0, 0, 0, 0.45), inset -3px -3px 6px rgba(255, 255, 255, 0.03);
+      --lila: #B98AE0; --lila-dark: #9F5FC4; --lila-shadow: rgba(159, 95, 196, 0.5);
+      --menta: #5FB88C; --menta-dark: #4EA57C;
+      --dorado: #E8C468; --dorado-dark: #C9A23F;
+      --coral: #E8828C; --coral-dark: #D45C68;
+      --ok-bg: rgba(111, 203, 159, 0.16); --ok-border: rgba(111, 203, 159, 0.3);
+      --alerta-bg: rgba(232, 196, 104, 0.14);
+      --error-bg: rgba(232, 130, 140, 0.16); --error-border: rgba(232, 130, 140, 0.3);
+      --lila-tenue: rgba(185, 138, 224, 0.22);
+      --gris-tenue-bg: rgba(255, 255, 255, 0.06);
+      --texto-sobre-acento: #1A1625;
+    }
+  }
+  :root[data-tema="oscuro"] {
+    --fondo-grad:   linear-gradient(135deg, #241D33 0%, #1E1B2E 30%, #1A2620 65%, #241C15 100%);
+    --superficie:   #241F30;
+    --glass-bg:     rgba(42, 36, 58, 0.55);
+    --glass-border: rgba(255, 255, 255, 0.09);
+    --glass-shadow: 0 10px 34px rgba(0, 0, 0, 0.4);
+    --divisor:      rgba(255, 255, 255, 0.07);
+    --blanco-puro:  #F2EDF9;
+    --gris-tenue:   #A99BC0;
+    --ok: #8FE0B8; --alerta: #E8C468; --error: #F0A0A8;
+    --neu-sombra:       6px 6px 14px rgba(0, 0, 0, 0.5), -6px -6px 14px rgba(255, 255, 255, 0.035);
+    --neu-sombra-chica: 4px 4px 10px rgba(0, 0, 0, 0.5), -4px -4px 10px rgba(255, 255, 255, 0.035);
+    --neu-inset:        inset 3px 3px 6px rgba(0, 0, 0, 0.45), inset -3px -3px 6px rgba(255, 255, 255, 0.03);
+    --lila: #B98AE0; --lila-dark: #9F5FC4; --lila-shadow: rgba(159, 95, 196, 0.5);
+    --menta: #5FB88C; --menta-dark: #4EA57C;
+    --dorado: #E8C468; --dorado-dark: #C9A23F;
+    --coral: #E8828C; --coral-dark: #D45C68;
+    --ok-bg: rgba(111, 203, 159, 0.16); --ok-border: rgba(111, 203, 159, 0.3);
+    --alerta-bg: rgba(232, 196, 104, 0.14);
+    --error-bg: rgba(232, 130, 140, 0.16); --error-border: rgba(232, 130, 140, 0.3);
+    --lila-tenue: rgba(185, 138, 224, 0.22);
+    --gris-tenue-bg: rgba(255, 255, 255, 0.06);
+    --texto-sobre-acento: #1A1625;
   }
   *{box-sizing:border-box; margin:0; padding:0;}
+  /* Reserva el canal de la barra de scroll siempre. Sin esto, cuando el modal
+     del negocio bloquea el scroll del fondo la barra desaparece y toda la
+     pagina salta ~15px a la derecha. */
+  html{ scrollbar-gutter: stable; }
   body{
-    font-family: var(--font);
-    background: radial-gradient(1200px 600px at 20% -10%, #171d2e 0%, var(--bg-0) 55%), var(--bg-0);
-    color: var(--text-hi);
+    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+    background: var(--fondo-grad);
+    color: var(--blanco-puro);
     min-height:100vh;
     padding: 24px;
+    transition: background 0.3s ease, color 0.3s ease;
   }
   .app{ max-width:1440px; margin:0 auto; display:flex; flex-direction:column; gap:22px; }
 
   /* Header */
-  .topbar{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; }
+  .topbar{
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    border-radius: 22px;
+    padding: 16px 22px;
+    box-shadow: var(--glass-shadow);
+  }
   .brand{ display:flex; align-items:center; gap:12px; }
   .brand-icon{
-    width:40px; height:40px; border-radius:11px;
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:16px; color:#0b0e14;
-    box-shadow: 0 0 24px rgba(124,92,255,0.35);
+    width:40px; height:40px; border-radius:13px;
+    background: linear-gradient(135deg, var(--lila) 0%, var(--menta) 50%, var(--dorado) 100%);
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:16px; color:var(--blanco-puro);
+    box-shadow: 0 4px 12px var(--lila-shadow);
   }
-  .brand h1{ font-size:18px; font-weight:700; letter-spacing:-0.02em; }
-  .brand span{ display:block; font-size:11.5px; color:var(--text-mid); font-weight:500; }
+  .brand h1{ font-size:18px; font-weight:800; letter-spacing:-0.02em; color: var(--blanco-puro); }
+  .brand span{ display:block; font-size:11.5px; color:var(--gris-tenue); font-weight:500; }
+  /* Es un <button>: abre el panel de preferencias del negocio
+     (menu_negocio.js). Hay que devolverle la tipografia y sacarle el chrome
+     nativo que trae el navegador. */
   .user-chip{
-    display:flex; align-items:center; gap:10px; background:var(--bg-2);
-    border:1px solid var(--border); padding:7px 14px 7px 7px; border-radius:30px;
+    display:flex; align-items:center; gap:10px; background:var(--superficie);
+    box-shadow: var(--neu-sombra-chica);
+    padding:7px 14px 7px 7px; border-radius:30px;
+    border:none; font-family:inherit; color:inherit; text-align:left;
+    cursor:pointer; transition:box-shadow .15s, transform .15s;
   }
-  .user-chip .avatar{ width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,#ff8a65,#ff5c72); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; }
-  .user-chip .info{ font-size:12.5px; line-height:1.25; }
-  .user-chip .info b{ display:block; font-size:13px; }
+  .user-chip:hover{ box-shadow: var(--neu-sombra); }
+  .user-chip:active{ transform: translateY(1px); }
+  .user-chip:focus-visible{ outline:2px solid var(--lila-dark); outline-offset:3px; }
+  .user-chip .chevron{ color:var(--gris-tenue); font-size:10px; margin-left:2px; }
+  .user-chip .avatar{ width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,var(--coral),var(--coral-dark)); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color: var(--blanco-puro); }
+  .user-chip .info{ display:block; font-size:12.5px; line-height:1.25; color: var(--gris-tenue); }
+  .user-chip .info b{ display:block; font-size:13px; color: var(--blanco-puro); }
+
+  /* Toggle de tema, junto al user-chip */
+  .toggle-tema{
+    margin-right: 4px; cursor: pointer; width: 46px; height: 26px; border-radius: 20px; position: relative;
+    background: var(--superficie); box-shadow: var(--neu-inset); border: none; padding: 0; flex-shrink: 0;
+  }
+  .toggle-tema-knob{
+    position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--lila) 0%, var(--lila-dark) 100%);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25); transition: left 0.25s ease;
+  }
+  :root[data-tema="oscuro"] .toggle-tema-knob{ left: 23px; }
+  @media (prefers-color-scheme: dark) { :root:not([data-tema="claro"]) .toggle-tema-knob{ left: 23px; } }
+  .toggle-tema-knob svg{ display: none; width: 11px; height: 11px; }
+  :root[data-tema="oscuro"] .toggle-tema-knob svg{ display: block; }
+  @media (prefers-color-scheme: dark) { :root:not([data-tema="claro"]) .toggle-tema-knob svg{ display: block; } }
 
   /* KPI Grid */
   .kpi-grid{ display:grid; grid-template-columns: repeat(4, 1fr); gap:16px; }
   .kpi-card{
-    background: linear-gradient(180deg, var(--bg-2), var(--bg-1));
-    border:1px solid var(--border); border-radius:16px; padding:18px 20px;
+    background: var(--superficie);
+    box-shadow: var(--neu-sombra);
+    border-radius:20px; padding:18px 20px;
     position:relative; overflow:hidden;
   }
   .kpi-card::after{
     content:""; position:absolute; top:-40%; right:-20%; width:140px; height:140px; border-radius:50%;
-    background: radial-gradient(circle, var(--kpi-glow, rgba(124,92,255,0.18)), transparent 70%);
+    background: radial-gradient(circle, var(--kpi-glow, rgba(184,127,217,0.18)), transparent 70%);
   }
   .kpi-top{ display:flex; justify-content:space-between; align-items:flex-start; }
-  .kpi-label{ font-size:12px; color:var(--text-mid); font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+  .kpi-label{ font-size:12px; color:var(--gris-tenue); font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
   .kpi-icon{ width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; }
-  .kpi-value{ font-size:26px; font-weight:800; margin-top:14px; letter-spacing:-0.02em; }
-  .kpi-sub{ font-size:12px; color:var(--text-mid); margin-top:4px; }
+  .kpi-value{ font-size:26px; font-weight:800; margin-top:14px; letter-spacing:-0.02em; color: var(--blanco-puro); }
+  .kpi-sub{ font-size:12px; color:var(--gris-tenue); margin-top:4px; }
   .kpi-sub.ok{ color:var(--ok); }
-  .kpi-sub.warn{ color:var(--warn); }
+  .kpi-sub.warn{ color:var(--alerta); }
   .pulse-dot{ width:8px; height:8px; border-radius:50%; background:var(--ok); display:inline-block; margin-right:6px; box-shadow:0 0 8px var(--ok); animation:pulse 1.6s infinite; }
   @keyframes pulse{ 0%{opacity:1;} 50%{opacity:.35;} 100%{opacity:1;} }
 
@@ -82,13 +190,9 @@
     .kpi-grid{ grid-template-columns: 1fr; }
     body{ padding:14px; }
   }
-  .btn-cerrar-sesion{
-    background:none; border:none; color:var(--text-mid); font-size:12.5px;
-    cursor:pointer; text-decoration:underline; text-underline-offset:3px;
-  }
-  .btn-cerrar-sesion:hover{ color:var(--text-hi); }
 </style>
-<script src="auth.js"></script>
+<script src="config.js?v=1"></script>
+<script src="auth.js?v=4"></script>
 <script>
   // Sincrónico y a propósito: corta el render de la página antes de mostrar
   // nada si no hay sesión válida (o si el usuario no es administrador).
@@ -102,14 +206,23 @@
     <div class="brand" id="btn-inicio" style="cursor:pointer;">
   <div class="brand-icon">sI</div>
   <div>
-    <h1>stockIAte <span style="color:var(--text-mid); font-weight:500;">/ Panel Administrador</span></h1>
-    <span>El fin de los códigos de barra. El inicio del stock inteligente.</span>
+    <h1>stockIAte <span style="color:var(--gris-tenue); font-weight:500;">/ Panel Administrador</span></h1>
+    <span style="color:var(--gris-tenue);">El fin de los códigos de barra. El inicio del stock inteligente.</span>
   </div>
 </div>
-    <div class="user-chip">
-      <div class="avatar" id="avatar-usuario"></div>
-      <div class="info"><b id="nombre-usuario"></b>Administrador</div>
-      <button type="button" class="btn-cerrar-sesion" id="btn-cerrar-sesion">Cerrar sesión</button>
+    <div style="display:flex; align-items:center; gap:16px;">
+    <button type="button" class="toggle-tema" onclick="window.stockiateTema.alternar()" title="Cambiar tema" aria-label="Cambiar tema claro/oscuro">
+      <span class="toggle-tema-knob">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#F0EAF7" stroke-width="2.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"></path></svg>
+      </span>
+    </button>
+    <button type="button" class="user-chip" id="btn-negocio"
+            aria-haspopup="dialog" aria-expanded="false" aria-controls="mngDialogo"
+            title="Preferencias del negocio">
+      <span class="avatar" data-mng-avatar></span>
+      <span class="info"><b data-mng-negocio>Mi negocio</b><span data-mng-usuario></span></span>
+      <span class="chevron" aria-hidden="true">&#9660;</span>
+    </button>
     </div>
   </div>
 
@@ -117,12 +230,29 @@
   <div class="kpi-grid" id="kpiGrid"></div>
 
   <div class="main-grid">
+    <!-- Gráficos: stock, capital por proveedor y ventas del último mes -->
+    <div id="graficosContenedor"></div>
     <!-- Inventario -->
     <div id="inventarioContenedor"></div>
+    <!-- Riesgo de quiebre: productos que se agotan pronto según el ritmo de
+         venta, aunque todavía no estén en stock crítico -->
+    <div id="prediccionContenedor"></div>
+    <!-- Costos y márgenes: carga rápida de precio de costo / proveedor -->
+    <div id="costosContenedor"></div>
+    <!-- Las preferencias del negocio ya no son un card de esta grilla: se abren
+         desde el chip de la topbar (menu_negocio.js). -->
   </div>
 </div>
 
-<script src="inventario_tabla.js?v=2"></script>
+<script src="vendor/chart.umd.min.js"></script>
+<script src="vendor/jspdf.umd.min.js"></script>
+<script src="plegable.js?v=1"></script>
+<script src="inventario_tabla.js?v=6"></script>
+<script src="prediccion_tabla.js?v=1"></script>
+<script src="costos_tabla.js?v=2"></script>
+<script src="graficos.js?v=5"></script>
+<script src="preferencias.js?v=2"></script>
+<script src="menu_negocio.js?v=1"></script>
 <script>
 /* ---------------- KPIs (datos reales de MySQL vía consultar_inventario.php) ---------------- */
 function renderKPIs(datos){
@@ -134,22 +264,22 @@ function renderKPIs(datos){
   const cards = [
     {
       label: "Ventas Estimadas Hoy", value: `$${ventasHoyMonto.toLocaleString('es-AR')}`,
-      sub: `≈ ${ventasHoyUnidades} unidades`, subClass:"ok", icon:"💰", glow:"rgba(61,220,132,0.18)"
+      sub: `≈ ${ventasHoyUnidades} unidades`, subClass:"ok", icon:"💰", glow:"rgba(184,232,206,0.35)"
     },
     {
       label: "Alertas de Stock Crítico", value: criticos,
       sub: criticos > 0 ? `${criticos} producto(s) requieren reposición` : "Todo bajo control",
-      subClass: criticos > 0 ? "warn" : "ok", icon:"⚠️", glow:"rgba(255,92,114,0.18)"
+      subClass: criticos > 0 ? "warn" : "ok", icon:"⚠️", glow:"rgba(242,191,196,0.35)"
     },
     {
       label: "Producto Más Vendido",
       value: masVendido ? masVendido.nombre.split(' ').slice(0,3).join(' ') : "Sin ventas este mes",
       sub: masVendido ? `${masVendido.marca || ''} · ${masVendido.unidades_vendidas} u/mes` : "",
-      subClass:"", icon:"🏆", glow:"rgba(124,92,255,0.18)"
+      subClass:"", icon:"🏆", glow:"rgba(245,227,174,0.35)"
     },
     {
       label: "Estado del Servidor IA", value: "Online",
-      sub: "Modo simulado · latencia 180ms", subClass:"ok", icon:"🛰️", glow:"rgba(77,208,225,0.18)", pulse:true
+      sub: "Modo simulado · latencia 180ms", subClass:"ok", icon:"🛰️", glow:"rgba(217,191,234,0.35)", pulse:true
     },
   ];
 
@@ -167,8 +297,30 @@ function renderKPIs(datos){
 }
 
 /* ---------------- Init ---------------- */
+// Se crea primero: las tablas le pasan sus datos por onDatos apenas responden,
+// así los gráficos no vuelven a pedir lo que el panel ya trajo.
+const graficos = initGraficos(document.getElementById('graficosContenedor'));
+
+// Plegable igual que el inventario: los dos arrancan cerrados para que el
+// panel entre de una en la pantalla.
+const costosTabla = initCostosTabla(document.getElementById('costosContenedor'), {
+  plegable: true,
+  onDatos: (datos) => graficos.actualizarRentabilidad(datos),
+});
+const prediccionQuiebre = initPrediccionQuiebre(document.getElementById('prediccionContenedor'));
+// Las preferencias dejaron de ser un card de la grilla: viven adentro del panel
+// que abre el chip de la topbar, y initMenuNegocio() monta initPreferencias()
+// recién la primera vez que alguien lo abre.
+const menuNegocio = initMenuNegocio(document.getElementById('btn-negocio'));
+
 initInventarioTabla(document.getElementById('inventarioContenedor'), {
-  onDatos: renderKPIs,
+  // Plegable sólo acá: en repositor.html esta misma tabla ES la pantalla entera.
+  plegable: true,
+  onDatos: (datos) => { renderKPIs(datos); graficos.actualizarInventario(datos); },
+  // Archivar o restaurar cambia qué productos existen, así que la tabla de
+  // costos y la predicción de quiebre (que leen del mismo catálogo por otros
+  // endpoints) quedan desfasadas.
+  onCambioCatalogo: () => { costosTabla.recargar(); prediccionQuiebre.recargar(); },
 });
 </script>
 <script>
@@ -176,12 +328,35 @@ document.getElementById("btn-inicio").addEventListener("click", () => {
     window.location.href = "landing_page.html";
 });
 
-document.getElementById("nombre-usuario").textContent = usuarioSesion.nombre;
-document.getElementById("avatar-usuario").textContent = usuarioSesion.nombre.charAt(0).toUpperCase();
-document.getElementById("btn-cerrar-sesion").addEventListener("click", cerrarSesion);
+// Pintada SINCRONICA desde el caché de localStorage. El objeto de sesión ya
+// trae negocio_nombre (lo escriben iniciar_sesion.php, crear_negocio.php,
+// aceptar_invitacion.php y sesion_demo.php), así que el chip nace con el nombre
+// real del negocio en vez del literal "Administrador" que después se pisaba.
+// Los listeners de Equipo y Cerrar sesión los cablea menu_negocio.js sobre los
+// botones del pie del panel.
+menuNegocio.pintarSesion(usuarioSesion);
 </script>
 
-<script>insertarChatbotWidget(usuarioSesion);</script>
+<script>
+  // Capa autoritativa: el servidor confirma (o desmiente) lo que dice el
+  // caché de localStorage. Ver auth.js.
+  confirmarSesion(["dueño"]).then((usuario) => {
+    if (!usuario) return;
+
+    // El negocio pudo haberse renombrado desde otra sesión: el chip se repinta
+    // con lo que dice el servidor.
+    menuNegocio.pintarSesion(usuario);
+
+    // Y se guarda en el caché. confirmarSesion() sólo reescribe localStorage
+    // cuando cambia el rol o el id (ver auth.js), nunca por el nombre del
+    // negocio: sin este write-back, un negocio renombrado volvería a mostrar el
+    // nombre viejo durante el primer frame de CADA carga, para siempre.
+    if (usuario.negocio_nombre !== usuarioSesion.negocio_nombre) {
+      guardarUsuarioSesion(usuario);
+    }
+  });
+  insertarChatbotWidget(usuarioSesion);
+</script>
 
 </body>
 </html>

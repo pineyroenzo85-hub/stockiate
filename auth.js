@@ -1,17 +1,38 @@
 /**
  * stockIAte - auth.js
  * ================================
- * Sesión de usuario en el frontend (localStorage), sin backend de sesión
- * (cookies/tokens) — ver CLAUDE.md, sección "Cosas para tener en cuenta".
- * Lo usan login.html, registro.html y las páginas de cada rol
- * (repositor.html, cajero.html, administrador.html) para separar el acceso
- * por rol y reemplazar el `usuarioId = 1` hardcodeado que había antes.
+ * Sesión de usuario del lado del frontend.
+ *
+ * OJO CON QUÉ ES CADA COSA ACÁ
+ * ----------------------------
+ * Hasta multi-tenant, localStorage ERA la sesión: no había nada del lado del
+ * servidor y cada endpoint le creía al `usuario_id` que le mandaran. Ahora la
+ * sesión de verdad es una cookie de servidor (ver sesion.php) y este archivo
+ * quedó dividido en dos capas con responsabilidades muy distintas:
+ *
+ *   1. CACHÉ DE UX (localStorage, sincrónico). Sirve para no parpadear:
+ *      saber a qué módulo redirigir y pintar el nombre y el rol sin esperar
+ *      un round-trip. `exigirSesion()` vive acá. **No es seguridad**: quien
+ *      edite su localStorage a mano puede ver el HTML de otro módulo.
+ *
+ *   2. VERDAD (el servidor). `confirmarSesion()` contrasta el caché contra
+ *      sesion_actual.php al cargar la página, y `fetchApi()` expulsa al
+ *      usuario ante cualquier 401/403. Lo que decide qué datos se ven son
+ *      las policies de cada endpoint PHP, no nada de este archivo.
+ *
+ * El peor caso es que alguien se falsee el caché y vea un cascarón de HTML
+ * vacío durante ~200 ms antes de ser pateado, sin haber leído un solo dato:
+ * todos los fetch pasan por fetchApi() y el servidor los rechaza.
+ *
+ * Requiere config.js cargado antes.
  */
 
 const STOCKIATE_SESSION_KEY = "stockiate_usuario";
 
 // "dueño" es el rol interno (coincide con el ENUM de la base y con
-// chatbot_ia.py); en la UI se muestra como "Administrador".
+// chatbot_ia.py); en la UI se muestra como "Administrador". En el modelo
+// multi-negocio significa "administrador DE SU negocio": es el único que
+// puede invitar gente y borrar productos.
 const STOCKIATE_RUTA_POR_ROL = {
   repositor: "repositor.html",
   cajero: "cajero.html",
@@ -37,9 +58,22 @@ function guardarUsuarioSesion(usuario) {
   localStorage.setItem(STOCKIATE_SESSION_KEY, JSON.stringify(usuario));
 }
 
-function cerrarSesion() {
+function olvidarUsuarioSesion() {
   localStorage.removeItem(STOCKIATE_SESSION_KEY);
-  window.location.href = "login.html";
+}
+
+/**
+ * Cierra sesión de verdad: primero en el servidor (que es lo que importa),
+ * después limpia el caché local. El `catch` es a propósito: si el server no
+ * responde igual queremos sacar al usuario de la pantalla.
+ */
+function cerrarSesion() {
+  fetch("cerrar_sesion.php", { method: "POST", credentials: "include", headers: STOCKIATE_HEADERS })
+    .catch(() => {})
+    .finally(() => {
+      olvidarUsuarioSesion();
+      window.location.href = "login.html";
+    });
 }
 
 function rutaParaRol(rol) {
@@ -47,10 +81,16 @@ function rutaParaRol(rol) {
 }
 
 /**
- * Exige sesión iniciada. Si `rolesPermitidos` viene definido, además exige
- * que el usuario tenga uno de esos roles; si no lo tiene, lo redirige al
- * módulo que sí le corresponde (no lo deja pasar). Devuelve el usuario, o
- * null si redirigió (en ese caso el resto del script no debería ejecutarse).
+ * Guardia OPTIMISTA, sincrónico. Corre en el <head> antes del render para
+ * evitar que se vea el contenido de un módulo que no te corresponde.
+ *
+ * Lee del caché de localStorage, así que es falsificable: es una decisión de
+ * UX, no de seguridad. La contraparte real es `confirmarSesion()`, que corre
+ * apenas carga la página, y sobre todo cada endpoint PHP, que valida la
+ * cookie por su cuenta.
+ *
+ * Devuelve el usuario, o null si redirigió (en ese caso el resto del script
+ * no debería ejecutarse).
  */
 function exigirSesion(rolesPermitidos) {
   const usuario = obtenerUsuarioSesion();
@@ -69,16 +109,208 @@ function exigirSesion(rolesPermitidos) {
 }
 
 /**
- * Inyecta el widget del chatbot con el rol y usuario_id de la sesión real,
- * en vez de los data-rol/data-usuario-id fijos que tenía cada página.
+ * Guardia AUTORITATIVO, asíncrono. Le pregunta al servidor quién sos de
+ * verdad y corrige el caché:
+ *
+ *   - sin sesión de servidor -> a login, sin importar qué diga localStorage;
+ *   - rol o negocio distintos a los cacheados -> actualiza y redirige al
+ *     módulo correcto (cubre el caso de alguien que se editó el rol a mano,
+ *     y también el de un rol cambiado desde otra sesión);
+ *   - sesión válida pero rol no permitido en ESTA página -> al módulo que sí.
+ *
+ * Se llama al final de cada página de rol. Si el servidor no responde (backend
+ * caído) no expulsa a nadie: no tiene sentido desloguear por un timeout.
+ */
+async function confirmarSesion(rolesPermitidos) {
+  let data;
+  try {
+    const resp = await fetch("sesion_actual.php", {
+      credentials: "include",
+      headers: STOCKIATE_HEADERS,
+    });
+
+    if (resp.status === 401) {
+      olvidarUsuarioSesion();
+      window.location.href = "login.html";
+      return null;
+    }
+
+    data = await resp.json();
+    if (!data || !data.ok) return null;
+  } catch (e) {
+    // Sin conexión con el backend: dejamos la pantalla como está.
+    return null;
+  }
+
+  // El modo (real o demo) lo decide el servidor, no el cliente: sale del
+  // .env vía conexion.php. Se pinta la banda antes de cualquier otra cosa
+  // para que no exista un instante en que la demo se vea como el sistema real.
+  window.STOCKIATE_MODO_DEMO = data.modo_demo === true;
+  if (window.STOCKIATE_MODO_DEMO) mostrarBandaDemo();
+
+  const usuario = data.usuario;
+  const cacheado = obtenerUsuarioSesion();
+
+  // El caché quedó desactualizado (o alguien lo tocó): lo alineamos con la
+  // única fuente que vale.
+  if (!cacheado || cacheado.rol !== usuario.rol || cacheado.id !== usuario.id) {
+    guardarUsuarioSesion(usuario);
+  }
+
+  if (rolesPermitidos && !rolesPermitidos.includes(usuario.rol)) {
+    window.location.href = rutaParaRol(usuario.rol);
+    return null;
+  }
+
+  return usuario;
+}
+
+/**
+ * Wrapper de fetch para TODOS los endpoints PHP. Dos cosas:
+ *
+ *   - manda la cookie de sesión (`credentials: include`) — sin esto el
+ *     servidor no sabe quién sos y todo devuelve 401;
+ *   - ante 401 (sesión vencida o inexistente) limpia el caché y manda a
+ *     login. Es la red de contención que hace que falsear el localStorage no
+ *     sirva de nada: la primera llamada a datos te expulsa.
+ *
+ * El 403 (rol insuficiente) NO expulsa: significa que estás logueado pero esa
+ * acción no es para vos. Se deja pasar para que cada pantalla muestre su
+ * propio mensaje.
+ */
+async function fetchApi(url, opciones = {}) {
+  const config = {
+    ...opciones,
+    credentials: "include",
+    headers: { ...STOCKIATE_HEADERS, ...(opciones.headers || {}) },
+  };
+
+  const resp = await fetch(url, config);
+
+  if (resp.status === 401) {
+    olvidarUsuarioSesion();
+    window.location.href = "login.html";
+    throw new Error("Sesión expirada");
+  }
+
+  return resp;
+}
+
+/**
+ * fetch para las páginas PRE-SESIÓN (login.html, registro.html,
+ * invitacion.html). Manda la cookie —los endpoints de alta la necesitan para
+ * dejarla puesta— pero NO expulsa ante un 401.
+ *
+ * La diferencia importa: en el login, un 401 significa "contraseña
+ * incorrecta" y hay que mostrar el mensaje. Si usara fetchApi(), el 401
+ * redirigiría a login.html y el usuario vería la página recargarse sin
+ * entender por qué.
+ */
+async function fetchPublico(url, opciones = {}) {
+  return fetch(url, {
+    ...opciones,
+    credentials: "include",
+    headers: { ...STOCKIATE_HEADERS, ...(opciones.headers || {}) },
+  });
+}
+
+/**
+ * Traduce una excepción del bloque try de un submit a un mensaje honesto.
+ *
+ * Por qué existe: los `catch` de las pantallas de auth mostraban siempre
+ * "No se pudo conectar con el servidor". Pero ahí adentro cae CUALQUIER
+ * excepción, no sólo las de red — y la más común no es de red: si el
+ * navegador sirve una copia cacheada vieja de este archivo, una función que
+ * todavía no existía lanza un ReferenceError y el usuario termina leyendo
+ * que el servidor está caído cuando el servidor está perfecto.
+ *
+ * `fetch` sólo tira TypeError cuando de verdad no pudo llegar al servidor.
+ * Todo lo demás es un error de la página, y conviene decirlo así.
+ */
+function mensajeDeError(err) {
+  console.error("[stockIAte]", err);
+
+  if (err instanceof TypeError) {
+    return "No se pudo conectar con el servidor.";
+  }
+  return "Error inesperado en la página. Probá recargar con Ctrl+Shift+R; "
+       + "si sigue, mirá la consola del navegador (F12).";
+}
+
+/**
+ * Qué sección del sistema es cada página. El chatbot lo usa para recortar sus
+ * herramientas: parado en el depósito no contesta de facturación, aunque
+ * quien pregunte sea el dueño.
+ *
+ * Es una pista del cliente, así que SÓLO PUEDE RECORTAR: el backend la
+ * intersecta con las herramientas del rol de la sesión (ver CONTEXT_TOOLS en
+ * chatbot_ia.py), y el control de acceso duro sigue estando en cada endpoint
+ * PHP. Una página que no esté en este mapa manda contexto vacío y el
+ * asistente se comporta como antes: recortado sólo por rol.
+ */
+const CONTEXTO_CHATBOT_POR_PAGINA = {
+  "repositor.html": "repositor",
+  "cajero.html": "cajero",
+  "administrador.html": "admin",
+};
+
+function contextoChatbotDeLaPagina() {
+  const archivo = window.location.pathname.split("/").pop();
+  return CONTEXTO_CHATBOT_POR_PAGINA[archivo] || "";
+}
+
+/**
+ * Inyecta el widget del chatbot con el rol de la sesión real y el contexto de
+ * la página, en vez de los data-rol/data-usuario-id fijos que tenía cada una.
  * chatbot_widget.js lee sus atributos de document.currentScript al cargar,
  * así que el <script> tiene que crearse dinámicamente con esos valores ya
  * puestos (no alcanza con editar los atributos de un <script> estático).
+ *
+ * El rol que va acá es sólo para elegir el copy y las preguntas sugeridas del
+ * widget: el backend ya no le cree (ver chatbot_ia.py, que resuelve el rol
+ * real reenviando la cookie a sesion_actual.php).
  */
 function insertarChatbotWidget(usuario) {
   const script = document.createElement("script");
-  script.src = "chatbot_widget.js?v=2";
+  script.src = "chatbot_widget.js?v=4";
   script.dataset.rol = usuario.rol;
-  script.dataset.usuarioId = usuario.id;
+  script.dataset.contexto = contextoChatbotDeLaPagina();
   document.body.appendChild(script);
+}
+
+/**
+ * Banda de "modo demostración" arriba de todo.
+ *
+ * En modo demo el sistema anda contra `stockiate_demo`, una base separada con
+ * datos inventados (ver conexion.php y seed_demo.php). Todo se ve igual que
+ * con datos reales, y ése es justamente el problema: una captura de pantalla
+ * de la demo metida en el informe como si fuera el piloto sería un dato
+ * falso. La banda existe para que eso no pueda pasar ni por accidente, así
+ * que es fija, va arriba de todo y no se puede cerrar.
+ *
+ * No usa las variables del tema a propósito: tiene que verse igual en claro,
+ * en oscuro y en escala de grises si alguien imprime la captura.
+ */
+function mostrarBandaDemo() {
+  if (document.getElementById("stockiate-banda-demo")) return;
+
+  const estilo = document.createElement("style");
+  estilo.textContent = `
+    #stockiate-banda-demo{
+      position:fixed; top:0; left:0; right:0; z-index:1000001;
+      background:#161b29; color:#ffb547;
+      font:700 12px/1 'Plus Jakarta Sans','Inter',system-ui,sans-serif;
+      letter-spacing:.06em; text-transform:uppercase; text-align:center;
+      padding:7px 12px; border-bottom:2px solid #ffb547;
+    }
+    #stockiate-banda-demo span{ font-weight:500; text-transform:none; letter-spacing:0; opacity:.85; }
+    body{ padding-top:32px !important; }
+  `;
+  document.head.appendChild(estilo);
+
+  const banda = document.createElement("div");
+  banda.id = "stockiate-banda-demo";
+  banda.setAttribute("role", "status");
+  banda.innerHTML = 'Modo demostración &nbsp;<span>— datos de ejemplo, no son del comercio</span>';
+  document.body.prepend(banda);
 }
