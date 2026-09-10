@@ -239,6 +239,9 @@
     <div id="prediccionContenedor"></div>
     <!-- Costos y márgenes: carga rápida de precio de costo / proveedor -->
     <div id="costosContenedor"></div>
+    <!-- Reposición: qué pedirle al proveedor y cuánto. Va pegado al riesgo
+         de quiebre porque contestan la misma pregunta en dos tiempos -->
+    <div id="reposicionContenedor"></div>
     <!-- Rendimiento del modelo de IA: lo que la Red de Seguridad viene
          guardando en correcciones_ia desde que arrancó el piloto -->
     <div id="metricasIaContenedor"></div>
@@ -254,8 +257,9 @@
 <script src="prediccion_tabla.js?v=1"></script>
 <script src="costos_tabla.js?v=2"></script>
 <script src="metricas_ia.js?v=3"></script>
+<script src="reposicion_tabla.js?v=2"></script>
 <script src="graficos.js?v=5"></script>
-<script src="preferencias.js?v=2"></script>
+<script src="preferencias.js?v=3"></script>
 <script src="menu_negocio.js?v=1"></script>
 <script>
 /* ---------------- KPIs (datos reales de MySQL vía consultar_inventario.php) ---------------- */
@@ -315,6 +319,7 @@ const prediccionQuiebre = initPrediccionQuiebre(document.getElementById('predicc
 // Plegable como los otros paneles grandes: plegado queda a la vista el acierto
 // exacto con su n, que es el número que se mira de un vistazo.
 initMetricasIA(document.getElementById('metricasIaContenedor'), { plegable: true });
+const reposicion = initReposicionTabla(document.getElementById('reposicionContenedor'), { plegable: true });
 // Las preferencias dejaron de ser un card de la grilla: viven adentro del panel
 // que abre el chip de la topbar, y initMenuNegocio() monta initPreferencias()
 // recién la primera vez que alguien lo abre.
@@ -327,7 +332,7 @@ initInventarioTabla(document.getElementById('inventarioContenedor'), {
   // Archivar o restaurar cambia qué productos existen, así que la tabla de
   // costos y la predicción de quiebre (que leen del mismo catálogo por otros
   // endpoints) quedan desfasadas.
-  onCambioCatalogo: () => { costosTabla.recargar(); prediccionQuiebre.recargar(); },
+  onCambioCatalogo: () => { costosTabla.recargar(); prediccionQuiebre.recargar(); reposicion.recargar(); },
 });
 </script>
 <script>

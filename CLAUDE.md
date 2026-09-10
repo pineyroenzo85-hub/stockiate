@@ -36,6 +36,11 @@ todo:
      cola de avisos) y las tres filas de `configuracion` por negocio. Deja
      todo **desactivado**: después de correrla no sale ningún mensaje hasta
      que un dueño cargue su número en el panel.
+   - `migracion_reposicion.sql` — las tres filas de `configuracion` de la
+     lista de reposición (`reposicion_dias_entrega`,
+     `reposicion_dias_objetivo`, `reposicion_factor_seguridad`). Aditiva e
+     idempotente; sin ella los lectores caen igual al default de
+     `CONFIG_INICIAL_NEGOCIO`, así que no rompe nada correrla tarde.
    - `migracion_preferencias_negocio.sql` — las dos filas de `configuracion`
      que faltaban (`ventana_notificaciones_horas`, `stock_minimo_default`),
      con los mismos valores que ya eran el comportamiento hardcodeado. No
@@ -355,6 +360,32 @@ Puntos importantes de este diseño:
   WhatsApp usen la misma función es lo que evita que se contradigan.
   (`inventario_tabla.js` **sigue** pintando sus badges con otro criterio, un
   `< 5` fijo: es una diferencia preexistente, del lado del cliente.)
+- **Reposición al proveedor** (`consultar_reposicion.php` +
+  `reposicion_tabla.js`, prefijo `rep-`, sólo `dueño`): qué pedir y cuánto. Es
+  el espejo del riesgo de quiebre — aquél avisa que algo se acaba, éste dice
+  cuántas unidades comprar y cuánto sale el pedido.
+  La cuenta es `punto_pedido = venta_diaria * dias_entrega * (1 +
+  factor_seguridad)` y `sugerido = venta_diaria * dias_objetivo -
+  stock_actual`, con los tres parámetros en `configuracion`
+  (`reposicion_dias_entrega` 7, `reposicion_dias_objetivo` 30,
+  `reposicion_factor_seguridad` 1.5) y editables desde Preferencias. **El
+  factor es el único valor decimal de la tabla**, y por eso existe
+  `leer_config_float()`; en el panel va por `guardarCampo` y no por
+  `guardarNumero`, que parsea con `parseInt` y convertiría 1.5 en 1 sin avisar.
+  Dos exclusiones que NO son un olvido y están puestas a propósito:
+  **un producto sin ventas en 90 días no entra en la lista** (no se repone lo
+  que no se vende: eso se liquida — si algún día hay un recomendador de
+  ofertas y un producto aparece en las dos listas, hay un bug de criterio),
+  y **uno con menos de 21 días desde su primera carga tampoco** (con dos
+  semanas de historia, "vendió 3 en 4 días" se proyecta a 67 por mes y alguien
+  va a pedir eso). Los excluidos se cuentan en `diagnostico` y el panel los
+  muestra, para poder contestar "¿por qué no aparece tal producto?" sin entrar
+  a la base.
+  **El texto para WhatsApp sale agrupado por proveedor**, no como una lista
+  corrida: un pedido se le manda a UN proveedor, y una lista mezclada de seis
+  hay que editarla a mano antes de mandarla — justo el trabajo que el botón
+  vino a evitar. El `navigator.clipboard` tiene respaldo en un `<textarea>`
+  porque no existe fuera de contexto seguro, y el sistema se usa por LAN.
 - **Métricas del modelo** (`consultar_metricas_ia.php` + `metricas_ia.js`,
   prefijo `mia-`, sólo `dueño`): el panel que lee `correcciones_ia`, la tabla
   que la Red de Seguridad viene llenando desde que arrancó el piloto y que

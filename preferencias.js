@@ -188,6 +188,29 @@ function initPreferencias(contenedor) {
           </div>
         </div>
 
+        <div class="prf-separador"></div>
+
+        <div class="prf-grupo">
+          <p class="prf-grupo-titulo">Reposición al proveedor</p>
+          <div class="prf-campos">
+            <div class="prf-campo">
+              <label for="prfDiasEntrega">Días de entrega</label>
+              <input type="number" id="prfDiasEntrega" min="1" max="120" step="1">
+              <span class="prf-hint">Cuánto tarda el proveedor desde que le pedís hasta que llega.</span>
+            </div>
+            <div class="prf-campo">
+              <label for="prfDiasObjetivo">Días de mercadería a pedir</label>
+              <input type="number" id="prfDiasObjetivo" min="1" max="365" step="1">
+              <span class="prf-hint">Para cuántos días de venta se pide. 30 = un mes.</span>
+            </div>
+            <div class="prf-campo">
+              <label for="prfFactorSeguridad">Colchón de seguridad</label>
+              <input type="number" id="prfFactorSeguridad" min="0" max="5" step="0.1">
+              <span class="prf-hint">Extra sobre lo que se vende durante la entrega. 1.5 = pedí con un 50% de margen.</span>
+            </div>
+          </div>
+        </div>
+
         <div id="prfBloqueDemo" hidden>
           <div class="prf-separador"></div>
           <div class="prf-grupo" style="margin-top:18px;">
@@ -226,6 +249,9 @@ function initPreferencias(contenedor) {
   const inputVencimiento = contenedor.querySelector("#prfVencimiento");
   const inputVentana = contenedor.querySelector("#prfVentana");
   const inputStockMinimo = contenedor.querySelector("#prfStockMinimo");
+  const inputDiasEntrega = contenedor.querySelector("#prfDiasEntrega");
+  const inputDiasObjetivo = contenedor.querySelector("#prfDiasObjetivo");
+  const inputFactorSeguridad = contenedor.querySelector("#prfFactorSeguridad");
   const botonProbar = contenedor.querySelector("#prfProbar");
   const hintTelefono = contenedor.querySelector("#prfTelefonoHint");
   const avisoServidor = contenedor.querySelector("#prfAvisoServidor");
@@ -253,6 +279,9 @@ function initPreferencias(contenedor) {
     umbral_dias_vencimiento: 30,
     ventana_notificaciones_horas: 24,
     stock_minimo_default: 5,
+    reposicion_dias_entrega: 7,
+    reposicion_dias_objetivo: 30,
+    reposicion_factor_seguridad: 1.5,
   };
 
   function marcar(input, clase) {
@@ -270,6 +299,9 @@ function initPreferencias(contenedor) {
     inputVencimiento.value = nuevas.umbral_dias_vencimiento;
     inputVentana.value = nuevas.ventana_notificaciones_horas;
     inputStockMinimo.value = nuevas.stock_minimo_default;
+    inputDiasEntrega.value = nuevas.reposicion_dias_entrega;
+    inputDiasObjetivo.value = nuevas.reposicion_dias_objetivo;
+    inputFactorSeguridad.value = nuevas.reposicion_factor_seguridad;
 
     if (!nuevas.telefono) {
       hintTelefono.className = "prf-hint";
@@ -405,6 +437,23 @@ function initPreferencias(contenedor) {
 
   inputStockMinimo.addEventListener("change", () => {
     guardarNumero(inputStockMinimo, "stock_minimo_default");
+  });
+
+  inputDiasEntrega.addEventListener("change", () => {
+    guardarNumero(inputDiasEntrega, "reposicion_dias_entrega");
+  });
+
+  inputDiasObjetivo.addEventListener("change", () => {
+    guardarNumero(inputDiasObjetivo, "reposicion_dias_objetivo");
+  });
+
+  // Va por guardarCampo y no por guardarNumero: es el único decimal del
+  // panel, y guardarNumero parsea con parseInt (ver su cuerpo), así que un
+  // 1.5 se guardaría como 1 sin que nada avise.
+  inputFactorSeguridad.addEventListener("change", () => {
+    const valor = parseFloat(inputFactorSeguridad.value);
+    if (Number.isNaN(valor) || valor === prefs.reposicion_factor_seguridad) return;
+    guardarCampo(inputFactorSeguridad, "reposicion_factor_seguridad", valor);
   });
 
   botonProbar.addEventListener("click", async () => {
