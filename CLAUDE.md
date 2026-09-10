@@ -36,6 +36,12 @@ todo:
      cola de avisos) y las tres filas de `configuracion` por negocio. Deja
      todo **desactivado**: después de correrla no sale ningún mensaje hasta
      que un dueño cargue su número en el panel.
+   - `migracion_ofertas.sql` — la tabla `ofertas` (precio promocional con
+     vigencia), que usa `carteles.html`. **Su FK de producto es simple y no
+     compuesta**, a diferencia de `schema.sql`: la compuesta necesita el índice
+     `uq_productos_id_negocio`, que crea la PARTE B de
+     `migracion_multitenant.sql`. El archivo trae el ALTER comentado para
+     subirla cuando esa parte se haya corrido.
    - `migracion_reposicion.sql` — las tres filas de `configuracion` de la
      lista de reposición (`reposicion_dias_entrega`,
      `reposicion_dias_objetivo`, `reposicion_factor_seguridad`). Aditiva e
@@ -360,6 +366,38 @@ Puntos importantes de este diseño:
   WhatsApp usen la misma función es lo que evita que se contradigan.
   (`inventario_tabla.js` **sigue** pintando sus badges con otro criterio, un
   `< 5` fijo: es una diferencia preexistente, del lado del cliente.)
+- **Carteles de góndola** (`carteles.html` + `consultar_carteles.php` +
+  `guardar_oferta.php`, sólo `dueño`, se entra por el menú del negocio): elegís
+  productos, se arma una hoja A4 con 6 u 8 carteles y se imprime con `Ctrl+P`.
+  **Sin biblioteca de PDF**: con la impresión del navegador alcanza y sobra, y
+  sale mejor (el navegador conoce la impresora y el papel real). El proyecto ya
+  sirve jsPDF para el reporte del panel; sumarlo acá sería pagar 300 KB para
+  hacer peor algo que ya funciona.
+  **Las reglas de impresión no son las de pantalla, y por eso el cartel no usa
+  las variables del tema**: fondo blanco y texto casi negro fijos (el modo
+  oscuro se chupa un cartucho por hoja), precio en 56pt con 6 por hoja y 44pt
+  con 8 —tiene que leerse desde dos metros—, nada por debajo de 12pt, y **todo
+  el cartel es escala de grises**, porque la mayoría de los comercios imprime
+  en blanco y negro: la banda de OFERTA es negra con texto blanco y no de
+  color, y el precio anterior se distingue por el tachado, no por el tono.
+  Dos detalles que se rompen solos si se tocan: la banda necesita
+  `print-color-adjust:exact` (sin eso el navegador descarta el fondo negro al
+  imprimir y queda texto blanco sobre blanco, invisible), y las alturas están
+  en mm calculadas contra el A4 útil (93.6mm × 3 filas y 70.2mm × 4 = 281mm)
+  para que entren exactamente 6 u 8 sin partir ninguno.
+  **La oferta se carga desde la misma pantalla que la imprime.** No hay módulo
+  de promociones ni recomendador; antes que dejar media función esperando uno,
+  el circuito se cierra acá: escribís el precio, elegís hasta cuándo, imprimís.
+  `ofertas.precio_anterior` es un **snapshot**, por el mismo motivo que
+  `ventas.costo_unitario`: el número tachado tiene que ser el precio que regía
+  cuando se armó la oferta, no el de hoy, o un aumento de lista cambiaría el
+  cartel que ya está pegado en la góndola.
+  **LO QUE NO HACE: la caja NO cobra el precio de oferta.**
+  `registrar_venta.php` sigue usando `productos.precio_venta`. Es una
+  limitación real y la pantalla la dice en pantalla, no sólo en un comentario.
+  Engancharlas es una decisión aparte: hay que resolver qué pasa con el
+  snapshot de `ventas.precio_unitario`, con los márgenes históricos y con lo
+  que responde el chatbot.
 - **Reposición al proveedor** (`consultar_reposicion.php` +
   `reposicion_tabla.js`, prefijo `rep-`, sólo `dueño`): qué pedir y cuánto. Es
   el espejo del riesgo de quiebre — aquél avisa que algo se acaba, éste dice
@@ -474,6 +512,17 @@ el esquema de base de datos tabla por tabla, y las convenciones de nombres.
   cuota, y un 502 manda a revisar el servidor que es justo lo que no hay
   que tocar). Ojo con el uso: los términos de Groq **no permiten abrir
   cuentas extra para esquivar los límites del plan gratuito**.
+- **La base real está en la PARTE A del multi-tenant, no en la B.** Verificado
+  el 09/09/2026 sobre `stockiate`: no existe `uq_productos_id_negocio`,
+  `negocio_id` sigue siendo NULLable en 7 tablas, y **ninguna tabla tiene FK
+  compuesta** — `ventas`, `lotes_stock` y `correcciones_ia` apuntan a
+  `productos(id)` a secas. O sea que el aislamiento entre negocios que esta
+  guía describe hoy lo sostiene **sólo el código PHP**: la red de contención
+  del motor no está puesta.
+  La buena noticia es que **la PARTE B se puede correr**: no hay un solo
+  `negocio_id` en NULL (productos 61/0, ventas 89/0, lotes 111/0,
+  correcciones 111/0, proveedores 10/0, usuarios 19/0). Es descomentarla y
+  correrla; hacerlo también habilita subir la FK de `ofertas` a compuesta.
 - **El backup NO es opcional, y la restauración hay que probarla.**
   `scripts/backup_stockiate.sh` (cron diario) + `scripts/restaurar_backup.sh`,
   configurados por `scripts/backup.conf` (gitignoreado, tiene la contraseña).

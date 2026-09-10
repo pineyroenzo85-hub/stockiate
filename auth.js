@@ -305,6 +305,16 @@ function mostrarBandaDemo() {
     }
     #stockiate-banda-demo span{ font-weight:500; text-transform:none; letter-spacing:0; opacity:.85; }
     body{ padding-top:32px !important; }
+
+    /* Al imprimir, la banda deja de ser fija. Fija se repetiría arriba de
+       CADA hoja y correría 32px hacia abajo todo el contenido de todas, que
+       en carteles.html rompe la grilla A4 entera. Estática sale una sola vez,
+       arriba del documento, que es lo que hace falta: que una impresión de la
+       demo no se pueda confundir con una del piloto. */
+    @media print{
+      #stockiate-banda-demo{ position:static; border-bottom:1px solid #000; }
+      body{ padding-top:0 !important; }
+    }
   `;
   document.head.appendChild(estilo);
 

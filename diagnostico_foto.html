@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>stockIAte — Diagnóstico de detección</title>
+<!--
+  Página de diagnóstico (NO es parte del flujo de la app).
+
+  Sirve para responder una sola pregunta cuando alguien dice "la IA no me
+  detecta nada": ¿es el modelo que no ve el envase, o es el pipeline del
+  cliente (resize/compresión) el que lo rompe antes de subirlo?
+
+  Manda LA MISMA foto por tres caminos y compara:
+    1. tal cual salió de la cámara / del disco
+    2. como la manda la app hoy (redimensionarImagen de image_utils.js)
+    3. re-encodeada a JPEG q=0.8 sin achicar (el comportamiento viejo)
+
+  Si (1) detecta y (2) o (3) no, el problema es la compresión.
+  Si ninguna detecta, el modelo no ve ese envase.
+
+  No necesita sesión: /procesar-imagen no pide login.
+-->
+<link rel="stylesheet" href="styles.css">
+<style>
+  body { padding: 24px; }
+  .dx-wrap { max-width: 860px; margin: 0 auto; }
+  .dx-drop { border: 2px dashed #2b3350; border-radius: 14px; padding: 28px; text-align: center; cursor: pointer; background: #161b29; }
+  .dx-drop:hover { border-color: #7c5cff; }
+  .dx-tabla { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13.5px; }
+  .dx-tabla th, .dx-tabla td { padding: 10px 12px; border-bottom: 1px solid #232a3d; text-align: left; vertical-align: top; }
+  .dx-tabla th { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: #5c6480; }
+  .dx-si { color: #3ddc84; font-weight: 700; }
+  .dx-no { color: #ff5c72; font-weight: 700; }
+  .dx-veredicto { margin-top: 20px; padding: 16px; border-radius: 12px; line-height: 1.55; font-size: 14px; }
+  .dx-veredicto.compresion { background: rgba(255,181,71,.12); border: 1px solid rgba(255,181,71,.4); color: #ffb547; }
+  .dx-veredicto.modelo { background: rgba(255,92,114,.12); border: 1px solid rgba(255,92,114,.4); color: #ff5c72; }
+  .dx-veredicto.ok { background: rgba(61,220,132,.12); border: 1px solid rgba(61,220,132,.4); color: #3ddc84; }
+  .dx-mono { font-family: ui-monospace, Consolas, monospace; font-size: 12px; color: #9aa1b5; }
+  .dx-nota { color: #5c6480; font-size: 12.5px; margin-top: 18px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="dx-wrap">
+  <h1 style="font-size:20px;margin:0 0 6px;">Diagnóstico de detección</h1>
+  <p style="color:#9aa1b5;font-size:13.5px;margin:0 0 20px;">
+    Elegí la foto que <strong>no te detecta</strong>. La mando por tres caminos distintos
+    y comparo, para separar "el modelo no lo ve" de "la app lo rompe al comprimir".
+  </p>
+
+  <label class="dx-drop" for="dx-file">
+    <div style="font-size:34px;">📷</div>
+    <div style="margin-top:8px;font-weight:600;">Elegí la foto</div>
+    <div style="color:#5c6480;font-size:12.5px;margin-top:4px;">Sacala del celular o arrastrá el archivo</div>
+    <input type="file" id="dx-file" accept="image/*" hidden>
+  </label>
+
+  <div id="dx-estado" style="margin-top:16px;color:#9aa1b5;font-size:13px;"></div>
+  <div id="dx-resultado"></div>
+</div>
+
+<script src="config.js?v=1"></script>
+<script src="image_utils.js?v=2"></script>
+<script>
+const dxEstado = document.getElementById("dx-estado");
+const dxResultado = document.getElementById("dx-resultado");
+
+// Re-encode SIN achicar, a la calidad que usaba la app antes del arreglo.
+// Es la variante que rompía la detección en fotos que ya eran chicas.
+async function dxReencodear(archivo, calidad) {
+  const bmp = await createImageBitmap(archivo, { imageOrientation: "from-image" });
+  const canvas = document.createElement("canvas");
+  canvas.width = bmp.width;
+  canvas.height = bmp.height;
+  canvas.getContext("2d").drawImage(bmp, 0, 0);
+  return await new Promise(r => canvas.toBlob(r, "image/jpeg", calidad));
+}
+
+async function dxMedir(blob) {
+  const fd = new FormData();
+  fd.append("imagen", blob, "captura.jpg");
+  const t0 = performance.now();
+  const resp = await fetch(URL_IA_PROCESAR_IMAGEN, {
+    method: "POST",
+    headers: { ...STOCKIATE_HEADERS },
+    body: fd,
+  });
+  const data = await resp.json();
+  return {
+    ok: resp.ok,
+    dets: data.conteo_total || 0,
+    ocr: (data.detecciones || []).map(d => d.clase || "(sin OCR)"),
+    offline: !!data.modo_offline,
+    ms: Math.round(performance.now() - t0),
+  };
+}
+
+async function dxDimensiones(blob) {
+  try {
+    const b = await createImageBitmap(blob);
+    return `${b.width}×${b.height}`;
+  } catch { return "?"; }
+}
+
+document.getElementById("dx-file").addEventListener("change", async (e) => {
+  const archivo = e.target.files[0];
+  if (!archivo) return;
+
+  dxResultado.innerHTML = "";
+  dxEstado.textContent = "Probando los tres caminos contra el modelo, aguantá…";
+
+  try {
+    const comoLaMandaLaApp = await redimensionarImagen(archivo);
+    const viejoQ08 = await dxReencodear(archivo, 0.8);
+
+    const variantes = [
+      { nombre: "1. Original (sin tocar)", blob: archivo,
+        detalle: "Tal cual salió de la cámara o del disco." },
+      { nombre: "2. Como la manda la app", blob: comoLaMandaLaApp,
+        detalle: comoLaMandaLaApp === archivo
+          ? "No la tocó: ya entraba en el límite de tamaño."
+          : "La achicó y re-encodeó a JPEG." },
+      { nombre: "3. JPEG q=0.8 sin achicar", blob: viejoQ08,
+        detalle: "El comportamiento viejo de image_utils.js." },
+    ];
+
+    const filas = [];
+    for (const v of variantes) {
+      const dim = await dxDimensiones(v.blob);
+      const r = await dxMedir(v.blob);
+      filas.push({ ...v, dim, ...r });
+    }
+
+    dxEstado.textContent = "";
+    dxResultado.innerHTML = `
+      <table class="dx-tabla">
+        <thead><tr><th>Camino</th><th>Tamaño</th><th>Detecta</th><th>Qué leyó el OCR</th></tr></thead>
+        <tbody>
+          ${filas.map(f => `
+            <tr>
+              <td><strong>${f.nombre}</strong><div class="dx-mono">${f.detalle}</div></td>
+              <td class="dx-mono">${(f.blob.size/1024).toFixed(0)} KB<br>${f.dim}</td>
+              <td class="${f.dets > 0 ? "dx-si" : "dx-no"}">${f.offline ? "OFFLINE" : (f.dets > 0 ? `SÍ (${f.dets})` : "NO")}</td>
+              <td class="dx-mono">${f.ocr.length ? f.ocr.join("<br>") : "—"}</td>
+            </tr>`).join("")}
+        </tbody>
+      </table>
+    `;
+
+    const [orig, app] = filas;
+    let clase, texto;
+
+    if (filas.some(f => f.offline)) {
+      clase = "modelo";
+      texto = "<strong>No se pudo hablar con el servicio de IA.</strong> Revisá que uvicorn esté corriendo en el puerto 8000.";
+    } else if (orig.dets === 0) {
+      clase = "modelo";
+      texto = "<strong>El modelo no ve el envase en esta foto</strong>, ni siquiera sin comprimir. " +
+              "No es la app: es el detector. Probá con el envase completo en cuadro, buena luz y un fondo que contraste — " +
+              "los productos claros sobre fondo blanco son los que más se le escapan.";
+    } else if (app.dets === 0) {
+      clase = "compresion";
+      texto = "<strong>El modelo SÍ ve la foto original, pero la app la rompe al prepararla.</strong> " +
+              "Pasá este resultado: es un bug del pipeline del cliente, no del modelo.";
+    } else {
+      clase = "ok";
+      texto = "<strong>Esta foto detecta bien por el camino de la app.</strong> " +
+              "Si en la pantalla de carga te da cero, el problema no está en la imagen: " +
+              "mirá que el navegador no tenga JS viejo en caché (Ctrl+Shift+R).";
+    }
+
+    dxResultado.insertAdjacentHTML("beforeend", `<div class="dx-veredicto ${clase}">${texto}</div>`);
+    dxResultado.insertAdjacentHTML("beforeend", `<p class="dx-nota">
+      Las clases crudas que devuelve YOLO (<span class="dx-mono">remote</span>,
+      <span class="dx-mono">cell phone</span>, <span class="dx-mono">person</span>…) son las 80 de COCO
+      y no significan nada acá: el nombre del producto sale siempre del OCR, nunca de la clase.
+      Quedan en el log de uvicorn para diagnóstico.
+    </p>`);
+  } catch (err) {
+    console.error(err);
+    dxEstado.textContent = "Falló el diagnóstico: " + err.message;
+  }
+});
+</script>
+</body>
+</html>
