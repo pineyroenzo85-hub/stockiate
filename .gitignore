@@ -18,3 +18,8 @@ __pycache__/
 # Config del backup: tiene la contraseña de MySQL. La plantilla sin valores,
 # que sí va a git, es scripts/backup.conf.example.
 scripts/backup.conf
+
+# Logos que suben los negocios: son datos de cada instalación, no del
+# proyecto. La carpeta sí va (con su .htaccess y su .gitkeep), el contenido no.
+uploads/logos/*
+!uploads/logos/.gitkeep

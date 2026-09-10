@@ -49,6 +49,25 @@ const CONFIG_INICIAL_NEGOCIO = [
     // consumo. 1.5 = "pedí cuando te quede el tiempo de entrega más un 50%".
     // Es el único valor decimal de la tabla: se lee con leer_config_float().
     'reposicion_factor_seguridad' => '1.5',
+    // --- Diseño del cartel de góndola (carteles.html) ---
+    // Los tamaños van en PUNTOS, no en píxeles: la unidad de destino es una
+    // hoja A4. Los rangos los valida `guardar_cartel_config.php`, que es quien
+    // garantiza que el precio nunca baje de 40pt ni el resto de 12pt --
+    // debajo de eso el cartel deja de leerse desde la góndola, que es lo único
+    // que tiene que hacer.
+    'cartel_diseno' => 'clasico',
+    'cartel_precio_pt' => '56',
+    'cartel_nombre_pt' => '15',
+    'cartel_mostrar_marca' => '1',
+    'cartel_mostrar_sku' => '1',
+    'cartel_mostrar_vencimiento' => '1',
+    // Texto libre corto al pie de cada cartel: el nombre del local, una
+    // dirección, "precios con IVA".
+    'cartel_texto_pie' => '',
+    // Nombre del archivo dentro de uploads/logos/, no una ruta: la carpeta la
+    // decide el servidor. Ver `subir_logo.php`.
+    'cartel_logo' => '',
+    'cartel_logo_posicion' => 'arriba',
     'whatsapp_telefono' => '',
     'whatsapp_activo' => '0',
     'whatsapp_hora_resumen' => '20:00',

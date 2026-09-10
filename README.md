@@ -184,3 +184,37 @@ DROP DATABASE stockiate_restore_test;
 
 Si los cinco pasos dan bien, el backup está probado. Anotá la fecha en que lo
 hiciste.
+
+## Carteles de góndola
+
+Se entra desde el panel: el chip del negocio -> **🏷 Carteles**. Elegís
+productos, se arma una hoja A4 con 6 u 8 carteles y se imprime con `Ctrl+P`.
+No hace falta ninguna biblioteca de PDF.
+
+El diseño se puede personalizar y **queda guardado para el negocio**: cuál de
+los tres diseños usar, el tamaño del precio y del nombre, qué campos mostrar,
+un texto al pie y el logo del comercio.
+
+Los tamaños se mueven **dentro de un rango**: el precio nunca baja de 40 pt ni
+el resto de 12 pt. No es una limitación pendiente de levantar — es lo único que
+garantiza que el cartel se lea desde la góndola, que es su único trabajo.
+
+### Para que el logo funcione
+
+Dos cosas del servidor, una sola vez:
+
+1. **Habilitar GD en PHP.** En `C:\xampp\php\php.ini`, sacarle el `;` a la
+   línea `;extension=gd` y reiniciar Apache. Sin esto el resto de la pantalla
+   anda igual y sólo la subida del logo avisa que falta.
+
+   Para verificar: `php -r "var_dump(extension_loaded('gd'));"`
+
+2. **Permiso de escritura en `uploads/logos/`.** En XAMPP sobre Windows ya
+   está; en Linux, una vez:
+
+   ```bash
+   chown www-data:www-data uploads/logos && chmod 755 uploads/logos
+   ```
+
+Los logos subidos no van a git (son datos de cada instalación), pero la
+carpeta sí, con un `.htaccess` que impide que Apache ejecute nada ahí adentro.

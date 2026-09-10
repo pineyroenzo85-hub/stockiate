@@ -40,6 +40,13 @@ todo:
      libro mayor del inventario. Aditiva: crea una tabla nueva y no toca
      ninguna existente. Su FK de producto también es simple, por el mismo
      motivo que la de `ofertas`.
+   - `migracion_cartel_config.sql` — las nueve filas de `configuracion` del
+     diseño del cartel (`cartel_diseno`, `cartel_precio_pt`, el logo, etc.).
+     Aditiva e idempotente, y siembra exactamente los valores que el cartel
+     tenía escritos en el CSS antes de que esto se pudiera configurar, así que
+     un negocio que migre y no toque nada imprime carteles idénticos.
+     **Además hace falta que `uploads/logos/` tenga permiso de escritura** y
+     que `extension=gd` esté habilitada en `php.ini`.
    - `migracion_ofertas.sql` — la tabla `ofertas` (precio promocional con
      vigencia), que usa `carteles.html`. **Su FK de producto es simple y no
      compuesta**, a diferencia de `schema.sql`: la compuesta necesita el índice
@@ -51,6 +58,12 @@ todo:
      `reposicion_dias_objetivo`, `reposicion_factor_seguridad`). Aditiva e
      idempotente; sin ella los lectores caen igual al default de
      `CONFIG_INICIAL_NEGOCIO`, así que no rompe nada correrla tarde.
+   - `migracion_reset_password.sql` — la tabla `password_resets` (los tokens
+     del "olvidé mi contraseña") y la columna `usuarios.password_cambiado_en`,
+     que es lo que echa a las sesiones abiertas al resetear. Aditiva: crea una
+     tabla nueva y suma una columna NULLable, así que es segura con el código
+     viejo andando. Sin ella el sistema anda igual y el reseteo simplemente no
+     funciona.
    - `migracion_preferencias_negocio.sql` — las dos filas de `configuracion`
      que faltaban (`ventana_notificaciones_horas`, `stock_minimo_default`),
      con los mismos valores que ya eran el comportamiento hardcodeado. No
@@ -230,6 +243,48 @@ Puntos importantes de este diseño:
   link se copia a mano. `info_invitacion.php` es público a propósito, para
   que `invitacion.html` muestre "te invitaron a X" antes de que la persona
   tenga sesión, pero expone sólo `negocio_nombre`/`email`/`rol`.
+- **Recuperación de contraseña: por email, y es el ÚNICO camino que no
+  depende de otra persona.** `login.html` -> `olvide_password.html` ->
+  `solicitar_reset.php` -> mail con `recuperar.html?token=` ->
+  `info_reset.php` (¿sirve el link?) -> `restablecer_password.php`.
+  Se agregó un mailer (`mailer.php` + `vendor/phpmailer/`, tres archivos sin
+  Composer) porque las invitaciones se copian a mano justamente por no
+  haberlo, y eso no sirve para el caso que hay que cubrir: **el `dueño` es el
+  único al que nadie puede resetearle la contraseña**. Se configura con el
+  bloque SMTP del `.env` (con Gmail va una **contraseña de aplicación**, no la
+  de la cuenta) y se prueba con `php probar_mail.php <tu-mail>`.
+  Cinco decisiones que parecen de más y no lo son:
+  **se guarda el SHA-256 del token, no el token** (a diferencia de
+  `invitaciones`, que lo guarda en claro y está bien: aquél crea una cuenta
+  nueva, éste abre una existente con las ventas adentro — si alguien lee la
+  tabla, con los tokens en claro se lleva las cuentas);
+  **`solicitar_reset.php` responde SIEMPRE lo mismo**, exista o no la cuenta,
+  esté o no agotado el límite de 3 por hora y falle o no el mail, porque si
+  distinguiera sería un enumerador de cuentas — la contracara es que no puede
+  decir qué falló, y por eso el error crudo del SMTP se guarda en
+  `password_resets.error` y existe `probar_mail.php`;
+  **la base del link sale de `APP_BASE_URL` y no del header `Host`**, que lo
+  elige quien manda el request (con el `Host` sale el agujero clásico: le
+  llega a la víctima un mail legítimo cuyo link apunta al servidor del
+  atacante);
+  **pedir un link nuevo anula los anteriores**, para que no queden tres llaves
+  vivas dando vueltas por la casilla;
+  y **no hay auto-login** al terminar, a diferencia de
+  `aceptar_invitacion.php`, porque el objetivo es que después del reseteo no
+  quede ninguna sesión viva.
+- **Cambiar la contraseña echa a las sesiones abiertas, y eso es lo que hace
+  que el reseteo sirva de algo.** El caso a cubrir es "me entraron a la
+  cuenta": si el atacante ya tiene su cookie, cambiar la contraseña sin
+  echarlo lo deja adentro igual que antes. Las sesiones de PHP son archivos en
+  disco y no se pueden barrer por usuario, así que va indirecto:
+  `establecer_sesion()` guarda en la sesión la foto de
+  `usuarios.password_cambiado_en` al momento del login, y `sesion_actual()`
+  la compara contra la base en cada request. **Cuesta un SELECT por PK por
+  request en todos los endpoints** y se paga a propósito.
+  Si no se puede consultar (MySQL caído, o la migración sin correr y la
+  columna inexistente), `estado_usuario_en_base()` devuelve `false` y **no se
+  decide nada**: la sesión sigue. Un hipo de MySQL no puede desloguear a todo
+  el mundo.
 - `administrador.html` **usa datos reales** de MySQL (KPIs y tabla de
   inventario salen de `consultar_inventario.php` vía `inventario_tabla.js`);
   lo único fijo es la KPI "Estado del Servidor IA". El chatbot tampoco es
@@ -412,6 +467,35 @@ Puntos importantes de este diseño:
   imprimir y queda texto blanco sobre blanco, invisible), y las alturas están
   en mm calculadas contra el A4 útil (93.6mm × 3 filas y 70.2mm × 4 = 281mm)
   para que entren exactamente 6 u 8 sin partir ninguno.
+  **El diseño del cartel es configurable, pero acotado.** El dueño elige entre
+  tres diseños, mueve el tamaño del precio y del nombre, muestra u oculta
+  marca / SKU / vigencia, escribe un texto al pie y sube el logo del negocio
+  (`consultar_cartel_config.php` / `guardar_cartel_config.php` / `subir_logo.php`,
+  todo guardado en `configuracion` con prefijo `cartel_`).
+  **Lo que NO se puede hacer es subir una plantilla HTML propia**, y es una
+  decisión, no algo que falte: sería el primer lugar del sistema que renderiza
+  HTML escrito por un usuario, en el mismo origen donde vive la cookie de
+  sesión; y tiraría abajo las garantías medidas que hacen útil la pantalla
+  (precio legible a dos metros, piso de 12pt, escala de grises, alturas que
+  hacen entrar 6 u 8 exactos).
+  Por eso **el piso lo aplica el servidor y el cliente**, no el `min` del
+  input: `CARTEL_LIMITES` (`cartel_config.php`) lo valida al guardar y
+  `crtPuntos()` (carteles.html) lo vuelve a aplicar al dibujar, porque además
+  del valor elegido hay dos factores que sólo existen en el cliente —el diseño
+  y cuántos carteles entran por hoja—. Con 8 por hoja todo se escala a 0.78
+  **pero nunca por debajo del piso**: un cartel apretado es mejor que uno
+  ilegible.
+  Los tamaños llegan al CSS como custom properties (`--crt-pt-precio`, etc.)
+  calculadas en JS y no con `calc()`, justamente porque `calc()` no sabe
+  recortar contra un piso.
+  **El logo es la primera y única subida de archivos del proyecto** y por eso
+  `subir_logo.php` es más paranoico que sus vecinos: el tipo sale de
+  `getimagesize()` (no de la extensión ni del `Content-Type`, que los elige
+  quien sube), el nombre lo inventa el servidor, la imagen se **re-encodea con
+  GD** —que es lo que destruye cualquier PHP escondido en los metadatos— y
+  `uploads/.htaccess` apaga la ejecución de código en esa carpeta como última
+  red. **Necesita `extension=gd` habilitada en `php.ini`**; si falta, el
+  endpoint lo dice con un mensaje que explica qué activar en vez de romperse.
   **La oferta se carga desde la misma pantalla que la imprime.** No hay módulo
   de promociones ni recomendador; antes que dejar media función esperando uno,
   el circuito se cierra acá: escribís el precio, elegís hasta cuándo, imprimís.
@@ -593,6 +677,29 @@ el esquema de base de datos tabla por tabla, y las convenciones de nombres.
   y `fetchApi()` (manda la cookie y expulsa ante 401). Falsear el
   `localStorage` sólo consigue ver un cascarón vacío ~200 ms: todos los
   datos los sirve PHP contra `$_SESSION`.
+- **El reloj de PHP y el de MySQL NO son el mismo, y hay 5 horas de
+  diferencia.** Medido el 10/09/2026 en esta máquina: `php.ini` tiene
+  `date.timezone = Europe/Berlin` y MySQL corre en hora local (UTC-3), así que
+  `date()` dice 21:26 mientras `NOW()` dice 16:26. La consecuencia es que
+  **cualquier vencimiento comparado con `strtotime($fila['columna']) < time()`
+  está mal por cinco horas**.
+  Se descubrió construyendo el reseteo de contraseña: un token de una hora
+  nacía vencido, siempre, con el mensaje "este link venció" que manda a buscar
+  el problema en cualquier otro lado. La solución es no comparar en PHP:
+  `motivo_reset_invalido()` usa un `(expira_at <= NOW())` calculado dentro de
+  la query, así los dos lados salen del mismo reloj y da igual cómo esté
+  configurado el otro.
+  **Ya no queda ningún lugar con el patrón viejo.** Lo tenían
+  `aceptar_invitacion.php` e `info_invitacion.php`, donde el desfasaje hacía
+  que una invitación de 7 días venciera a los 6 días y 19 horas — cinco horas
+  sobre siete días no se notan, y por eso el bug estuvo ahí sin que nadie lo
+  viera. Los dos leen la misma invitación y por eso había que arreglarlos
+  juntos: con uno solo corregido, la previa diría "válida" y el canje
+  "vencida" sobre el mismo link. El que escribe (`crear_invitacion.php`)
+  siempre estuvo bien, porque su chequeo de duplicados ya compara con
+  `expira_at > NOW()` dentro de la query.
+  Los `strtotime()` que quedan en el repo son otra cosa (`strtotime('-30
+  days')` para armar el rango de un reporte), no comparaciones de vencimiento.
 - **`usuarios.email` es UNIQUE global**, no por negocio: una persona = una
   cuenta = un negocio. Si alguien trabaja en dos comercios necesita dos
   emails. Es una decisión consciente (`iniciar_sesion.php` busca sólo por
