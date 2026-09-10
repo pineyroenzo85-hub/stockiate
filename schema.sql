@@ -201,6 +201,52 @@ CREATE TABLE ventas (
 );
 
 -- ------------------------------------------------------------
+-- MOVIMIENTOS DE STOCK (el libro mayor del inventario)
+-- ------------------------------------------------------------
+-- Una fila por cada vez que cambia `productos.stock_actual`, sin importar
+-- quién ni por qué. Antes, las entradas quedaban en `lotes_stock`, las
+-- salidas por venta en `ventas`, y los ajustes de los botones +/- del panel
+-- NO QUEDABAN EN NINGÚN LADO: si el sistema decía 12 y en la góndola había 9,
+-- no había forma de saber si faltaba mercadería, si alguien había tocado un
+-- botón de más, o si una venta se había registrado mal.
+--
+-- `stock_anterior` y `stock_nuevo` parecen redundantes con `delta` y no lo
+-- son: con ellos cada fila se valida sola (`anterior + delta = nuevo`) y
+-- cualquier salto entre el `stock_nuevo` de un movimiento y el
+-- `stock_anterior` del siguiente señala exactamente dónde alguien escribió por
+-- afuera del libro. Sin ellos habría que sumar la historia entera desde el
+-- principio, y un solo movimiento perdido arrastraría el error hacia adelante
+-- sin que nada lo delate.
+--
+-- La escritura vive en `movimientos.php` (`registrar_movimiento()`), y va
+-- SIEMPRE dentro de la misma transacción que el UPDATE del stock -- al revés
+-- que el encolado de notificaciones, que va después del commit a propósito.
+CREATE TABLE movimientos_stock (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    negocio_id INT NOT NULL,
+    producto_id INT NOT NULL,
+    -- carga: entró mercadería · venta: salió por caja · ajuste: los +/- del
+    -- panel · conteo: se corrigió contra un conteo físico
+    motivo ENUM('carga', 'venta', 'ajuste', 'conteo') NOT NULL,
+    delta INT NOT NULL,              -- con signo; nunca 0
+    stock_anterior INT NOT NULL,
+    stock_nuevo INT NOT NULL,
+    -- A qué fila de otra tabla corresponde, cuando corresponde a alguna. Va
+    -- como (tipo, id) y no como una FK por destino posible: serían tres
+    -- columnas nullables que casi siempre están vacías.
+    referencia_tipo VARCHAR(20) NULL,
+    referencia_id INT NULL,
+    usuario_id INT NULL,
+    fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (negocio_id) REFERENCES negocios(id),
+    FOREIGN KEY (producto_id, negocio_id) REFERENCES productos(id, negocio_id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
+    KEY idx_mov_producto_fecha (negocio_id, producto_id, fecha),
+    KEY idx_mov_negocio_fecha (negocio_id, fecha),
+    KEY idx_mov_referencia (referencia_tipo, referencia_id)
+);
+
+-- ------------------------------------------------------------
 -- CORRECCIONES DE IA (feedback loop - Red de Seguridad)
 -- Registra cada vez que el repositor corrige lo que detectó YOLO
 -- ------------------------------------------------------------

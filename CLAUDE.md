@@ -36,6 +36,10 @@ todo:
      cola de avisos) y las tres filas de `configuracion` por negocio. Deja
      todo **desactivado**: después de correrla no sale ningún mensaje hasta
      que un dueño cargue su número en el panel.
+   - `migracion_movimientos_stock.sql` — la tabla `movimientos_stock`, el
+     libro mayor del inventario. Aditiva: crea una tabla nueva y no toca
+     ninguna existente. Su FK de producto también es simple, por el mismo
+     motivo que la de `ofertas`.
    - `migracion_ofertas.sql` — la tabla `ofertas` (precio promocional con
      vigencia), que usa `carteles.html`. **Su FK de producto es simple y no
      compuesta**, a diferencia de `schema.sql`: la compuesta necesita el índice
@@ -366,6 +370,29 @@ Puntos importantes de este diseño:
   WhatsApp usen la misma función es lo que evita que se contradigan.
   (`inventario_tabla.js` **sigue** pintando sus badges con otro criterio, un
   `< 5` fijo: es una diferencia preexistente, del lado del cliente.)
+- **`movimientos_stock`: el libro mayor del inventario.** Una fila por cada vez
+  que cambia `productos.stock_actual`. Antes las entradas quedaban en
+  `lotes_stock`, las salidas por venta en `ventas`, y **los ajustes de los
+  botones +/- del panel no quedaban en ningún lado**: si el sistema decía 12 y
+  en la góndola había 9, no había forma de saber si faltaba mercadería, si
+  alguien había tocado un botón de más, o si una venta se había registrado mal.
+  La escritura vive toda en `movimientos.php` (`registrar_movimiento()`), y la
+  llaman `guardar_stock.php` (carga), `registrar_venta.php` (venta) y
+  `actualizar_stock.php` (ajuste).
+  **Va SIEMPRE dentro de la misma transacción que el UPDATE del stock**, que es
+  exactamente lo contrario de `encolar_notificacion()` y a propósito: un
+  WhatsApp que no sale es un aviso perdido, pero un movimiento que no se
+  registra es stock que cambió sin que nadie sepa por qué, o sea el problema
+  que la tabla vino a resolver.
+  `stock_anterior` y `stock_nuevo` **parecen redundantes con `delta` y no lo
+  son**: con ellos cada fila se valida sola y cualquier salto entre el
+  `stock_nuevo` de un movimiento y el `stock_anterior` del siguiente señala
+  dónde alguien escribió por afuera del libro. Sin ellos, un solo movimiento
+  perdido arrastra el error hacia adelante para siempre.
+  Ojo con una cosa al leerla: **la tabla arranca vacía**. La historia anterior
+  a `migracion_movimientos_stock.sql` no existe y no se puede reconstruir, así
+  que la suma de deltas no va a cuadrar con `stock_actual` para los productos
+  que ya venían moviéndose. Sirve de ahí en adelante.
 - **Carteles de góndola** (`carteles.html` + `consultar_carteles.php` +
   `guardar_oferta.php`, sólo `dueño`, se entra por el menú del negocio): elegís
   productos, se arma una hoja A4 con 6 u 8 carteles y se imprime con `Ctrl+P`.
