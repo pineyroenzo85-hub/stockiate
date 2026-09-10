@@ -492,6 +492,12 @@ Puntos importantes de este diseño:
   lado PHP tiene las credenciales de MySQL hardcodeadas en `conexion.php`.
   No comparten configuración.
 
+Los materiales del test de usabilidad (guion del facilitador, planilla,
+cuestionario, consentimiento y la plantilla del capítulo del informe) están en
+[docs/usabilidad/](docs/usabilidad/). El test **se corre en modo demo**, con
+`php seed_demo.php` entre participante y participante: si el segundo encuentra
+el stock ya modificado por el primero, los tiempos dejan de ser comparables.
+
 Ver [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) para el detalle completo:
 tabla de responsabilidades por archivo, los flujos paso a paso con payloads,
 el esquema de base de datos tabla por tabla, y las convenciones de nombres.
