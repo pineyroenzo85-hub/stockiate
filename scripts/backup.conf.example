@@ -1,0 +1,53 @@
+# stockIAte - configuración del backup
+# ============================================================
+# Copiar como `backup.conf` (al lado de este archivo) y completar.
+# El `backup.conf` real NO va a git: tiene la contraseña de MySQL.
+#
+#     cp backup.conf.example backup.conf
+#     chmod 600 backup.conf
+#
+# El chmod no es decorativo: si el archivo es legible por todos, la
+# contraseña de la base la puede leer cualquier usuario del servidor y el
+# backup deja de ser una medida de seguridad para pasar a ser un agujero.
+# `backup_stockiate.sh` se niega a correr si los permisos son más abiertos
+# que 600.
+
+# --- Qué se respalda ---
+DB_NOMBRE=stockiate
+DB_HOST=localhost
+DB_USUARIO=stockiate_backup
+DB_PASSWORD=
+
+# --- Dónde van los archivos ---
+# Se crean dos subcarpetas adentro: `diarios/` y `semanales/`.
+DESTINO=/var/backups/stockiate
+
+# --- Cuánto se guarda ---
+# Los diarios se borran a los 14; los semanales, a los 3. Un backup semanal
+# es una copia del diario de DIA_SEMANAL: no se hace un dump aparte.
+RETENER_DIARIOS=14
+RETENER_SEMANALES=3
+
+# Qué día se guarda además como semanal. Numeración ISO: 1 = lunes,
+# 7 = domingo.
+DIA_SEMANAL=7
+
+# --- La guarda de "falló en silencio" ---
+# Si el .sql.gz pesa menos que esto, el backup se considera fallado y el
+# script sale con código distinto de cero. Un dump vacío o truncado pesa
+# unos pocos cientos de bytes y se ve igual de bien que uno bueno en un
+# `ls`, y un backup que falla en silencio es peor que no tener backup:
+# te da confianza falsa hasta el día que lo necesitás.
+#
+# Ajustalo a algo que sea claramente menor que un backup real de tu base
+# pero mayor que un dump vacío. Con la base del piloto (~40 productos y
+# unos miles de ventas) un dump comprimido ronda los 200 KB.
+TAMANO_MINIMO_BYTES=51200
+
+# --- Binarios ---
+# En un VPS con MySQL/MariaDB instalado alcanza con el nombre. En XAMPP
+# hay que poner la ruta completa, por ejemplo:
+#   MYSQLDUMP=/c/xampp/mysql/bin/mysqldump.exe
+#   MYSQL=/c/xampp/mysql/bin/mysql.exe
+MYSQLDUMP=mysqldump
+MYSQL=mysql

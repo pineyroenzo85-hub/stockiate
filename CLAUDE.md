@@ -474,6 +474,26 @@ el esquema de base de datos tabla por tabla, y las convenciones de nombres.
   cuota, y un 502 manda a revisar el servidor que es justo lo que no hay
   que tocar). Ojo con el uso: los términos de Groq **no permiten abrir
   cuentas extra para esquivar los límites del plan gratuito**.
+- **El backup NO es opcional, y la restauración hay que probarla.**
+  `scripts/backup_stockiate.sh` (cron diario) + `scripts/restaurar_backup.sh`,
+  configurados por `scripts/backup.conf` (gitignoreado, tiene la contraseña).
+  El procedimiento completo está en el [README](README.md). Cuatro cosas que
+  parecen paranoia y no lo son:
+  **la contraseña nunca va en la línea de comandos** (`mysqldump -pclave` se ve
+  en `ps aux`): se escribe un temporal 600 y se pasa con
+  `--defaults-extra-file`;
+  **se chequea que el dump termine con `Dump completed`**, que es lo único que
+  distingue un dump completo de uno cortado a la mitad — un truncado
+  descomprime sin error y pesa parecido;
+  **la retención borra por POSICIÓN y no por antigüedad en días**, porque si el
+  cron estuvo caído una semana, "borrar lo de más de 14 días" vacía la carpeta
+  entera;
+  y **el archivo se llama `.parcial` hasta pasar todas las verificaciones**, así
+  que una corrida muerta a mitad de camino no deja algo que parezca un backup
+  bueno.
+  `restaurar_backup.sh` **se niega a escribir sobre la base de producción** y
+  pide escribir el nombre de la base destino a mano: un "s/n" con un enter de
+  más no puede ser suficiente para borrar una base.
 - **Nunca commitear el `.env`**: contiene las API keys de Roboflow y Groq.
   El repo tiene remoto público en GitHub. Está cubierto por `.gitignore`
   junto con `venv/`, `.venv/` y `__pycache__/`; la plantilla sin valores,
