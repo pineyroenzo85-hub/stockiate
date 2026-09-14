@@ -19,6 +19,10 @@ base de datos y las convenciones del proyecto.
 | `registrar_chatbot_log.php` | PHP/persistencia | Inserta cada intercambio pregunta/respuesta del chatbot en `chatbot_conversaciones`. Lo llama `main.py` en modo best-effort. |
 | `registrar_usuario.php` | PHP/persistencia | Endpoint de registro. Valida y hashea la contraseña (`password_hash`, `PASSWORD_DEFAULT`) e inserta en `usuarios`. Devuelve el usuario creado (sin el hash). |
 | `iniciar_sesion.php` | PHP/persistencia | Endpoint de login. Busca por `email`, valida con `password_verify`, y devuelve el usuario (sin el hash) si coincide. Mensaje de error genérico en ambos casos de fallo (email inexistente o contraseña incorrecta) para no filtrar qué emails están registrados. |
+| `actualizar_usuario.php` | PHP/persistencia | Endpoint de "Mi cuenta" en `ajustes.html`. Actualiza nombre/apellido (email y rol no se editan) y devuelve el usuario actualizado, mismo shape que `iniciar_sesion.php`. |
+| `cambiar_password.php` | PHP/persistencia | Endpoint de "Seguridad" en `ajustes.html`. Verifica la contraseña actual con `password_verify` antes de aceptar la nueva. |
+| `consultar_configuracion.php` | PHP/persistencia | Endpoint de solo lectura sobre la tabla `configuracion` (clave-valor). Lo usa "Preferencias del negocio" en `ajustes.html` para precargar valores. |
+| `actualizar_configuracion.php` | PHP/persistencia | Escribe una clave de `configuracion`, restringido a rol `dueño` (vía el `rol` que manda el body, mismo criterio de confianza que `/chatbot`). Whitelist de claves editables. |
 | `schema.sql` | PHP/persistencia | DDL completo: crea la base `stockiate` y sus tablas (incluye `chatbot_conversaciones`). |
 | `migracion_usuarios_apellido.sql` | PHP/persistencia | Migración puntual para bases creadas con un `schema.sql` anterior sin columna `apellido` en `usuarios`. No hace falta si la base se crea desde cero. |
 | `main.py` | Python/IA | App FastAPI ("Motor de IA"). Expone `/`, `/procesar-imagen`, `/registrar-correccion` y `/chatbot`. No accede a MySQL. |
@@ -31,6 +35,7 @@ base de datos y las convenciones del proyecto.
 | `smoke_test_roboflow.py` | Python/IA (script suelto) | Test de humo manual (no pytest) para verificar conectividad con Roboflow. |
 | `login.html` | Frontend | Formulario de login (email + contraseña). Pega a `iniciar_sesion.php`, guarda el usuario devuelto en `localStorage` (`auth.js`) y redirige al módulo de su rol. |
 | `registro.html` | Frontend | Formulario de registro (nombre, apellido, email, contraseña, rol). Pega a `registrar_usuario.php`; si sale bien, inicia sesión automáticamente igual que `login.html`. |
+| `ajustes.html` | Frontend | Página de configuración de cuenta y de negocio (perfil, contraseña, y — sólo rol `dueño` — `umbral_dias_vencimiento`). Accesible a cualquier rol logueado, `exigirSesion(["repositor","cajero","dueño"])`. Ver "Flujo ajustes". |
 | `auth.js` | Frontend | Sesión de usuario en `localStorage` (sin backend de sesión). Expone `exigirSesion(rolesPermitidos)` — usado como guard sincrónico en `<head>` de cada página protegida —, `cerrarSesion()`, `rutaParaRol()` e `insertarChatbotWidget()`. Lo cargan `landing_page.html`, `login.html`, `registro.html`, `repositor.html`, `cajero.html` y `administrador.html`. |
 | `landing_page.html` | Frontend | Selector de módulo, ahora detrás de `exigirSesion()`: exige sesión iniciada y sólo muestra los paneles que le corresponden al rol logueado (`dueño`/Administrador ve los tres; `repositor`/`cajero` sólo el suyo). |
 | `repositor.html` | Frontend | Flujo de carga de stock (versión vigente). Protegido con `exigirSesion(["repositor", "dueño"])`. |
@@ -147,6 +152,53 @@ confirmar, hace `POST` a
    `usuarioId = 1` hardcodeado que tenían antes `repositor.html` y
    `cajero.html`, y para inyectar el widget del chatbot con el `rol` y
    `usuario_id` reales (`insertarChatbotWidget()`).
+
+### Flujo ajustes
+
+`ajustes.html` es una página propia (no un modal/panel), accesible a
+**cualquier rol logueado** (`exigirSesion(["repositor","cajero","dueño"])`)
+porque es la configuración de la cuenta del usuario, no un módulo
+restringido. Se llega desde el ítem "Ajustes" del menú desplegable en
+`repositor.html`/`cajero.html`, o desde un botón nuevo junto al
+`.user-chip` en `administrador.html` (que no tiene menú desplegable).
+Extiende `styles.css` (no es standalone con tema propio como
+`administrador.html`), reutilizando `.item-card`, `.auth-mensaje`,
+`.fila-doble`, `.btn`/`.btn-primario`/`.btn-secundario` y
+`.menu-desplegable` tal cual — sólo se agregaron dos clases chicas
+(`.ajustes-titulo`, `.campo-solo-lectura`).
+
+Cuatro secciones, cada una con su propio formulario y su propio mensaje de
+resultado (mismo patrón `mostrarMensaje()`/`.auth-mensaje` que
+`login.html`/`registro.html`):
+
+1. **Mi cuenta** — editar nombre/apellido. Email y rol quedan de sólo
+   lectura (el email es la clave única de login, el rol define accesos).
+   `POST actualizar_usuario.php` con `{usuario_id, nombre, apellido}`,
+   devuelve el usuario actualizado con el mismo shape que
+   `iniciar_sesion.php`/`registrar_usuario.php`
+   (`{id,nombre,apellido,email,rol}`). El frontend llama
+   `guardarUsuarioSesion()` con la respuesta para resincronizar
+   `localStorage` — el resto de la app (header, chatbot) sigue leyendo la
+   sesión guardada y no se entera sola de un cambio de nombre.
+2. **Seguridad** — cambiar contraseña. `POST cambiar_password.php` con
+   `{usuario_id, password_actual, password_nueva}`; verifica la actual con
+   `password_verify()` antes de aceptar la nueva (`401` si no coincide),
+   mínimo 6 caracteres igual que en el registro. Validación de
+   confirmación en el cliente antes de pegarle al backend.
+3. **Preferencias del negocio** (sólo visible si `rol === "dueño"`, gating
+   cliente + servidor) — editar `umbral_dias_vencimiento`. `POST
+   consultar_configuracion.php` (`{}`, sin restricción de rol, dato no
+   sensible) precarga el valor actual; `POST actualizar_configuracion.php`
+   con `{rol, clave, valor}` lo guarda, con una whitelist de claves
+   editables (hoy sólo esa una) y `403` si `rol !== "dueño"` — mismo
+   patrón de "confiar en el rol que manda el body" que ya usa `/chatbot`
+   (ver "Cosas para tener en cuenta"), no es seguridad real. Este campo no
+   es decorativo: `consultar_vencimientos.php` ya lo lee como default
+   cuando el chatbot no especifica `dias`.
+4. **Sesión** — botón "Cerrar sesión" (`cerrarSesion()` de `auth.js`).
+
+**Pendiente**: el comando de voz "ir a ajustes" de `voz_busqueda.js`
+todavía no navega acá — ver "Gaps conocidos".
 
 ### Flujo administrador (dashboard mockeado, chatbot real)
 
@@ -287,9 +339,12 @@ Definido en `schema.sql`, base `stockiate` (utf8mb4).
   `cantidad_detectada`, `cantidad_corregida`, `confianza_ia` (score que
   devuelve Roboflow), `usuario_id`, `fecha`. Se llena a través de
   `registrar_correccion.php`, que todavía no existe.
-- **`configuracion`** — tabla clave-valor simple para ajustes editables
-  desde un futuro dashboard. Único valor precargado:
-  `umbral_dias_vencimiento = 30`.
+- **`configuracion`** — tabla clave-valor simple para ajustes de negocio.
+  Único valor precargado: `umbral_dias_vencimiento = 30`. Se lee/escribe
+  desde `consultar_configuracion.php`/`actualizar_configuracion.php`
+  (sección "Preferencias del negocio" de `ajustes.html`, sólo rol `dueño`)
+  y `consultar_vencimientos.php` ya la usa como default cuando el chatbot
+  no especifica `dias` — no es un valor decorativo.
 - **`chatbot_conversaciones`** — log de cada intercambio con el chatbot IA:
   `rol` (quién preguntó), `usuario_id` (FK nullable), `pregunta`,
   `respuesta`, `herramientas_usadas` (string separado por comas, ej.
@@ -345,7 +400,13 @@ Definido en `schema.sql`, base `stockiate` (utf8mb4).
   que le pegue directo al endpoint puede mandar `rol: "dueño"` y
   `usuario_id` de otra persona sin que nada lo verifique del lado
   servidor. La sesión en `localStorage` protege la UI (qué páginas se
-  pueden navegar), no los endpoints.
+  pueden navegar), no los endpoints. Los endpoints nuevos de `ajustes.html`
+  heredan el mismo gap: `actualizar_usuario.php` y `cambiar_password.php`
+  confían en el `usuario_id` que manda el body (cualquiera puede editar el
+  perfil o la contraseña de otro usuario si conoce su id), y
+  `actualizar_configuracion.php` restringe por `rol` de la misma forma que
+  `/chatbot` — no es una regresión nueva, es el mismo diseño ya aceptado en
+  el resto del proyecto.
 - **`stockiate-panel-admin.html`** es un archivo vacío (0 bytes), sin
   contenido ni uso actual.
 - **La sesión vive sólo en el navegador (`localStorage`), no en el
@@ -368,13 +429,14 @@ Definido en `schema.sql`, base `stockiate` (utf8mb4).
   manual— el dictado **no funciona offline**. En todos esos casos el botón
   del micrófono queda deshabilitado con un tooltip que explica por qué, y la
   búsqueda escrita sigue funcionando igual.
-- **No hay módulo de ajustes.** El comando de voz "ir a ajustes" /
-  "configuración" está implementado, pero como el proyecto todavía no tiene
-  esa pantalla, abre el menú desplegable de `repositor.html` / `cajero.html`
-  (lo más parecido que hay) y en `administrador.html`, que no tiene menú,
-  avisa que el módulo no existe. Cuando se cree la pantalla, alcanza con
-  manejar el destino `"ajustes"` en el `onNavegar` de la página o agregarlo
-  a `RUTAS` en `voz_busqueda.js`.
+- **El comando de voz "ir a ajustes" todavía no apunta a `ajustes.html`.**
+  El módulo de ajustes ya existe (ver "Flujo ajustes" más arriba), pero
+  `voz_busqueda.js` sigue sin actualizarse: el destino `"ajustes"` en
+  `navegarPorDefecto()` (`voz_busqueda.js:367-376`) sigue con el caso
+  especial que abre el menú desplegable como fallback, en vez de navegar
+  directo a la página real. Falta: agregar
+  `ajustes: { url: "ajustes.html", roles: null, etiqueta: "Ajustes" }` al
+  mapa `RUTAS` (`voz_busqueda.js:343-348`) y borrar ese caso especial.
 - **`cajero.html` no tiene micrófono** porque no tiene barra de búsqueda:
   su flujo es foto → Red de Seguridad. Si se le agrega un buscador, el
   dictado se engancha con una línea (`initBusquedaPorVoz(input)`).

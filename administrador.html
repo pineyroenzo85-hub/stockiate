@@ -109,6 +109,7 @@
     <div class="user-chip">
       <div class="avatar" id="avatar-usuario"></div>
       <div class="info"><b id="nombre-usuario"></b>Administrador</div>
+      <button type="button" class="btn-cerrar-sesion" id="btn-ajustes">Ajustes</button>
       <button type="button" class="btn-cerrar-sesion" id="btn-cerrar-sesion">Cerrar sesión</button>
     </div>
   </div>
@@ -193,6 +194,9 @@ document.getElementById("btn-inicio").addEventListener("click", () => {
 document.getElementById("nombre-usuario").textContent = usuarioSesion.nombre;
 document.getElementById("avatar-usuario").textContent = usuarioSesion.nombre.charAt(0).toUpperCase();
 document.getElementById("btn-cerrar-sesion").addEventListener("click", cerrarSesion);
+document.getElementById("btn-ajustes").addEventListener("click", () => {
+    window.location.href = "ajustes.html";
+});
 </script>
 
 <script>insertarChatbotWidget(usuarioSesion);</script>

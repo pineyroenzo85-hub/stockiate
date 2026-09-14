@@ -105,6 +105,21 @@ Puntos importantes de este diseño:
   búsqueda escrita sigue funcionando igual. El parser de comandos
   (`VozBusqueda.interpretarComando`) es una función pura y se puede probar
   desde la consola del navegador sin micrófono.
+- **Ajustes**: `ajustes.html` es una página propia (no modal), accesible a
+  cualquier rol logueado, con 4 secciones — Mi cuenta (editar
+  nombre/apellido; email y rol quedan de sólo lectura), Seguridad (cambiar
+  contraseña, verificando la actual server-side), Preferencias del negocio
+  (sólo rol `dueño`: `umbral_dias_vencimiento`, que ya usa
+  `consultar_vencimientos.php` como default) y Sesión (cerrar sesión).
+  Cuatro endpoints PHP nuevos (`actualizar_usuario.php`,
+  `cambiar_password.php`, `consultar_configuracion.php`,
+  `actualizar_configuracion.php`) con el mismo boilerplate CORS que
+  `iniciar_sesion.php`/`registrar_usuario.php`, y heredando el mismo gap de
+  seguridad ya documentado (confían en `usuario_id`/`rol` del body, sin
+  sesión de servidor real). Se entra desde el menú desplegable de
+  `repositor.html`/`cajero.html` o un botón nuevo en `administrador.html`.
+  El comando de voz "ir a ajustes" de `voz_busqueda.js` **todavía no**
+  navega acá — sigue pendiente, ver `docs/ARCHITECTURE.md`.
 - La configuración está partida entre capas: el lado Python lee `.env`
   (`ROBOFLOW_API_KEY`, `GROQ_API_KEY`, etc.) vía `python-dotenv`; el
   lado PHP tiene las credenciales de MySQL hardcodeadas en `conexion.php`.

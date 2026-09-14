@@ -619,3 +619,21 @@ footer {
     width:100%;
     max-height:350px;
 }
+
+/* ---------- Ajustes ---------- */
+.ajustes-titulo {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--crema-clean);
+  margin: 0 0 2px;
+}
+
+.campo-solo-lectura {
+  background: var(--azul-input);
+  border: 1px solid rgba(255,255,255,0.05);
+  color: var(--gris-tenue);
+  padding: 11px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin: 0;
+}
