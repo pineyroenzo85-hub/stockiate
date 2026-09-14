@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 560" width="760" height="560" font-family="Segoe UI, Inter, system-ui, sans-serif">
+<rect width="760" height="560" fill="#ffffff"/>
+<text x="60.0" y="28.0" font-size="13" fill="#2b2b33" text-anchor="start" font-weight="bold">A · Detecciones por foto según el umbral pedido</text>
+<line x1="60" y1="220.0" x2="620" y2="220.0" stroke="#d8d8e0" stroke-width="1"/>
+<text x="52.0" y="224.0" font-size="10" fill="#7c7c8a" text-anchor="end" font-weight="normal">0.0</text>
+<line x1="60" y1="177.5" x2="620" y2="177.5" stroke="#d8d8e0" stroke-width="1"/>
+<text x="52.0" y="181.5" font-size="10" fill="#7c7c8a" text-anchor="end" font-weight="normal">0.3</text>
+<line x1="60" y1="135.0" x2="620" y2="135.0" stroke="#d8d8e0" stroke-width="1"/>
+<text x="52.0" y="139.0" font-size="10" fill="#7c7c8a" text-anchor="end" font-weight="normal">0.6</text>
+<line x1="60" y1="92.5" x2="620" y2="92.5" stroke="#d8d8e0" stroke-width="1"/>
+<text x="52.0" y="96.5" font-size="10" fill="#7c7c8a" text-anchor="end" font-weight="normal">0.9</text>
+<line x1="60" y1="50.0" x2="620" y2="50.0" stroke="#d8d8e0" stroke-width="1"/>
+<text x="52.0" y="54.0" font-size="10" fill="#7c7c8a" text-anchor="end" font-weight="normal">1.2</text>
+<text x="60.0" y="238.0" font-size="10" fill="#7c7c8a" text-anchor="middle" font-weight="normal">0.2</text>
+<text x="246.7" y="238.0" font-size="10" fill="#7c7c8a" text-anchor="middle" font-weight="normal">0.3</text>
+<text x="433.3" y="238.0" font-size="10" fill="#7c7c8a" text-anchor="middle" font-weight="normal">0.4</text>
+<text x="620.0" y="238.0" font-size="10" fill="#7c7c8a" text-anchor="middle" font-weight="normal">0.5</text>
+<text x="340.0" y="256.0" font-size="10" fill="#7c7c8a" text-anchor="middle" font-weight="normal">confidence pedido por código</text>
+<polyline points="60.0,111.2 246.7,111.2 433.3,111.2 620.0,111.2" fill="none" stroke="#8673d9" stroke-width="2.5" stroke-dasharray="7 5"/>
+<circle cx="60.0" cy="111.2" r="4" fill="#8673d9"/>
+<circle cx="246.7" cy="111.2" r="4" fill="#8673d9"/>
+<circle cx="433.3" cy="111.2" r="4" fill="#8673d9"/>
+<circle cx="620.0" cy="111.2" r="4" fill="#8673d9"/>
+<rect x="642" y="55" width="11" height="11" rx="3" fill="#8673d9"/>
+<text x="659.0" y="65.0" font-size="11" fill="#2b2b33" text-anchor="start" font-weight="normal">original</text>
+<polyline points="60.0,111.2 246.7,111.2 433.3,111.2 620.0,111.2" fill="none" stroke="#009faa" stroke-width="2.5"/>
+<circle cx="60.0" cy="111.2" r="4" fill="#009faa"/>
+<circle cx="246.7" cy="111.2" r="4" fill="#009faa"/>
+<circle cx="433.3" cy="111.2" r="4" fill="#009faa"/>
+<circle cx="620.0" cy="111.2" r="4" fill="#009faa"/>
+<rect x="642" y="75" width="11" height="11" rx="3" fill="#009faa"/>
+<text x="659.0" y="85.0" font-size="11" fill="#2b2b33" text-anchor="start" font-weight="normal">comprimida</text>
+<text x="130.0" y="298.0" font-size="13" fill="#2b2b33" text-anchor="start" font-weight="bold">B · Confianza de cada detección devuelta</text>
+<line x1="130.0" y1="320" x2="130.0" y2="490" stroke="#d8d8e0" stroke-width="1"/>
+<text x="130.0" y="508.0" font-size="10" fill="#7c7c8a" text-anchor="middle" font-weight="normal">0.0</text>
+<line x1="228.0" y1="320" x2="228.0" y2="490" stroke="#d8d8e0" stroke-width="1"/>
+<text x="228.0" y="508.0" font-size="10" fill="#7c7c8a" text-anchor="middle" font-weight="normal">0.2</text>
+<line x1="326.0" y1="320" x2="326.0" y2="490" stroke="#d8d8e0" stroke-width="1"/>
+<text x="326.0" y="508.0" font-size="10" fill="#7c7c8a" text-anchor="middle" font-weight="normal">0.4</text>
+<line x1="424.0" y1="320" x2="424.0" y2="490" stroke="#d8d8e0" stroke-width="1"/>
+<text x="424.0" y="508.0" font-size="10" fill="#7c7c8a" text-anchor="middle" font-weight="normal">0.6</text>
+<line x1="522.0" y1="320" x2="522.0" y2="490" stroke="#d8d8e0" stroke-width="1"/>
+<text x="522.0" y="508.0" font-size="10" fill="#7c7c8a" text-anchor="middle" font-weight="normal">0.8</text>
+<line x1="620.0" y1="320" x2="620.0" y2="490" stroke="#d8d8e0" stroke-width="1"/>
+<text x="620.0" y="508.0" font-size="10" fill="#7c7c8a" text-anchor="middle" font-weight="normal">1.0</text>
+<text x="375.0" y="526.0" font-size="10" fill="#7c7c8a" text-anchor="middle" font-weight="normal">confianza devuelta por el modelo</text>
+<line x1="228.0" y1="314" x2="228.0" y2="490" stroke="#2b2b33" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text x="228.0" y="309.0" font-size="9.5" fill="#2b2b33" text-anchor="middle" font-weight="normal">0.2</text>
+<line x1="277.0" y1="314" x2="277.0" y2="490" stroke="#2b2b33" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text x="277.0" y="309.0" font-size="9.5" fill="#2b2b33" text-anchor="middle" font-weight="normal">0.3</text>
+<line x1="326.0" y1="314" x2="326.0" y2="490" stroke="#2b2b33" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text x="326.0" y="309.0" font-size="9.5" fill="#2b2b33" text-anchor="middle" font-weight="normal">0.4</text>
+<line x1="375.0" y1="314" x2="375.0" y2="490" stroke="#2b2b33" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text x="375.0" y="309.0" font-size="9.5" fill="#2b2b33" text-anchor="middle" font-weight="normal">0.5</text>
+<text x="122.0" y="341.0" font-size="9.5" fill="#7c7c8a" text-anchor="end" font-weight="normal">5rexonasiguales.png</text>
+<circle cx="269.7" cy="337.0" r="4.5" fill="#8673d9" fill-opacity="0.55" stroke="#8673d9" stroke-width="1"/>
+<circle cx="269.7" cy="337.0" r="4.5" fill="#8673d9" fill-opacity="0.55" stroke="#8673d9" stroke-width="1"/>
+<circle cx="269.7" cy="337.0" r="4.5" fill="#8673d9" fill-opacity="0.55" stroke="#8673d9" stroke-width="1"/>
+<circle cx="269.7" cy="337.0" r="4.5" fill="#8673d9" fill-opacity="0.55" stroke="#8673d9" stroke-width="1"/>
+<circle cx="263.5" cy="337.0" r="4.5" fill="#009faa" fill-opacity="0.55" stroke="#009faa" stroke-width="1"/>
+<circle cx="263.5" cy="337.0" r="4.5" fill="#009faa" fill-opacity="0.55" stroke="#009faa" stroke-width="1"/>
+<circle cx="263.5" cy="337.0" r="4.5" fill="#009faa" fill-opacity="0.55" stroke="#009faa" stroke-width="1"/>
+<circle cx="263.5" cy="337.0" r="4.5" fill="#009faa" fill-opacity="0.55" stroke="#009faa" stroke-width="1"/>
+<text x="122.0" y="375.0" font-size="9.5" fill="#7c7c8a" text-anchor="end" font-weight="normal">hawas.png</text>
+<circle cx="291.5" cy="371.0" r="4.5" fill="#8673d9" fill-opacity="0.55" stroke="#8673d9" stroke-width="1"/>
+<circle cx="291.5" cy="371.0" r="4.5" fill="#8673d9" fill-opacity="0.55" stroke="#8673d9" stroke-width="1"/>
+<circle cx="291.5" cy="371.0" r="4.5" fill="#8673d9" fill-opacity="0.55" stroke="#8673d9" stroke-width="1"/>
+<circle cx="291.5" cy="371.0" r="4.5" fill="#8673d9" fill-opacity="0.55" stroke="#8673d9" stroke-width="1"/>
+<circle cx="296.8" cy="371.0" r="4.5" fill="#009faa" fill-opacity="0.55" stroke="#009faa" stroke-width="1"/>
+<circle cx="296.8" cy="371.0" r="4.5" fill="#009faa" fill-opacity="0.55" stroke="#009faa" stroke-width="1"/>
+<circle cx="296.8" cy="371.0" r="4.5" fill="#009faa" fill-opacity="0.55" stroke="#009faa" stroke-width="1"/>
+<circle cx="296.8" cy="371.0" r="4.5" fill="#009faa" fill-opacity="0.55" stroke="#009faa" stroke-width="1"/>
+<text x="122.0" y="409.0" font-size="9.5" fill="#7c7c8a" text-anchor="end" font-weight="normal">local.jpeg</text>
+<text x="122.0" y="443.0" font-size="9.5" fill="#7c7c8a" text-anchor="end" font-weight="normal">rasta.png</text>
+<circle cx="468.5" cy="439.0" r="4.5" fill="#8673d9" fill-opacity="0.55" stroke="#8673d9" stroke-width="1"/>
+<circle cx="468.5" cy="439.0" r="4.5" fill="#8673d9" fill-opacity="0.55" stroke="#8673d9" stroke-width="1"/>
+<circle cx="468.5" cy="439.0" r="4.5" fill="#8673d9" fill-opacity="0.55" stroke="#8673d9" stroke-width="1"/>
+<circle cx="468.5" cy="439.0" r="4.5" fill="#8673d9" fill-opacity="0.55" stroke="#8673d9" stroke-width="1"/>
+<circle cx="446.6" cy="439.0" r="4.5" fill="#009faa" fill-opacity="0.55" stroke="#009faa" stroke-width="1"/>
+<circle cx="446.6" cy="439.0" r="4.5" fill="#009faa" fill-opacity="0.55" stroke="#009faa" stroke-width="1"/>
+<circle cx="446.6" cy="439.0" r="4.5" fill="#009faa" fill-opacity="0.55" stroke="#009faa" stroke-width="1"/>
+<circle cx="446.6" cy="439.0" r="4.5" fill="#009faa" fill-opacity="0.55" stroke="#009faa" stroke-width="1"/>
+<text x="122.0" y="477.0" font-size="9.5" fill="#7c7c8a" text-anchor="end" font-weight="normal">sauvage.png</text>
+<circle cx="260.9" cy="473.0" r="4.5" fill="#8673d9" fill-opacity="0.55" stroke="#8673d9" stroke-width="1"/>
+<circle cx="260.9" cy="473.0" r="4.5" fill="#8673d9" fill-opacity="0.55" stroke="#8673d9" stroke-width="1"/>
+<circle cx="260.9" cy="473.0" r="4.5" fill="#8673d9" fill-opacity="0.55" stroke="#8673d9" stroke-width="1"/>
+<circle cx="260.9" cy="473.0" r="4.5" fill="#8673d9" fill-opacity="0.55" stroke="#8673d9" stroke-width="1"/>
+<circle cx="276.7" cy="473.0" r="4.5" fill="#009faa" fill-opacity="0.55" stroke="#009faa" stroke-width="1"/>
+<circle cx="276.7" cy="473.0" r="4.5" fill="#009faa" fill-opacity="0.55" stroke="#009faa" stroke-width="1"/>
+<circle cx="276.7" cy="473.0" r="4.5" fill="#009faa" fill-opacity="0.55" stroke="#009faa" stroke-width="1"/>
+<circle cx="276.7" cy="473.0" r="4.5" fill="#009faa" fill-opacity="0.55" stroke="#009faa" stroke-width="1"/>
+<text x="130.0" y="548.0" font-size="10" fill="#7c7c8a" text-anchor="start" font-weight="normal">Las líneas punteadas son los umbrales pedidos. Todo punto a su izquierda es una detección que ese umbral tendría que haber filtrado.</text>
+</svg>

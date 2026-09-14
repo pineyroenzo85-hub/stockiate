@@ -1,0 +1,68 @@
+# stockIAte - .htaccess
+# ============================================================
+# Control de caché del navegador.
+#
+# POR QUÉ EXISTE
+# --------------
+# Apache sirve los .html y .js de este proyecto sólo con Last-Modified y
+# ETag, sin Cache-Control. Ante eso el navegador aplica "caché heurística":
+# decide por su cuenta durante cuánto tiempo puede reusar el archivo sin
+# siquiera preguntar al servidor.
+#
+# Eso genera un modo de falla muy confuso: quedan mezclados un HTML nuevo con
+# un JS viejo (o al revés), y el error que ves no tiene nada que ver con la
+# causa. Pasó de verdad: tras cambiar auth.js, el navegador siguió usando la
+# copia vieja, faltaba una función, y el login mostraba "No se pudo conectar
+# con el servidor" con el servidor funcionando perfecto.
+#
+# Como esto es una app servida desde XAMPP en local (no un sitio con tráfico
+# donde el ancho de banda importe), la respuesta correcta es: que el
+# navegador SIEMPRE revalide. Con Last-Modified/ETag ya presentes, revalidar
+# es un 304 barato, no una descarga completa.
+#
+# `must-revalidate` no alcanza por sí solo: sin max-age, el navegador sigue
+# aplicando su heurística. Por eso va `no-cache` (que NO significa "no
+# guardes", sino "no uses la copia guardada sin preguntarme antes").
+
+<IfModule mod_headers.c>
+    # HTML: nunca reusar sin revalidar. Es el que arrastra al resto, porque
+    # de él salen las referencias a los .js y .css.
+    <FilesMatch "\.html$">
+        Header set Cache-Control "no-cache, must-revalidate"
+    </FilesMatch>
+
+    # JS y CSS: igual. Además cada <script> lleva su ?v=N como segunda
+    # defensa, pero eso sólo sirve si el HTML que lo referencia está fresco
+    # -- de ahí que el bloque de arriba sea el importante.
+    <FilesMatch "\.(js|css)$">
+        Header set Cache-Control "no-cache, must-revalidate"
+    </FilesMatch>
+
+    # Los endpoints PHP nunca deben cachearse: devuelven datos por sesión.
+    # Una respuesta cacheada de un negocio podría reaparecer en otro.
+    <FilesMatch "\.php$">
+        Header set Cache-Control "no-store, no-cache, must-revalidate"
+    </FilesMatch>
+</IfModule>
+
+# ============================================================
+# Archivos que NUNCA se sirven por HTTP
+# ============================================================
+# Apache trae de fábrica una única regla de este tipo, y sólo cubre `.ht*`.
+# Todo lo demás que esté en la carpeta se sirve, incluidos los archivos que
+# nunca deberían salir por la web:
+#
+#   - `.env`  -> tiene las API keys de Roboflow, Groq y WhatsApp EN TEXTO
+#                PLANO. Antes de esta regla, `curl http://localhost/stockiate/
+#                tesis_enzo/.env` te las devolvía todas. Con el túnel de ngrok
+#                levantado (ver ORIGENES_PERMITIDOS en sesion.php), eso es
+#                público en internet.
+#   - `.sql`  -> schema.sql y las migraciones viven en la raíz del proyecto,
+#                que es también la raíz web. No tienen secretos, pero regalan
+#                el mapa completo de la base a cualquiera que pase.
+#
+# `Require all denied` es de Apache 2.4 (el que trae XAMPP). En 2.2 el
+# equivalente era `Order allow,deny`.
+<FilesMatch "^\.env|\.sql$">
+    Require all denied
+</FilesMatch>

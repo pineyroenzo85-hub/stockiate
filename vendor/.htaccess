@@ -1,0 +1,20 @@
+# stockIAte - vendor/.htaccess
+# ============================================================
+# En esta carpeta conviven dos cosas muy distintas:
+#
+#   * los .js que el navegador SÍ tiene que poder bajar (Chart.js y jsPDF,
+#     servidos desde el repo y no desde un CDN justamente para que el día de
+#     la defensa un wifi caído no deje el panel sin gráficos);
+#   * los .php de PHPMailer, que son código del servidor y que nadie tiene por
+#     qué poder pedir por HTTP.
+#
+# Por eso el bloqueo es por extensión y no de la carpeta entera.
+#
+# Hoy pedir vendor/phpmailer/PHPMailer.php no hace nada visible (son
+# definiciones de clases: se cargan y no ejecutan nada), pero regala la
+# versión exacta de la librería, que es media pista para buscarle un CVE. La
+# regla es una línea; el criterio es el mismo del .htaccess de la raíz con
+# `.env` y `.sql`.
+<FilesMatch "\.php$">
+    Require all denied
+</FilesMatch>

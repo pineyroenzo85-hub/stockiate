@@ -2,13 +2,13 @@
 /**
  * stockIAte - iniciar_sesion.php
  * ================================
- * Login: valida email + contraseña contra `usuarios` y devuelve los datos
- * del usuario (sin el hash) para que el frontend guarde la sesión en
- * localStorage y redirija al módulo que corresponde a su rol.
+ * Login: valida email + contraseña contra `usuarios` y ABRE LA SESIÓN DE
+ * SERVIDOR (cookie STOCKIATE_SID, ver sesion.php).
  *
- * No hay manejo de sesión de servidor (cookies/tokens) en este proyecto:
- * el frontend es el que sostiene la sesión, igual que el resto del repo
- * (ver CLAUDE.md, sección "Cosas para tener en cuenta").
+ * Además devuelve los datos del usuario en el JSON, pero eso ya NO es la
+ * sesión: es solo para que auth.js llene su caché de UX (nombre, rol, a qué
+ * módulo redirigir) sin tener que hacer un round-trip extra. La sesión real,
+ * la que deciden los endpoints, vive en $_SESSION.
  *
  * Espera un body tipo:
  * {
@@ -17,25 +17,15 @@
  * }
  */
 
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, ngrok-skip-browser-warning");
-header("Content-Type: application/json");
+require_once 'sesion.php'; // trae también conexion.php ($pdo)
 
-// Preflight CORS
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
+cabeceras_json();
+exigir_metodo('POST');
 
-require_once 'conexion.php'; // debe exponer $pdo (PDO conectado a MySQL/XAMPP)
-
-$body = json_decode(file_get_contents("php://input"), true);
+$body = cuerpo_json();
 
 if (!isset($body['email'], $body['password']) || trim($body['email']) === '' || $body['password'] === '') {
-    http_response_code(400);
-    echo json_encode(["ok" => false, "mensaje" => "Faltan campos obligatorios"]);
-    exit();
+    responder(['ok' => false, 'mensaje' => 'Faltan campos obligatorios'], 400);
 }
 
 $email = trim($body['email']);
@@ -43,7 +33,7 @@ $password = (string) $body['password'];
 
 try {
     $stmt = $pdo->prepare(
-        "SELECT id, nombre, apellido, email, password_hash, rol
+        "SELECT id, negocio_id, nombre, apellido, email, password_hash, rol
          FROM usuarios WHERE email = :email"
     );
     $stmt->execute([':email' => $email]);
@@ -52,23 +42,27 @@ try {
     // Mensaje genérico en ambos casos (email inexistente o contraseña
     // incorrecta) para no revelar si un email está registrado o no.
     if (!$usuario || !password_verify($password, $usuario['password_hash'])) {
-        http_response_code(401);
-        echo json_encode(["ok" => false, "mensaje" => "Email o contraseña incorrectos"]);
-        exit();
+        responder(['ok' => false, 'mensaje' => 'Email o contraseña incorrectos'], 401);
     }
 
     unset($usuario['password_hash']);
 
-    echo json_encode([
-        "ok" => true,
-        "mensaje" => "Inicio de sesión exitoso",
-        "usuario" => $usuario,
+    // Nombre del negocio: lo usa la UI para mostrar "estás en X".
+    $stmtNeg = $pdo->prepare("SELECT nombre FROM negocios WHERE id = :id");
+    $stmtNeg->execute([':id' => $usuario['negocio_id']]);
+    $usuario['negocio_nombre'] = (string) $stmtNeg->fetchColumn();
+
+    establecer_sesion($usuario);
+
+    responder([
+        'ok' => true,
+        'mensaje' => 'Inicio de sesión exitoso',
+        'usuario' => $usuario,
     ]);
 } catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode([
-        "ok" => false,
-        "mensaje" => "Error al iniciar sesión",
-        "error" => $e->getMessage(),
-    ]);
+    responder([
+        'ok' => false,
+        'mensaje' => 'Error al iniciar sesión',
+        'error' => $e->getMessage(),
+    ], 500);
 }

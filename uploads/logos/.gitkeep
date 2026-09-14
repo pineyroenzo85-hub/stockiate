@@ -1,0 +1,4 @@
+Los logos que suben los negocios viven acá. Los archivos NO van a git (ver
+.gitignore): son datos de cada instalación, no del proyecto. Este archivo
+existe sólo para que la carpeta exista al clonar el repo, porque git no
+versiona carpetas vacías y `subir_logo.php` necesita que esté.

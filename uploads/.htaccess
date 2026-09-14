@@ -1,0 +1,62 @@
+# stockIAte - uploads/.htaccess
+# ============================================================
+# EL CANDADO DE LA CARPETA DE SUBIDAS.
+#
+# Acá adentro se guardan archivos que subió un usuario. Es la única carpeta
+# del proyecto donde eso pasa, y por eso es la única que necesita esta regla.
+#
+# EL ATAQUE QUE ESTO IMPIDE
+# -------------------------
+# Alguien sube un archivo llamado `logo.php` (o `logo.php.png`, o `logo.pHp`,
+# según qué tan distraída sea la validación de arriba) y después lo pide por
+# el navegador: `http://.../uploads/logos/logo.php`. Si Apache lo trata como
+# PHP, ese archivo corre EN EL SERVIDOR, con acceso a `conexion.php` y a la
+# base entera. Es la forma más directa que hay de convertir una subida de
+# imágenes en la toma del servidor.
+#
+# `subir_logo.php` ya valida el tipo real de la imagen (no la extensión), le
+# pone un nombre generado por el servidor y la re-encodea con GD, que es lo
+# que destruye cualquier código escondido en los metadatos. Esto de acá es la
+# SEGUNDA barrera, para cuando alguna de esas tres falle o alguien las cambie
+# sin darse cuenta.
+
+# 1. Nada de ejecutar código, sea cual sea la extensión.
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+    php_flag engine off
+</IfModule>
+
+# `php_flag` sólo existe si PHP corre como módulo de Apache. Con PHP-FPM o
+# CGI no hace nada, así que además se desactivan los handlers a mano: esto
+# funciona en las dos configuraciones.
+<FilesMatch "\.(php|php3|php4|php5|php7|php8|phtml|phar|pl|py|cgi|asp|aspx|sh|htaccess)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+RemoveHandler .php .php3 .php4 .php5 .php7 .php8 .phtml .phar
+RemoveType .php .php3 .php4 .php5 .php7 .php8 .phtml .phar
+
+# 2. Servir SÓLO imágenes, y como imágenes.
+#    `SetHandler default-handler` fuerza a Apache a entregar el archivo tal
+#    cual, sin pasarlo por ningún módulo.
+<FilesMatch "\.(png|jpe?g|webp)$">
+    SetHandler default-handler
+    # Sin esto, un navegador podría "adivinar" que un .png en realidad es HTML
+    # y renderizarlo, que es un XSS servido desde nuestro propio dominio.
+    Header set X-Content-Type-Options "nosniff"
+    Header set Content-Disposition "inline"
+</FilesMatch>
+
+# 3. Que no se pueda listar la carpeta.
+Options -Indexes -ExecCGI

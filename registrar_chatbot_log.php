@@ -9,37 +9,35 @@
  *
  * Espera un body tipo:
  * {
- *   "rol": "repositor",
- *   "usuario_id": 1,
  *   "pregunta": "¿qué productos tienen stock bajo?",
  *   "respuesta": "Tenés 3 productos con stock bajo: ...",
  *   "herramientas_usadas": "consultar_stock"
  * }
+ *
+ * `rol` y `usuario_id` YA NO se leen del body: salen de la sesión, que
+ * main.py resuelve reenviando la cookie del navegador. Antes se guardaba lo
+ * que mandara el cliente, sin verificar que el usuario existiera ni que el
+ * rol fuera el suyo -- el log de auditoría era falsificable.
+ *
+ * `chatbot_conversaciones` es la única tabla sin `negocio_id` propio: es un
+ * log, y el negocio se deriva por usuario_id -> usuarios.negocio_id.
  */
 
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
-header("Content-Type: application/json");
+require_once 'sesion.php'; // trae también conexion.php ($pdo)
 
-// Preflight CORS
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
+cabeceras_json();
+exigir_metodo('POST');
+
+$sesion = exigir_sesion();
+$rol = $sesion['rol'];
+$usuario_id = $sesion['id'];
+
+$body = cuerpo_json();
+
+if (!isset($body['pregunta'], $body['respuesta'])) {
+    responder(["ok" => false, "mensaje" => "Faltan campos obligatorios"], 400);
 }
 
-require_once 'conexion.php'; // debe exponer $pdo (PDO conectado a MySQL/XAMPP)
-
-$body = json_decode(file_get_contents("php://input"), true);
-
-if (!isset($body['rol'], $body['pregunta'], $body['respuesta'])) {
-    http_response_code(400);
-    echo json_encode(["ok" => false, "mensaje" => "Faltan campos obligatorios"]);
-    exit();
-}
-
-$rol = $body['rol'];
-$usuario_id = isset($body['usuario_id']) ? (int) $body['usuario_id'] : null;
 $pregunta = $body['pregunta'];
 $respuesta = $body['respuesta'];
 $herramientas_usadas = isset($body['herramientas_usadas']) ? $body['herramientas_usadas'] : null;
@@ -57,12 +55,11 @@ try {
         ':herramientas_usadas' => $herramientas_usadas,
     ]);
 
-    echo json_encode(["ok" => true]);
+    responder(["ok" => true]);
 } catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode([
+    responder([
         "ok" => false,
         "mensaje" => "Error al guardar el log del chatbot",
         "error" => $e->getMessage(),
-    ]);
+    ], 500);
 }

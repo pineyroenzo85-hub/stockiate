@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>stockIAte | Carteles</title>
+<link rel="stylesheet" href="styles.css">
+<script src="tema.js?v=1"></script>
+<script src="embebido.js?v=1"></script>
+<script src="config.js?v=1"></script>
+<script src="auth.js?v=5"></script>
+<script>
+  // Guardia optimista: los precios de cara al público los decide el dueño.
+  // La contraparte real son consultar_carteles.php y guardar_oferta.php, que
+  // exigen el rol contra la sesión de servidor.
+  var usuarioSesion = exigirSesion(["dueño"]);
+</script>
+<style>
+/* ============================================================
+   PANTALLA
+   ============================================================ */
+.carteles-app{ max-width:1200px; margin:0 auto; padding:20px; display:flex; flex-direction:column; gap:18px; }
+
+.crt-panel{
+  background:var(--glass-bg); backdrop-filter:blur(20px) saturate(180%);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  border:1px solid var(--glass-border); border-radius:22px;
+  box-shadow:var(--glass-shadow); overflow:hidden;
+}
+.crt-panel-head{ padding:16px 20px; border-bottom:1px solid var(--divisor); display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+.crt-panel-head h2{ font-size:15px; font-weight:800; margin:0; color:var(--blanco-puro); }
+.crt-panel-head p{ font-size:12px; color:var(--gris-tenue); margin:2px 0 0; }
+
+.crt-acciones{ display:flex; gap:9px; flex-wrap:wrap; align-items:center; }
+.crt-btn{ background:var(--superficie); box-shadow:var(--neu-sombra-chica); border:none; color:var(--blanco-puro); border-radius:10px; padding:9px 14px; font-size:12.5px; font-weight:700; cursor:pointer; font-family:inherit; transition:all .15s; }
+.crt-btn:hover:not(:disabled){ color:var(--lila-dark); }
+.crt-btn:disabled{ opacity:.45; cursor:default; }
+.crt-btn-primario{ background:var(--lila-dark); color:#fff; }
+.crt-btn-primario:hover:not(:disabled){ background:var(--azul-glow); color:#fff; }
+.crt-campo{ background:var(--superficie); box-shadow:var(--neu-inset); border:none; border-radius:10px; padding:9px 12px; color:var(--blanco-puro); font-size:12.5px; font-family:inherit; outline:none; }
+.crt-campo::placeholder{ color:var(--gris-tenue); }
+
+.crt-tabla-wrap{ max-height:60vh; overflow:auto; }
+.crt-tabla{ width:100%; border-collapse:collapse; font-size:12.5px; color:var(--blanco-puro); }
+.crt-tabla th{ position:sticky; top:0; z-index:1; background:var(--superficie); text-align:left; padding:10px 14px; font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--gris-tenue); font-weight:700; white-space:nowrap; }
+.crt-tabla td{ padding:8px 14px; border-bottom:1px solid var(--divisor); vertical-align:middle; }
+.crt-tabla tr:last-child td{ border-bottom:none; }
+.crt-marca{ display:block; font-size:11px; color:var(--gris-tenue); }
+.crt-num{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.crt-check{ width:17px; height:17px; accent-color:var(--lila-dark); cursor:pointer; }
+.crt-oferta-campos{ display:flex; gap:6px; align-items:center; }
+.crt-oferta-campos input[type=number]{ width:104px; }
+.crt-oferta-campos input[type=date]{ width:142px; }
+.crt-vigente{ font-size:11px; color:var(--ok); font-weight:700; white-space:nowrap; }
+.crt-empty{ padding:26px; text-align:center; color:var(--gris-tenue); font-size:12.5px; }
+.crt-nota{ font-size:12px; color:var(--gris-tenue); line-height:1.5; margin:0; }
+.crt-aviso{ margin:0 20px 16px; border-radius:10px; padding:10px 13px; font-size:12.5px; line-height:1.5; background:var(--alerta-bg); border:1px solid rgba(232,196,104,0.4); color:var(--alerta); }
+
+.crt-disenio{ padding:18px 20px; display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:20px; }
+.crt-grupo{ display:flex; flex-direction:column; gap:7px; }
+.crt-grupo > label:first-child{ font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--gris-tenue); font-weight:700; }
+.crt-slider{ display:flex; align-items:center; gap:10px; }
+.crt-slider input[type=range]{ flex:1; accent-color:var(--lila-dark); }
+.crt-slider output{ font-size:13px; font-weight:800; color:var(--blanco-puro); font-variant-numeric:tabular-nums; min-width:44px; text-align:right; }
+.crt-switch{ display:flex; align-items:center; gap:9px; cursor:pointer; user-select:none; font-size:13px; color:var(--blanco-puro); }
+.crt-switch input{ appearance:none; width:38px; height:21px; border-radius:999px; background:var(--superficie); box-shadow:var(--neu-inset); position:relative; cursor:pointer; margin:0; flex:none; }
+.crt-switch input::after{ content:""; position:absolute; top:3px; left:3px; width:15px; height:15px; border-radius:50%; background:var(--gris-tenue); transition:all .15s; }
+.crt-switch input:checked{ background:var(--lila-tenue); }
+.crt-switch input:checked::after{ left:20px; background:var(--lila-dark); }
+/* La caja del logo va sobre un fondo claro fijo y no sobre el tema: un logo
+   blanco sobre fondo oscuro se ve perfecto en pantalla y desaparece en el
+   papel, que es donde va a terminar. Mostrarlo sobre blanco acá es la única
+   forma de que la vista previa no mienta. */
+.crt-logo-caja{ background:#fff; border-radius:10px; padding:10px; min-height:56px; display:flex; align-items:center; justify-content:center; }
+.crt-logo-caja img{ max-height:44px; max-width:100%; object-fit:contain; }
+.crt-logo-caja .crt-nota{ color:#777; }
+.crt-campo[type=file]{ font-size:12px; padding:7px 10px; }
+
+/* ============================================================
+   LA HOJA
+   ============================================================
+   Se ve igual en pantalla que impresa: fondo blanco y texto casi negro
+   SIEMPRE, sin las variables del tema. Un cartel se ve en papel, y una vista
+   previa en modo oscuro no diría nada sobre cómo va a salir.
+
+   Los tamaños van en mm y pt (no en px ni rem) porque la unidad de destino es
+   una hoja A4, no una pantalla.
+   ============================================================ */
+.crt-hoja{
+  background:#fff;
+  color:#111;
+  width:210mm;
+  margin:0 auto;
+  padding:8mm;
+  box-sizing:border-box;
+  display:grid;
+  grid-template-columns:repeat(2, 1fr);
+  gap:0;
+  box-shadow:0 12px 40px rgba(0,0,0,.35);
+}
+
+.crt-cartel{
+  /* La línea de corte: fina y gris, para guiar la tijera sin comerse tinta.
+     Los bordes se pisan entre celdas vecinas, así que queda una sola línea. */
+  border:1px solid #b8b8b8;
+  margin:-0.5px;
+  padding:6mm 5mm;
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  align-items:center;
+  text-align:center;
+  /* Que ningún cartel quede partido entre dos hojas. */
+  break-inside:avoid;
+  page-break-inside:avoid;
+  overflow:hidden;
+}
+
+/* Seis por hoja: 3 filas de 2. A4 útil = 297 - 16 de margen = 281mm. */
+.crt-hoja[data-por-hoja="6"] .crt-cartel{ height:93.6mm; }
+/* Ocho por hoja: 4 filas de 2. */
+.crt-hoja[data-por-hoja="8"] .crt-cartel{ height:70.2mm; }
+
+/* ------------------------------------------------------------
+   LOS TAMAÑOS SALEN DE VARIABLES, NO ESTÁN FIJOS
+   ------------------------------------------------------------
+   Las calcula el JS (`crtPuntos()`) a partir del diseño elegido, del tamaño
+   que configuró el dueño y de cuántos carteles entran por hoja, y las escribe
+   como custom properties sobre `.crt-hoja`.
+
+   El cálculo va en JS y no en `calc()` de CSS a propósito: hay un PISO que
+   respetar (40pt el precio, 12pt todo lo demás) y `calc()` no sabe recortar.
+   Con las cuentas en JS, el piso se aplica una vez, en un solo lugar, y se
+   puede verificar mirando el estilo computado.
+   ------------------------------------------------------------ */
+.crt-cartel-marca{
+  font-size:var(--crt-pt-marca, 12pt);
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  color:#444;
+}
+.crt-cartel-nombre{
+  font-size:var(--crt-pt-nombre, 15pt);
+  font-weight:800;
+  line-height:1.15;
+  margin-top:1mm;
+}
+
+/* EL PRECIO. Tiene que leerse desde dos metros: por eso su piso son 40pt y
+   no una preferencia que se pueda bajar. */
+.crt-cartel-precio{
+  font-size:var(--crt-pt-precio, 56pt);
+  font-weight:800;
+  line-height:1;
+  letter-spacing:-0.03em;
+  white-space:nowrap;
+}
+.crt-cartel-precio small{ font-size:.45em; font-weight:700; vertical-align:.35em; margin-right:.05em; }
+
+.crt-cartel-antes{
+  font-size:var(--crt-pt-antes, 20pt);
+  font-weight:700;
+  color:#555;
+  text-decoration:line-through;
+  text-decoration-thickness:2px;
+  line-height:1;
+}
+
+/* La banda de OFERTA es negra con texto blanco, no de color: tiene que
+   distinguirse igual impresa en escala de grises, que es como imprime la
+   mayoría de los comercios. */
+.crt-cartel-banda{
+  background:#111;
+  color:#fff;
+  font-size:var(--crt-pt-banda, 14pt);
+  font-weight:800;
+  letter-spacing:.18em;
+  padding:1.5mm 6mm;
+  width:100%;
+  box-sizing:border-box;
+  /* Sin esto, el navegador descarta el fondo negro al imprimir y la banda
+     sale como texto blanco sobre blanco: invisible. */
+  -webkit-print-color-adjust:exact;
+  print-color-adjust:exact;
+}
+
+.crt-cartel-vigencia{ font-size:var(--crt-pt-pie, 12pt); font-weight:600; color:#333; }
+.crt-cartel-sku{ font-size:var(--crt-pt-pie, 12pt); color:#666; }
+.crt-cartel-texto{ font-size:var(--crt-pt-pie, 12pt); color:#444; font-weight:600; }
+
+/* El logo del negocio. Se acota en mm y no en px porque comparte el cartel
+   con el precio: si crece, lo empuja. */
+.crt-cartel-logo{
+  display:block;
+  max-height:12mm;
+  max-width:60%;
+  width:auto;
+  object-fit:contain;
+  margin:0 auto 1mm;
+}
+.crt-hoja[data-por-hoja="8"] .crt-cartel-logo{ max-height:9mm; }
+.crt-cartel-pie .crt-cartel-logo{ max-height:9mm; margin:1mm auto 0; }
+
+/* ------------------------------------------------------------
+   LOS TRES DISEÑOS
+   ------------------------------------------------------------
+   Lo que cambia de tamaño ya viene resuelto en las variables. Acá queda sólo
+   lo que cambia de ESTRUCTURA: cuánto respira cada zona y qué peso visual
+   tiene cada parte.
+   ------------------------------------------------------------ */
+
+/* Oferta: la banda ocupa el ancho completo y respira más, y el precio se come
+   el centro. Para el cartel que tiene que gritar desde la punta del pasillo. */
+.crt-hoja[data-diseno="oferta"] .crt-cartel{ padding:0 0 4mm; }
+.crt-hoja[data-diseno="oferta"] .crt-cartel-cabeza{ padding:0 4mm; }
+.crt-hoja[data-diseno="oferta"] .crt-cartel-banda{ padding:2.5mm 6mm; margin-bottom:2mm; }
+.crt-hoja[data-diseno="oferta"] .crt-cartel-pie{ padding:0 4mm; }
+/* Sin banda (un producto sin oferta con este diseño) el cartel quedaría con el
+   nombre pegado al borde de arriba. */
+.crt-hoja[data-diseno="oferta"] .crt-cartel-cabeza:not(:has(.crt-cartel-banda)){ padding-top:5mm; }
+
+/* Compacto: casi todo precio. El nombre a una sola línea con puntos
+   suspensivos, porque en un estante angosto lo que se lee es el número. */
+.crt-hoja[data-diseno="compacto"] .crt-cartel{ padding:4mm 4mm; }
+.crt-hoja[data-diseno="compacto"] .crt-cartel-nombre{
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:100%;
+}
+.crt-hoja[data-diseno="compacto"] .crt-cartel-cuerpo{ gap:0; }
+
+.crt-cartel-cuerpo{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1mm; flex:1; width:100%; }
+.crt-cartel-cabeza{ width:100%; }
+.crt-cartel-pie{ width:100%; display:flex; flex-direction:column; align-items:center; gap:1mm; }
+
+/* ============================================================
+   IMPRESIÓN
+   ============================================================ */
+@page{ size:A4; margin:8mm; }
+
+@media print{
+  /* Fuera todo lo que no sea la hoja. */
+  .no-imprimir{ display:none !important; }
+
+  html, body{
+    background:#fff !important;
+    color:#111 !important;
+    padding:0 !important;
+    margin:0 !important;
+  }
+  .carteles-app{ padding:0; max-width:none; gap:0; }
+
+  .crt-hoja{
+    /* El margen ya lo pone @page: repetirlo acá daría el doble. */
+    width:auto;
+    padding:0;
+    margin:0;
+    box-shadow:none;
+  }
+}
+</style>
+</head>
+<body>
+
+<!--
+  stockIAte - carteles.html
+  ================================
+  Los carteles de precio y de oferta que se pegan en la góndola, listos para
+  imprimir en A4.
+
+  CIERRA EL CÍRCULO
+  -----------------
+  El sistema sabe los precios y sabe qué está en oferta; hasta acá eso vivía
+  sólo adentro de la pantalla. Un cartel escrito a mano con un fibrón es
+  exactamente el punto donde el inventario digital se desconecta del local.
+
+  POR QUÉ NO USA UNA BIBLIOTECA DE PDF
+  ------------------------------------
+  Porque no hace falta: con la impresión del navegador alcanza y sobra, y el
+  resultado es mejor (el navegador conoce la impresora y el tamaño real del
+  papel). El proyecto ya sirve jsPDF desde `vendor/` para el reporte del panel;
+  sumarlo acá sería pagar 300 KB para hacer peor algo que `Ctrl+P` hace bien.
+
+  LAS REGLAS DE IMPRESIÓN NO SON LAS DE PANTALLA
+  ----------------------------------------------
+  - Fondo blanco y texto casi negro SIEMPRE, sin las variables del tema: el
+    modo oscuro de la app se chupa un cartucho por hoja.
+  - El precio tiene que leerse desde dos metros: 56pt con 6 por hoja, 44pt
+    con 8.
+  - Nada por debajo de 12pt.
+  - Tiene que funcionar en escala de grises, porque la mayoría de los
+    comercios imprime en blanco y negro. Por eso la banda de OFERTA es negra
+    con texto blanco y no de color, y el precio anterior se distingue por el
+    tachado, no por el tono.
+-->
+
+<div class="carteles-app">
+
+  <header class="no-imprimir" style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+    <div>
+      <div class="marca" id="btn-volver" style="cursor:pointer;">stock<em>IA</em>te</div>
+      <div class="modulo-tag">Carteles de góndola</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <button type="button" class="toggle-tema" onclick="window.stockiateTema.alternar()" title="Cambiar tema" aria-label="Cambiar tema claro/oscuro">
+        <span class="toggle-tema-knob">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#F0EAF7" stroke-width="2.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"></path></svg>
+        </span>
+      </button>
+      <button type="button" class="crt-btn" id="btnPanel">Volver al panel</button>
+    </div>
+  </header>
+
+  <!-- Selección -->
+  <div class="crt-panel no-imprimir">
+    <div class="crt-panel-head">
+      <div>
+        <h2>Qué imprimir</h2>
+        <p id="crtSubtitulo">Cargando catálogo...</p>
+      </div>
+      <div class="crt-acciones">
+        <input type="search" class="crt-campo" id="crtBuscar" placeholder="Buscar producto o marca" autocomplete="off">
+        <button type="button" class="crt-btn" id="crtSoloOfertas">Los que tienen oferta</button>
+        <button type="button" class="crt-btn" id="crtTodos">Todos</button>
+        <button type="button" class="crt-btn" id="crtNinguno">Ninguno</button>
+      </div>
+    </div>
+
+    <div id="crtAvisoCaja"></div>
+
+    <div class="crt-tabla-wrap">
+      <table class="crt-tabla">
+        <thead>
+          <tr>
+            <th style="width:34px;"><input type="checkbox" class="crt-check" id="crtCheckTodos" title="Seleccionar todo lo visible"></th>
+            <th>Producto</th>
+            <th class="crt-num">Precio</th>
+            <th>Oferta</th>
+            <th style="width:96px;"></th>
+          </tr>
+        </thead>
+        <tbody id="crtTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Diseño del cartel -->
+  <div class="crt-panel no-imprimir">
+    <div class="crt-panel-head">
+      <div>
+        <h2>Diseño del cartel</h2>
+        <p class="crt-nota">Se guarda para tu negocio: la próxima vez que entres está como lo dejaste.</p>
+      </div>
+    </div>
+
+    <div class="crt-disenio">
+      <div class="crt-grupo">
+        <label for="crtDiseno">Diseño</label>
+        <select class="crt-campo" id="crtDiseno"></select>
+        <span class="crt-nota" id="crtDisenoNota"></span>
+      </div>
+
+      <div class="crt-grupo">
+        <label for="crtPrecioPt">Tamaño del precio</label>
+        <div class="crt-slider">
+          <input type="range" id="crtPrecioPt" step="1">
+          <output id="crtPrecioPtValor"></output>
+        </div>
+        <span class="crt-nota" id="crtPrecioPtNota"></span>
+      </div>
+
+      <div class="crt-grupo">
+        <label for="crtNombrePt">Tamaño del nombre</label>
+        <div class="crt-slider">
+          <input type="range" id="crtNombrePt" step="1">
+          <output id="crtNombrePtValor"></output>
+        </div>
+        <span class="crt-nota" id="crtNombrePtNota"></span>
+      </div>
+
+      <div class="crt-grupo">
+        <label>Qué mostrar</label>
+        <label class="crt-switch"><input type="checkbox" id="crtVerMarca"><span>Marca</span></label>
+        <label class="crt-switch"><input type="checkbox" id="crtVerSku"><span>Código (SKU)</span></label>
+        <label class="crt-switch"><input type="checkbox" id="crtVerVencimiento"><span>Vigencia de la oferta</span></label>
+      </div>
+
+      <div class="crt-grupo">
+        <label for="crtTextoPie">Texto al pie</label>
+        <input type="text" class="crt-campo" id="crtTextoPie" placeholder="Perfumería Aroma · Precios con IVA" autocomplete="off">
+        <span class="crt-nota" id="crtTextoPieNota"></span>
+      </div>
+
+      <div class="crt-grupo">
+        <label for="crtLogoArchivo">Logo del negocio</label>
+        <div class="crt-logo-caja">
+          <img id="crtLogoPreview" alt="Logo del negocio" hidden>
+          <span class="crt-nota" id="crtLogoVacio">Todavía no cargaste ninguno.</span>
+        </div>
+        <input type="file" class="crt-campo" id="crtLogoArchivo" accept="image/png,image/jpeg">
+        <div class="crt-acciones" style="margin-top:8px;">
+          <select class="crt-campo" id="crtLogoPosicion"></select>
+          <button type="button" class="crt-btn" id="crtLogoQuitar" hidden>Quitar logo</button>
+        </div>
+        <span class="crt-nota" id="crtLogoNota">PNG o JPG, hasta 3 MB. Se achica y se convierte a PNG en el servidor.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vista previa e impresión -->
+  <div class="crt-panel no-imprimir">
+    <div class="crt-panel-head">
+      <div>
+        <h2>La hoja</h2>
+        <p class="crt-nota">Así va a salir impresa. Se ve en blanco porque es papel, no porque falle el tema.</p>
+      </div>
+      <div class="crt-acciones">
+        <label class="crt-nota" for="crtPorHoja">Carteles por hoja</label>
+        <select class="crt-campo" id="crtPorHoja">
+          <option value="6" selected>6 (más grandes)</option>
+          <option value="8">8 (entran más)</option>
+        </select>
+        <button type="button" class="crt-btn crt-btn-primario" id="crtImprimir">Imprimir</button>
+      </div>
+    </div>
+    <div class="crt-nota" style="padding:0 20px 14px;" id="crtResumenHoja"></div>
+  </div>
+
+  <!-- Lo único que se imprime -->
+  <div class="crt-hoja" id="crtHoja" data-por-hoja="6"></div>
+
+</div>
+
+<script>
+const URL_CRT_CATALOGO = "consultar_carteles.php";
+const URL_CRT_OFERTA = "guardar_oferta.php";
+const URL_CRT_CONFIG = "consultar_cartel_config.php";
+const URL_CRT_GUARDAR_CONFIG = "guardar_cartel_config.php";
+const URL_CRT_LOGO = "subir_logo.php";
+
+let CATALOGO = [];
+// El diseno guardado del negocio. Arranca con los mismos valores que tenia el
+// cartel cuando esto no se podia configurar, asi la pantalla dibuja algo
+// sensato aunque el fetch de la config falle.
+let CONFIG = {
+  diseno: "clasico", precio_pt: 56, nombre_pt: 15,
+  mostrar_marca: true, mostrar_sku: true, mostrar_vencimiento: true,
+  texto_pie: "", logo: "", logo_url: null, logo_posicion: "arriba",
+};
+let LIMITES = { precio_pt: { min: 40, max: 72 }, nombre_pt: { min: 12, max: 22 } };
+let DISENOS = {};
+let HOY = "";
+// Los ids elegidos viven en un Set aparte y no como estado del <input>: la
+// tabla se repinta al filtrar, y si la selección viviera en el DOM se perdería
+// todo lo elegido cada vez que alguien escribe una letra en el buscador.
+const ELEGIDOS = new Set();
+
+const $ = (id) => document.getElementById(id);
+
+function escapar(texto) {
+  const div = document.createElement("div");
+  div.textContent = texto === null || texto === undefined ? "" : String(texto);
+  return div.innerHTML;
+}
+
+/** $ 12.490  — sin centavos: en un cartel de góndola son ruido. */
+function pesos(valor) {
+  return Math.round(valor).toLocaleString("es-AR");
+}
+
+/** "2026-09-30" -> "30/09" */
+function fechaCorta(iso) {
+  if (!iso) return "";
+  const p = String(iso).split("-");
+  return p.length >= 3 ? `${p[2]}/${p[1]}` : iso;
+}
+
+function visibles() {
+  const q = $("crtBuscar").value.trim().toLowerCase();
+  if (!q) return CATALOGO;
+  return CATALOGO.filter(p =>
+    (p.nombre || "").toLowerCase().includes(q) ||
+    (p.marca || "").toLowerCase().includes(q) ||
+    (p.sku || "").toLowerCase().includes(q)
+  );
+}
+
+/* ------------------------------------------------------------------
+   La tabla de selección
+   ------------------------------------------------------------------ */
+function renderTabla() {
+  const filas = visibles();
+  const tbody = $("crtTbody");
+
+  if (!filas.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="crt-empty">No hay productos que coincidan.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filas.map(p => {
+    const o = p.oferta;
+    const vence = o ? `<span class="crt-vigente">vigente hasta ${fechaCorta(o.hasta)}</span>` : "";
+
+    return `
+      <tr data-id="${p.id}">
+        <td><input type="checkbox" class="crt-check" data-elegir="${p.id}" ${ELEGIDOS.has(p.id) ? "checked" : ""}></td>
+        <td>
+          ${escapar(p.nombre)}
+          <span class="crt-marca">${escapar([p.marca, p.variante].filter(Boolean).join(" · "))}</span>
+        </td>
+        <td class="crt-num">$${pesos(p.precio_venta)}</td>
+        <td>
+          <div class="crt-oferta-campos">
+            <input type="number" class="crt-campo" data-precio="${p.id}" min="1" step="1"
+                   placeholder="sin oferta" value="${o ? Math.round(o.precio) : ""}">
+            <input type="date" class="crt-campo" data-hasta="${p.id}" value="${o ? o.hasta : ""}" min="${HOY}">
+          </div>
+          ${vence}
+        </td>
+        <td>
+          <button type="button" class="crt-btn" data-guardar="${p.id}">Guardar</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  sincronizarCheckTodos();
+}
+
+function sincronizarCheckTodos() {
+  const filas = visibles();
+  const todos = filas.length > 0 && filas.every(p => ELEGIDOS.has(p.id));
+  $("crtCheckTodos").checked = todos;
+}
+
+/* ------------------------------------------------------------------
+   Los tamanos del cartel
+   ------------------------------------------------------------------ */
+
+/**
+ * El piso, en puntos. No es una preferencia con un default conservador: es lo
+ * que hace que un cartel sirva. Por debajo de 40pt el precio no se lee desde
+ * la gondola y por debajo de 12pt no se lee el texto impreso, asi que ningun
+ * calculo de aca puede devolver menos.
+ *
+ * Los mismos numeros los valida el servidor (`CARTEL_LIMITES` en
+ * `cartel_config.php`). Aca vuelven a aplicarse porque ademas del valor que
+ * eligio el dueno hay dos factores que solo existen del lado del cliente: el
+ * diseno y cuantos carteles entran por hoja.
+ */
+const CRT_PISO_PRECIO = 40;
+const CRT_PISO_TEXTO = 12;
+
+/**
+ * Cuanto se agranda o achica cada parte segun el diseno. El precio va en 1 en
+ * los tres: el que manda es el que configuro el dueno, y un diseno que le
+ * cambiara el numero por debajo haria que el control no significara nada.
+ */
+const CRT_FACTORES = {
+  clasico:  { nombre: 1,    marca: 1,    banda: 1,    antes: 1,   pie: 1 },
+  oferta:   { nombre: 0.9,  marca: 0.95, banda: 1.25, antes: 1.2, pie: 1 },
+  compacto: { nombre: 0.85, marca: 0.9,  banda: 0.9,  antes: 0.9, pie: 0.95 },
+};
+
+/**
+ * Con 8 carteles por hoja cada uno mide 70.2mm de alto contra los 93.6mm de la
+ * hoja de 6, asi que todo tiene que entrar en un 75% del espacio. Se achica en
+ * la misma proporcion... pero nunca por debajo del piso: si el resultado no
+ * entra, es mejor que un cartel quede apretado a que salga ilegible.
+ */
+const CRT_ESCALA_8 = 0.78;
+
+/**
+ * Devuelve los tamanos finales, en puntos, ya con el piso aplicado. Es el
+ * unico lugar donde se decide cuanto mide cada cosa.
+ */
+function crtPuntos(porHoja) {
+  const f = CRT_FACTORES[CONFIG.diseno] || CRT_FACTORES.clasico;
+  const escala = porHoja === 8 ? CRT_ESCALA_8 : 1;
+
+  const precio = Math.max(CRT_PISO_PRECIO, Math.round(CONFIG.precio_pt * escala));
+  const texto = (base, factor) =>
+    Math.max(CRT_PISO_TEXTO, Math.round(base * factor * escala));
+
+  return {
+    precio,
+    nombre: texto(CONFIG.nombre_pt, f.nombre),
+    marca: texto(12, f.marca),
+    banda: texto(14, f.banda),
+    // El precio tachado se mueve con el precio grande y no con un numero fijo:
+    // si el dueno agranda el precio, el "antes" tiene que acompanar o queda
+    // perdido al lado.
+    antes: Math.max(CRT_PISO_TEXTO, Math.round(precio * 0.36 * f.antes)),
+    pie: texto(12, f.pie),
+  };
+}
+
+/* ------------------------------------------------------------------
+   La hoja
+   ------------------------------------------------------------------ */
+function renderHoja() {
+  const hoja = $("crtHoja");
+  // Se respeta el orden del catálogo (categoría, marca, nombre) y no el orden
+  // en que se fueron tildando: así los carteles salen agrupados por góndola,
+  // que es como se van a pegar.
+  const elegidos = CATALOGO.filter(p => ELEGIDOS.has(p.id));
+
+  const porHoja = parseInt($("crtPorHoja").value, 10);
+  hoja.dataset.porHoja = porHoja;
+  hoja.dataset.diseno = CONFIG.diseno;
+
+  // Los tamanos viajan como custom properties en vez de estilos por cartel:
+  // asi el CSS sigue siendo el dueno de la maqueta y el JS solo aporta los
+  // numeros, y cambiar un tamano no obliga a repintar cada nodo a mano.
+  const pt = crtPuntos(porHoja);
+  for (const clave of Object.keys(pt)) {
+    hoja.style.setProperty("--crt-pt-" + clave, pt[clave] + "pt");
+  }
+
+  if (!elegidos.length) {
+    hoja.innerHTML = "";
+    $("crtResumenHoja").textContent = "Todavía no elegiste ningún producto.";
+    $("crtImprimir").disabled = true;
+    return;
+  }
+
+  // El nombre del archivo del logo ya trae un sufijo aleatorio que cambia en
+  // cada subida, asi que no hace falta cache-busting aparte.
+  const logo = CONFIG.logo_url
+    ? `<img class="crt-cartel-logo" src="${escapar(CONFIG.logo_url)}" alt="">`
+    : "";
+  const logoArriba = CONFIG.logo_posicion === "arriba" ? logo : "";
+  const logoPie = CONFIG.logo_posicion === "pie" ? logo : "";
+
+  const pie = CONFIG.texto_pie
+    ? `<div class="crt-cartel-texto">${escapar(CONFIG.texto_pie)}</div>`
+    : "";
+
+  hoja.innerHTML = elegidos.map(p => {
+    const o = p.oferta;
+    const precio = o ? o.precio : p.precio_venta;
+
+    // La vigencia sale solo si hay oferta Y el dueno la quiere; el SKU, solo si
+    // lo quiere. Cuando ninguna aplica, el pie queda con el texto libre y el
+    // logo, o vacio: el cartel no se rompe, porque el que estira es
+    // `.crt-cartel-cuerpo`.
+    const detalle = o
+      ? (CONFIG.mostrar_vencimiento
+          ? `<div class="crt-cartel-vigencia">Válido hasta el ${fechaCorta(o.hasta)}</div>`
+          : "")
+      : (CONFIG.mostrar_sku && p.sku
+          ? `<div class="crt-cartel-sku">${escapar(p.sku)}</div>`
+          : "");
+
+    return `
+      <div class="crt-cartel">
+        <div class="crt-cartel-cabeza">
+          ${o ? `<div class="crt-cartel-banda">OFERTA</div>` : ""}
+          ${logoArriba}
+          ${CONFIG.mostrar_marca && p.marca ? `<div class="crt-cartel-marca">${escapar(p.marca)}</div>` : ""}
+          <div class="crt-cartel-nombre">${escapar(p.nombre)}</div>
+        </div>
+        <div class="crt-cartel-cuerpo">
+          ${o ? `<div class="crt-cartel-antes">$${pesos(o.precio_anterior)}</div>` : ""}
+          <div class="crt-cartel-precio"><small>$</small>${pesos(precio)}</div>
+        </div>
+        <div class="crt-cartel-pie">
+          ${detalle}
+          ${pie}
+          ${logoPie}
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  const hojas = Math.ceil(elegidos.length / porHoja);
+  const sobran = hojas * porHoja - elegidos.length;
+  $("crtResumenHoja").textContent =
+    `${elegidos.length} cartel(es) · ${hojas} hoja(s) de A4` +
+    (sobran > 0 ? ` · van a quedar ${sobran} lugar(es) vacío(s) en la última.` : ".");
+  $("crtImprimir").disabled = false;
+}
+
+function repintar() {
+  renderTabla();
+  renderHoja();
+}
+
+/* ------------------------------------------------------------------
+   Ofertas
+   ------------------------------------------------------------------ */
+async function guardarOferta(id) {
+  const inputPrecio = document.querySelector(`[data-precio="${id}"]`);
+  const inputHasta = document.querySelector(`[data-hasta="${id}"]`);
+  const boton = document.querySelector(`[data-guardar="${id}"]`);
+
+  const valor = inputPrecio.value.trim();
+  const textoOriginal = boton.textContent;
+  boton.disabled = true;
+  boton.textContent = "...";
+
+  try {
+    const resp = await fetchApi(URL_CRT_OFERTA, {
+      method: "POST",
+      headers: { ...STOCKIATE_HEADERS, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        producto_id: id,
+        // Vacío = sacar la oferta. Es el mismo campo para poner y para quitar,
+        // así no hace falta un botón de borrar al lado de cada fila.
+        precio: valor === "" ? null : Number(valor),
+        hasta: inputHasta.value || undefined,
+      }),
+    });
+    const data = await resp.json();
+
+    if (!resp.ok || !data.ok) {
+      alert(data.mensaje || "No se pudo guardar la oferta.");
+      return;
+    }
+
+    const producto = CATALOGO.find(p => p.id === id);
+    if (producto) producto.oferta = data.oferta;
+    repintar();
+  } catch (err) {
+    alert(mensajeDeError(err));
+  } finally {
+    boton.disabled = false;
+    boton.textContent = textoOriginal;
+  }
+}
+
+/* ------------------------------------------------------------------
+   El diseno del cartel
+   ------------------------------------------------------------------ */
+
+/**
+ * Pinta los controles con lo que devolvio el servidor.
+ *
+ * Se llama al cargar y despues de cada guardado: los endpoints devuelven la
+ * config releida de la base, no lo que mando el cliente, asi que la pantalla
+ * siempre muestra lo que quedo guardado de verdad. Mismo criterio que
+ * `actualizar_costo.php`.
+ */
+function pintarDiseno() {
+  const sel = $("crtDiseno");
+  sel.innerHTML = Object.keys(DISENOS)
+    .map(k => `<option value="${escapar(k)}">${escapar(DISENOS[k])}</option>`)
+    .join("");
+  sel.value = CONFIG.diseno;
+
+  const pos = $("crtLogoPosicion");
+  pos.innerHTML = [
+    ["arriba", "Logo arriba de todo"],
+    ["pie", "Logo abajo, junto al texto"],
+    ["oculto", "No mostrar el logo"],
+  ].map(([k, t]) => `<option value="${k}">${t}</option>`).join("");
+  pos.value = CONFIG.logo_posicion;
+
+  // Los min/max salen del servidor, no estan escritos en el HTML: son los
+  // mismos que valida `guardar_cartel_config.php`, asi que el slider no puede
+  // ofrecer un valor que el servidor va a rechazar.
+  const precio = $("crtPrecioPt");
+  precio.min = LIMITES.precio_pt.min;
+  precio.max = LIMITES.precio_pt.max;
+  precio.value = CONFIG.precio_pt;
+
+  const nombre = $("crtNombrePt");
+  nombre.min = LIMITES.nombre_pt.min;
+  nombre.max = LIMITES.nombre_pt.max;
+  nombre.value = CONFIG.nombre_pt;
+
+  $("crtVerMarca").checked = CONFIG.mostrar_marca;
+  $("crtVerSku").checked = CONFIG.mostrar_sku;
+  $("crtVerVencimiento").checked = CONFIG.mostrar_vencimiento;
+  $("crtTextoPie").value = CONFIG.texto_pie;
+  $("crtTextoPie").maxLength = 60;
+
+  const img = $("crtLogoPreview");
+  img.hidden = !CONFIG.logo_url;
+  if (CONFIG.logo_url) img.src = CONFIG.logo_url;
+  $("crtLogoVacio").hidden = !!CONFIG.logo_url;
+  $("crtLogoQuitar").hidden = !CONFIG.logo_url;
+
+  pintarNotasDiseno();
+}
+
+/** Los textos que acompanan a cada control, que cambian con el valor. */
+function pintarNotasDiseno() {
+  const porHoja = parseInt($("crtPorHoja").value, 10);
+  const pt = crtPuntos(porHoja);
+
+  $("crtPrecioPtValor").textContent = CONFIG.precio_pt + " pt";
+  $("crtNombrePtValor").textContent = CONFIG.nombre_pt + " pt";
+
+  // Lo importante no es el numero que eligio sino el que va a salir impreso:
+  // con 8 por hoja todo se achica, y sin decirlo el control mentiria.
+  $("crtPrecioPtNota").textContent = porHoja === 8
+    ? `Con 8 por hoja se imprime en ${pt.precio} pt. Nunca baja de ${CRT_PISO_PRECIO}: por debajo no se lee desde la góndola.`
+    : `Mínimo ${LIMITES.precio_pt.min} pt: por debajo el precio deja de leerse desde dos metros.`;
+
+  $("crtNombrePtNota").textContent = porHoja === 8
+    ? `Con 8 por hoja se imprime en ${pt.nombre} pt.`
+    : `Mínimo ${LIMITES.nombre_pt.min} pt, que es el piso de lo legible impreso.`;
+
+  const restantes = 60 - $("crtTextoPie").value.length;
+  $("crtTextoPieNota").textContent = `Va abajo de cada cartel. Quedan ${restantes} caracteres.`;
+
+  // No repetir la etiqueta del <option>, que ya esta ahi arriba: decir para
+  // que sirve cada diseno, que es lo que no se ve.
+  const cuando = {
+    clasico: "Para el cartel de todos los días.",
+    oferta: "Para que se vea desde la punta del pasillo.",
+    compacto: "Para estantes angostos o muchos productos juntos.",
+  };
+  $("crtDisenoNota").textContent = cuando[CONFIG.diseno] || "";
+}
+
+/**
+ * Guarda uno o varios campos y repinta con lo que quedo en la base.
+ *
+ * Guarda campo por campo, como `preferencias.js`: mandar la config entera en
+ * cada cambio haria que mover un slider pisara un texto que se esta editando
+ * en otra pestana.
+ */
+async function guardarDiseno(cambios) {
+  try {
+    const resp = await fetchApi(URL_CRT_GUARDAR_CONFIG, {
+      method: "POST",
+      headers: { ...STOCKIATE_HEADERS, "Content-Type": "application/json" },
+      body: JSON.stringify(cambios),
+    });
+    const data = await resp.json();
+
+    if (!resp.ok || !data.ok) {
+      alert(data.mensaje || "No se pudo guardar el diseño.");
+      // Se repinta igual: hay que volver a mostrar el valor que SI esta
+      // guardado, o el control queda mostrando uno que el servidor rechazo.
+      pintarDiseno();
+      renderHoja();
+      return;
+    }
+
+    CONFIG = data.config;
+    pintarDiseno();
+    renderHoja();
+  } catch (err) {
+    alert(mensajeDeError(err));
+  }
+}
+
+/* ------------------------------------------------------------------
+   Eventos
+   ------------------------------------------------------------------ */
+// Delegado sobre el tbody: la tabla se repinta entera en cada cambio, así que
+// enganchar listeners fila por fila los perdería en el primer repintado.
+$("crtTbody").addEventListener("click", (e) => {
+  const elegir = e.target.closest("[data-elegir]");
+  if (elegir) {
+    const id = parseInt(elegir.dataset.elegir, 10);
+    if (elegir.checked) ELEGIDOS.add(id); else ELEGIDOS.delete(id);
+    sincronizarCheckTodos();
+    renderHoja();   // no renderTabla(): repintar acá perdería el foco del click
+    return;
+  }
+
+  const guardar = e.target.closest("[data-guardar]");
+  if (guardar) guardarOferta(parseInt(guardar.dataset.guardar, 10));
+});
+
+$("crtCheckTodos").addEventListener("change", (e) => {
+  for (const p of visibles()) {
+    if (e.target.checked) ELEGIDOS.add(p.id); else ELEGIDOS.delete(p.id);
+  }
+  repintar();
+});
+
+$("crtBuscar").addEventListener("input", renderTabla);
+
+$("crtSoloOfertas").addEventListener("click", () => {
+  ELEGIDOS.clear();
+  for (const p of CATALOGO) {
+    if (p.oferta) ELEGIDOS.add(p.id);
+  }
+  repintar();
+});
+
+$("crtTodos").addEventListener("click", () => {
+  for (const p of visibles()) ELEGIDOS.add(p.id);
+  repintar();
+});
+
+$("crtNinguno").addEventListener("click", () => {
+  ELEGIDOS.clear();
+  repintar();
+});
+
+$("crtPorHoja").addEventListener("change", () => { renderHoja(); pintarNotasDiseno(); });
+
+$("crtDiseno").addEventListener("change", (e) => {
+  CONFIG.diseno = e.target.value;
+  renderHoja();                       // primero se ve, despues se guarda
+  guardarDiseno({ diseno: e.target.value });
+});
+
+// `input` para la vista previa (se mueve mientras arrastras) y `change` para
+// guardar (una sola escritura al soltar, no una por pixel del slider).
+for (const [id, campo] of [["crtPrecioPt", "precio_pt"], ["crtNombrePt", "nombre_pt"]]) {
+  $(id).addEventListener("input", (e) => {
+    CONFIG[campo] = parseInt(e.target.value, 10);
+    renderHoja();
+    pintarNotasDiseno();
+  });
+  $(id).addEventListener("change", (e) => {
+    guardarDiseno({ [campo]: parseInt(e.target.value, 10) });
+  });
+}
+
+for (const [id, campo] of [
+  ["crtVerMarca", "mostrar_marca"],
+  ["crtVerSku", "mostrar_sku"],
+  ["crtVerVencimiento", "mostrar_vencimiento"],
+]) {
+  $(id).addEventListener("change", (e) => {
+    CONFIG[campo] = e.target.checked;
+    renderHoja();
+    guardarDiseno({ [campo]: e.target.checked });
+  });
+}
+
+$("crtTextoPie").addEventListener("input", (e) => {
+  CONFIG.texto_pie = e.target.value;
+  renderHoja();
+  pintarNotasDiseno();
+});
+$("crtTextoPie").addEventListener("change", (e) => {
+  guardarDiseno({ texto_pie: e.target.value });
+});
+
+$("crtLogoPosicion").addEventListener("change", (e) => {
+  CONFIG.logo_posicion = e.target.value;
+  renderHoja();
+  guardarDiseno({ logo_posicion: e.target.value });
+});
+
+/* ------------------------------------------------------------------
+   El logo
+   ------------------------------------------------------------------ */
+$("crtLogoArchivo").addEventListener("change", async (e) => {
+  const archivo = e.target.files && e.target.files[0];
+  if (!archivo) return;
+
+  const nota = $("crtLogoNota");
+  nota.textContent = "Subiendo...";
+
+  try {
+    // FormData y NO un JSON con base64: la validacion del servidor
+    // (`getimagesize`, el re-encodeo con GD) trabaja sobre el archivo real, y
+    // el base64 lo infla un 33% para nada.
+    const datos = new FormData();
+    datos.append("logo", archivo);
+
+    // Sin Content-Type a mano: el navegador tiene que ponerlo el solo, porque
+    // el multipart necesita un boundary que solo el conoce.
+    const resp = await fetchApi(URL_CRT_LOGO, { method: "POST", body: datos });
+    const data = await resp.json();
+
+    if (!resp.ok || !data.ok) {
+      nota.textContent = data.mensaje || "No se pudo subir el logo.";
+      return;
+    }
+
+    CONFIG.logo = data.logo;
+    CONFIG.logo_url = data.url;
+    nota.textContent = `Listo: ${data.ancho}x${data.alto} px.`;
+    pintarDiseno();
+    renderHoja();
+  } catch (err) {
+    nota.textContent = mensajeDeError(err);
+  } finally {
+    // Se limpia el input para que volver a elegir EL MISMO archivo dispare
+    // otro `change`: sin esto, reintentar despues de un error no hace nada.
+    e.target.value = "";
+  }
+});
+
+$("crtLogoQuitar").addEventListener("click", async () => {
+  if (!window.confirm("¿Sacar el logo de los carteles?")) return;
+
+  try {
+    const resp = await fetchApi(URL_CRT_LOGO, {
+      method: "POST",
+      headers: { ...STOCKIATE_HEADERS, "Content-Type": "application/json" },
+      body: JSON.stringify({ borrar: true }),
+    });
+    const data = await resp.json();
+
+    if (!resp.ok || !data.ok) {
+      alert(data.mensaje || "No se pudo sacar el logo.");
+      return;
+    }
+
+    CONFIG.logo = "";
+    CONFIG.logo_url = null;
+    pintarDiseno();
+    renderHoja();
+  } catch (err) {
+    alert(mensajeDeError(err));
+  }
+});
+$("crtImprimir").addEventListener("click", () => window.print());
+$("btnPanel").addEventListener("click", () => { window.location.href = "administrador.html"; });
+$("btn-volver").addEventListener("click", () => { window.location.href = "administrador.html"; });
+
+/* ------------------------------------------------------------------
+   Carga
+   ------------------------------------------------------------------ */
+async function cargar() {
+  try {
+    const resp = await fetchApi(URL_CRT_CATALOGO, {
+      method: "POST",
+      headers: { ...STOCKIATE_HEADERS, "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    const data = await resp.json();
+
+    if (!resp.ok || !data.ok) {
+      $("crtSubtitulo").textContent = data.mensaje || "No se pudo cargar el catálogo.";
+      return;
+    }
+
+    CATALOGO = data.productos;
+    HOY = data.hoy;
+
+    $("crtSubtitulo").textContent =
+      `${data.total} producto(s) activos · ${data.con_oferta} con oferta vigente`;
+    $("crtSoloOfertas").disabled = data.con_oferta === 0;
+
+    // Esto es una limitación real y hay que decirla en pantalla, no sólo en un
+    // comentario del código: el cartel lo escribe esta pantalla, pero el
+    // precio lo cobra registrar_venta.php desde productos.precio_venta.
+    $("crtAvisoCaja").innerHTML = `
+      <div class="crt-aviso">
+        <b>La oferta es sólo para el cartel.</b> La caja sigue cobrando el precio de lista:
+        si ponés un producto en oferta, avisale a quien cobra o cambiale el precio de venta
+        desde "Costos y márgenes" en el panel.
+      </div>
+    `;
+
+    repintar();
+  } catch (err) {
+    $("crtSubtitulo").textContent = mensajeDeError(err);
+  }
+}
+
+/**
+ * El diseno se pide aparte del catalogo y ANTES de dibujar la hoja: si fallara
+ * y dibujaramos igual, el primer render saldria con los defaults y despues
+ * saltaria al diseno real, que se ve como un parpadeo sin explicacion.
+ *
+ * Si falla, se sigue con los defaults y se avisa: no poder leer el diseno no
+ * puede dejar sin imprimir a alguien que tiene los carteles para pegar.
+ */
+async function cargarDiseno() {
+  try {
+    const resp = await fetchApi(URL_CRT_CONFIG, {
+      method: "POST",
+      headers: { ...STOCKIATE_HEADERS, "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    const data = await resp.json();
+
+    if (!resp.ok || !data.ok) {
+      $("crtDisenoNota").textContent = data.mensaje || "No se pudo cargar el diseño guardado; se usa el de fábrica.";
+      return;
+    }
+
+    CONFIG = data.config;
+    LIMITES = data.limites;
+    DISENOS = data.disenos;
+  } catch (err) {
+    $("crtDisenoNota").textContent = mensajeDeError(err);
+  } finally {
+    pintarDiseno();
+  }
+}
+
+(async () => {
+  const usuario = await confirmarSesion(["dueño"]);
+  if (!usuario) return;
+  await cargarDiseno();
+  cargar();
+})();
+</script>
+</body>
+</html>

@@ -60,6 +60,3 @@ que usan las páginas).
   - Administrador: `http://localhost/stockiate/tesis_enzo/administrador.html`
     (recordar que este último es un mock client-side, no usa el backend
     real — ver `docs/ARCHITECTURE.md`).
-
-No abrir ni ofrecer `index.html` — es el prototipo viejo y superado del
-flujo repositor (ver "Gaps conocidos" en `CLAUDE.md`).

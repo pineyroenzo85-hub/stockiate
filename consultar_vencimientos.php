@@ -10,45 +10,33 @@
  * {
  *   "dias": 30   // opcional, default: configuracion.umbral_dias_vencimiento
  * }
+ *
+ * El umbral por defecto ahora es POR NEGOCIO: `configuracion` pasó de tener
+ * PK `clave` (una fila global para todo el sistema) a PK (negocio_id, clave).
  */
 
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
-header("Content-Type: application/json");
+require_once 'sesion.php'; // trae también conexion.php ($pdo)
+require_once 'alertas.php'; // queries compartidas con tareas_notificaciones.php
 
-// Preflight CORS
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
+cabeceras_json();
+exigir_metodo('POST');
 
-require_once 'conexion.php'; // debe exponer $pdo (PDO conectado a MySQL/XAMPP)
+// Repositor y dueño son los que miran vencimientos (coincide con ROLE_TOOLS
+// en chatbot_ia.py; la restricción real es ésta).
+$negocio_id = exigir_sesion(['repositor', 'dueño'])['negocio_id'];
 
-$body = json_decode(file_get_contents("php://input"), true) ?? [];
+$body = cuerpo_json();
 
 $dias = isset($body['dias']) ? (int) $body['dias'] : null;
 
-if ($dias === null) {
-    $stmtConfig = $pdo->prepare("SELECT valor FROM configuracion WHERE clave = 'umbral_dias_vencimiento'");
-    $stmtConfig->execute();
-    $config = $stmtConfig->fetch();
-    $dias = $config ? (int) $config['valor'] : 30;
-}
-
 try {
-    $stmt = $pdo->prepare(
-        "SELECT l.id AS lote_id, l.cantidad, l.fecha_vencimiento, l.fecha_carga,
-                p.id AS producto_id, p.nombre, p.marca, p.sku
-         FROM lotes_stock l
-         JOIN productos p ON p.id = l.producto_id
-         WHERE l.fecha_vencimiento IS NOT NULL
-           AND l.fecha_vencimiento <= DATE_ADD(CURDATE(), INTERVAL :dias DAY)
-         ORDER BY l.fecha_vencimiento ASC
-         LIMIT 50"
-    );
-    $stmt->execute([':dias' => $dias]);
-    $lotes = $stmt->fetchAll();
+    // Esta lectura estaba FUERA del try: si fallaba, PHP devolvía un fatal en
+    // HTML en vez de un JSON de error, y el chatbot reventaba al parsearlo.
+    if ($dias === null) {
+        $dias = dias_vencimiento_config($pdo, $negocio_id);
+    }
+
+    $lotes = lotes_por_vencer($pdo, $negocio_id, $dias);
 
     echo json_encode([
         "ok" => true,
@@ -57,10 +45,9 @@ try {
         "total" => count($lotes),
     ]);
 } catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode([
+    responder([
         "ok" => false,
         "mensaje" => "Error al consultar vencimientos",
         "error" => $e->getMessage(),
-    ]);
+    ], 500);
 }

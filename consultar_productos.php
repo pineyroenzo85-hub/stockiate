@@ -11,31 +11,28 @@
  * }
  */
 
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, ngrok-skip-browser-warning");
-header("Content-Type: application/json");
+require_once 'sesion.php'; // trae también conexion.php ($pdo)
 
-// Preflight CORS
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
+cabeceras_json();
+exigir_metodo('POST');
 
-require_once 'conexion.php'; // debe exponer $pdo (PDO conectado a MySQL/XAMPP)
+$negocio_id = exigir_sesion()['negocio_id'];
 
-$body = json_decode(file_get_contents("php://input"), true) ?? [];
+$body = cuerpo_json();
 
 $termino = !empty($body['termino']) ? trim($body['termino']) : null;
 
-$condiciones = [];
-$parametros = [];
+// Primera condición y siempre presente. `activo = 1` la acompaña: un
+// producto archivado no tiene que aparecer en los <select> de la Red de
+// Seguridad ni cuando el chatbot busca en el catálogo.
+$condiciones = ["p.negocio_id = :negocio_id", "p.activo = 1"];
+$parametros = [':negocio_id' => $negocio_id];
 
 if ($termino !== null) {
     // Placeholders con nombre distinto por cada ocurrencia: con
     // PDO::ATTR_EMULATE_PREPARES en false (ver conexion.php), MySQL no
     // permite reusar el mismo :param varias veces en la misma query.
-    $condiciones[] = "(nombre LIKE :termino1 OR marca LIKE :termino2 OR sku LIKE :termino3 OR categoria LIKE :termino4)";
+    $condiciones[] = "(p.nombre LIKE :termino1 OR p.marca LIKE :termino2 OR p.sku LIKE :termino3 OR p.categoria LIKE :termino4)";
     $like = "%$termino%";
     $parametros[':termino1'] = $like;
     $parametros[':termino2'] = $like;
@@ -43,14 +40,22 @@ if ($termino !== null) {
     $parametros[':termino4'] = $like;
 }
 
-$where = count($condiciones) > 0 ? "WHERE " . implode(" AND ", $condiciones) : "";
+$where = "WHERE " . implode(" AND ", $condiciones);
 
 try {
+    // El LEFT JOIN también filtra por negocio: si un producto quedara
+    // apuntando a un proveedor ajeno (imposible con las FK compuestas, pero
+    // el filtro es gratis), el nombre del proveedor de otro comercio no se
+    // filtraría en la respuesta -- aparecería como NULL.
     $stmt = $pdo->prepare(
-        "SELECT id, sku, nombre, marca, variante, categoria, precio_venta, stock_actual
-         FROM productos
+        "SELECT p.id, p.sku, p.nombre, p.marca, p.variante, p.categoria,
+                p.precio_venta, p.precio_costo, p.stock_actual,
+                p.proveedor_id, pr.nombre AS proveedor
+         FROM productos p
+         LEFT JOIN proveedores pr
+                ON pr.id = p.proveedor_id AND pr.negocio_id = p.negocio_id
          $where
-         ORDER BY nombre ASC
+         ORDER BY p.nombre ASC
          LIMIT 30"
     );
     $stmt->execute($parametros);
@@ -62,10 +67,9 @@ try {
         "total" => count($productos),
     ]);
 } catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode([
+    responder([
         "ok" => false,
         "mensaje" => "Error al consultar productos",
         "error" => $e->getMessage(),
-    ]);
+    ], 500);
 }

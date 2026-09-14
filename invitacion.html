@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>stockIAte | Te invitaron</title>
+<link rel="stylesheet" href="styles.css">
+<script src="tema.js?v=1"></script>
+</head>
+<body>
+
+<!--
+  stockIAte - invitacion.html
+  ================================
+  Página de alta por invitación. Es PRE-SESIÓN: la persona todavía no tiene
+  cuenta, así que acá no se llama a exigirSesion().
+
+  Antes de mostrar el formulario le pregunta a info_invitacion.php a qué
+  negocio la invitaron y con qué rol, para que no complete un formulario a
+  ciegas. Ese endpoint es público a propósito, pero sólo expone
+  negocio_nombre / email / rol -- nunca el negocio_id ni el resto de la tabla
+  de invitaciones (que sí tiene el filtro por negocio y es sólo para dueños).
+
+  El email es de sólo lectura: sale de la invitación, no del formulario. Si se
+  pudiera editar, un link mandado a una persona serviría para que se registre
+  otra.
+-->
+
+<div class="app">
+
+<header>
+    <div>
+        <div class="marca" id="btn-inicio" style="cursor:pointer;">
+         stock<em>IA</em>te
+         </div>
+        <div class="modulo-tag">Invitación</div>
+    </div>
+    <button type="button" class="toggle-tema" onclick="window.stockiateTema.alternar()" title="Cambiar tema" aria-label="Cambiar tema claro/oscuro">
+      <span class="toggle-tema-knob">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#F0EAF7" stroke-width="2.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"></path></svg>
+      </span>
+    </button>
+</header>
+
+<main>
+<section class="landing" style="text-align:left;">
+
+    <!-- Estado 1: consultando el token -->
+    <div id="estado-cargando">
+        <h1>Un segundo...</h1>
+        <p class="sub">Estamos verificando tu invitación.</p>
+    </div>
+
+    <!-- Estado 2: token inválido / vencido / ya usado -->
+    <div id="estado-invalida" hidden>
+        <h1>Esta invitación no sirve</h1>
+        <p class="sub" id="texto-invalida"></p>
+        <p class="auth-footer">
+            Pedile a la persona que administra el negocio que te mande una nueva.
+            ¿Ya tenés cuenta? <a href="login.html">Iniciá sesión</a>
+        </p>
+    </div>
+
+    <!-- Estado 3: invitación válida, formulario de alta -->
+    <div id="estado-valida" hidden>
+        <h1>Te invitaron a <span id="nombre-negocio"></span></h1>
+        <p class="sub">Vas a entrar como <b id="etiqueta-rol"></b>. Completá tus
+           datos para crear tu cuenta.</p>
+
+        <div id="mensaje" class="auth-mensaje"></div>
+
+        <form id="form-invitacion" class="auth-form" novalidate>
+            <div>
+                <label for="email">Email</label>
+                <!-- Sale de la invitación: no se puede cambiar. -->
+                <input type="email" id="email" name="email" readonly>
+                <span class="campo-opcional-tag" style="margin-left:0;">Es el email al que te invitaron</span>
+            </div>
+            <div class="fila-doble">
+                <div>
+                    <label for="nombre">Nombre</label>
+                    <input type="text" id="nombre" name="nombre" autocomplete="given-name" required>
+                </div>
+                <div>
+                    <label for="apellido">Apellido</label>
+                    <input type="text" id="apellido" name="apellido" autocomplete="family-name" required>
+                </div>
+            </div>
+            <div>
+                <label for="password">Contraseña</label>
+                <input type="password" id="password" name="password" autocomplete="new-password" minlength="6" required>
+                <span class="campo-opcional-tag" style="margin-left:0;">Mínimo 6 caracteres</span>
+            </div>
+            <div>
+                <label for="password-confirmar">Confirmar contraseña</label>
+                <input type="password" id="password-confirmar" name="password-confirmar" autocomplete="new-password" required>
+            </div>
+            <button type="submit" id="btn-submit" class="btn btn-primario">Crear mi cuenta</button>
+        </form>
+    </div>
+
+</section>
+</main>
+
+</div>
+
+<script src="config.js?v=1"></script>
+<script src="auth.js?v=5"></script>
+<script>
+document.getElementById("btn-inicio").addEventListener("click", () => {
+    window.location.href = "login.html";
+});
+
+const token = new URLSearchParams(window.location.search).get("token") || "";
+
+const elCargando = document.getElementById("estado-cargando");
+const elInvalida = document.getElementById("estado-invalida");
+const elValida = document.getElementById("estado-valida");
+const mensaje = document.getElementById("mensaje");
+const btnSubmit = document.getElementById("btn-submit");
+
+function mostrarMensaje(texto, tipo) {
+    mensaje.textContent = texto;
+    mensaje.className = `auth-mensaje activo ${tipo}`;
+}
+
+function mostrarInvalida(texto) {
+    elCargando.hidden = true;
+    elValida.hidden = true;
+    elInvalida.hidden = false;
+    document.getElementById("texto-invalida").textContent = texto;
+}
+
+// ===== Paso 1: ¿la invitación sirve? =================================
+async function cargarInvitacion() {
+    if (!token) {
+        mostrarInvalida("El link no trae ningún código de invitación.");
+        return;
+    }
+
+    try {
+        const resp = await fetchPublico(`info_invitacion.php?token=${encodeURIComponent(token)}`);
+        const data = await resp.json();
+
+        if (!resp.ok || !data.ok) {
+            mostrarInvalida(data.mensaje || "No pudimos validar esta invitación.");
+            return;
+        }
+
+        document.getElementById("nombre-negocio").textContent = data.negocio_nombre;
+        document.getElementById("etiqueta-rol").textContent =
+            STOCKIATE_ETIQUETA_ROL[data.rol] || data.rol;
+        document.getElementById("email").value = data.email;
+
+        elCargando.hidden = true;
+        elValida.hidden = false;
+    } catch (err) {
+        mostrarInvalida(mensajeDeError(err));
+    }
+}
+
+cargarInvitacion();
+
+// ===== Paso 2: crear la cuenta =======================================
+document.getElementById("form-invitacion").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    mensaje.className = "auth-mensaje";
+
+    const nombre = document.getElementById("nombre").value.trim();
+    const apellido = document.getElementById("apellido").value.trim();
+    const password = document.getElementById("password").value;
+    const passwordConfirmar = document.getElementById("password-confirmar").value;
+
+    if (!nombre || !apellido) {
+        mostrarMensaje("Completá tu nombre y apellido.", "error");
+        return;
+    }
+    if (password.length < 6) {
+        mostrarMensaje("La contraseña debe tener al menos 6 caracteres.", "error");
+        return;
+    }
+    if (password !== passwordConfirmar) {
+        mostrarMensaje("Las contraseñas no coinciden.", "error");
+        return;
+    }
+
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = "Creando cuenta...";
+
+    try {
+        // Ni el rol ni el email van en el body: los pone el servidor a partir
+        // de la invitación. Ver aceptar_invitacion.php.
+        const resp = await fetchPublico("aceptar_invitacion.php", {
+            method: "POST",
+            headers: { ...STOCKIATE_HEADERS, "Content-Type": "application/json" },
+            body: JSON.stringify({ token, nombre, apellido, password }),
+        });
+        const data = await resp.json();
+
+        if (!resp.ok || !data.ok) {
+            mostrarMensaje(data.mensaje || "No se pudo crear la cuenta.", "error");
+            return;
+        }
+
+        guardarUsuarioSesion(data.usuario);
+        mostrarMensaje("Cuenta creada. Redirigiendo...", "exito");
+        setTimeout(() => {
+            window.location.href = rutaParaRol(data.usuario.rol);
+        }, 600);
+    } catch (err) {
+        mostrarMensaje(mensajeDeError(err), "error");
+    } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = "Crear mi cuenta";
+    }
+});
+</script>
+
+</body>
+</html>

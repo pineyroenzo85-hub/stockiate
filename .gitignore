@@ -9,3 +9,20 @@ venv/
 # Cache de Python
 __pycache__/
 *.pyc
+
+# Config local de Claude Code: es de tu maquina (permisos, preferencias),
+# no del proyecto. El archivo se queda en disco, solo sale del control de
+# versiones.
+.claude/settings.local.json
+
+# Config del backup: tiene la contraseña de MySQL. La plantilla sin valores,
+# que sí va a git, es scripts/backup.conf.example.
+scripts/backup.conf
+
+# Logos que suben los negocios: son datos de cada instalación, no del
+# proyecto. La carpeta sí va (con su .htaccess y su .gitkeep), el contenido no.
+uploads/logos/*
+!uploads/logos/.gitkeep
+# Fotos de productos (subir_foto_producto.php): mismo criterio que los logos.
+uploads/productos/*
+!uploads/productos/.gitkeep
