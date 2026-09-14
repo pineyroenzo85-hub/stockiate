@@ -8,10 +8,18 @@
  *
  * Uso:
  *   initInventarioTabla(document.getElementById("contenedor"), {
- *     onDatos: (datos) => { ... } // opcional, recibe la respuesta completa
- *                                  // de consultar_inventario.php (para que
- *                                  // cada página arme sus propios KPI cards)
+ *     onDatos: (datos) => { ... },  // opcional, recibe la respuesta completa
+ *                                   // de consultar_inventario.php (para que
+ *                                   // cada página arme sus propios KPI cards)
+ *     onNavegar: (destino) => bool, // opcional, para los comandos de voz:
+ *                                   // devolver true si la página resolvió el
+ *                                   // destino por su cuenta (ej. cambiar de
+ *                                   // pantalla en vez de navegar)
  *   });
+ *
+ * La barra de búsqueda incluye dictado por voz si está cargado
+ * voz_busqueda.js (opcional: sin él, el botón del micrófono se esconde y la
+ * búsqueda por texto sigue funcionando igual).
  *
  * Clases CSS con prefijo "invt-" para no chocar con estilos ya definidos en
  * styles.css (.panel, .kpi-card, etc. se reutilizan en otras pantallas).
@@ -32,10 +40,11 @@ const INVT_CSS = `
 .invt-panel-head{ padding:18px 20px; border-bottom:1px solid #252b3d; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
 .invt-panel-head h2{ font-size:15px; font-weight:700; margin:0; }
 .invt-panel-head p{ font-size:12px; color:#9aa1b5; margin:2px 0 0; }
-.invt-search-box{ display:flex; align-items:center; gap:8px; background:#1e2436; border:1px solid #252b3d; border-radius:10px; padding:8px 12px; min-width:230px; }
+.invt-search-wrap{ display:flex; flex-direction:column; gap:6px; min-width:265px; max-width:100%; }
+.invt-search-box{ display:flex; align-items:center; gap:8px; background:#1e2436; border:1px solid #252b3d; border-radius:10px; padding:6px 8px 6px 12px; }
 .invt-search-box input{ background:transparent; border:none; outline:none; color:#e8eaf2; font-size:13px; width:100%; font-family:inherit; }
 .invt-search-box input::placeholder{ color:#5c6480; }
-.invt-search-box svg{ flex-shrink:0; opacity:.6; }
+.invt-search-box > svg{ flex-shrink:0; opacity:.6; }
 .invt-table-wrap{ overflow-x:auto; }
 .invt-table{ width:100%; border-collapse:collapse; font-size:13.5px; }
 .invt-table thead th{ text-align:left; padding:10px 20px; font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:#5c6480; border-bottom:1px solid #252b3d; font-weight:700; background:#161b29; }
@@ -92,9 +101,15 @@ function initInventarioTabla(contenedor, opciones = {}) {
           <h2>Inventario en Tiempo Real</h2>
           <p data-invt-subtitle>Cargando catálogo...</p>
         </div>
-        <div class="invt-search-box">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-          <input type="text" data-invt-search placeholder="Buscar por nombre o marca...">
+        <div class="invt-search-wrap">
+          <div class="invt-search-box">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" data-invt-search placeholder="Buscar por nombre o marca...">
+            <!-- Dictado por voz: voz_busqueda.js le pone el icono, los
+                 estados visuales y el manejo de errores (ver initBusquedaPorVoz). -->
+            <button type="button" class="voz-mic" data-invt-voz></button>
+          </div>
+          <p class="voz-estado" data-invt-voz-estado hidden aria-live="polite"></p>
         </div>
       </div>
       <div class="invt-table-wrap">
@@ -262,6 +277,22 @@ function initInventarioTabla(contenedor, opciones = {}) {
   buscador.addEventListener("input", (e) => {
     renderTabla(e.target.value);
   });
+
+  // Búsqueda y navegación por voz (Speech-to-Text). Es progressive
+  // enhancement: si voz_busqueda.js no está cargado, sacamos el botón y la
+  // tabla sigue funcionando con la búsqueda escrita de siempre. El módulo
+  // rellena el input y dispara su evento "input", así que el filtrado lo
+  // termina haciendo el listener de arriba.
+  const botonVoz = contenedor.querySelector("[data-invt-voz]");
+  if (typeof initBusquedaPorVoz === "function") {
+    initBusquedaPorVoz(buscador, {
+      boton: botonVoz,
+      estado: contenedor.querySelector("[data-invt-voz-estado]"),
+      onNavegar: opciones.onNavegar,
+    });
+  } else if (botonVoz) {
+    botonVoz.remove();
+  }
 
   async function cargar() {
     try {

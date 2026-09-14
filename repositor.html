@@ -140,7 +140,8 @@
 
 <div id="toast-container" class="toast-container"></div>
 
-<script src="inventario_tabla.js?v=2"></script>
+<script src="voz_busqueda.js?v=1"></script>
+<script src="inventario_tabla.js?v=3"></script>
 <script src="image_utils.js?v=1"></script>
 <script>
   const URL_BACKEND_IA = "https://atrium-overtime-deluxe.ngrok-free.dev/procesar-imagen";
@@ -591,10 +592,28 @@ btnEliminar.addEventListener("click", () => {
   window.location.href = "landing_page.html";
 });
 
+// Comandos de voz de la barra de búsqueda del inventario: los destinos que
+// existen dentro de esta misma página se resuelven cambiando de pantalla
+// (sin recargar); "ajustes" lo cubre voz_busqueda.js abriendo el menú
+// desplegable, y el resto lo resuelve con las rutas por rol.
+function manejarNavegacionPorVoz(destino) {
+  if (destino === "inventario") {
+    mostrarPantalla("inventario");
+    return true;
+  }
+  if (destino === "repositor") {
+    mostrarPantalla("captura");
+    return true;
+  }
+  return false;
+}
+
 let inventarioTablaInstancia = null;
 document.getElementById("btn-ver-inventario").addEventListener("click", () => {
   if (!inventarioTablaInstancia) {
-    inventarioTablaInstancia = initInventarioTabla(document.getElementById("inventarioContenedor"));
+    inventarioTablaInstancia = initInventarioTabla(document.getElementById("inventarioContenedor"), {
+      onNavegar: manejarNavegacionPorVoz,
+    });
   } else {
     inventarioTablaInstancia.recargar();
   }

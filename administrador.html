@@ -122,7 +122,8 @@
   </div>
 </div>
 
-<script src="inventario_tabla.js?v=2"></script>
+<script src="voz_busqueda.js?v=1"></script>
+<script src="inventario_tabla.js?v=3"></script>
 <script>
 /* ---------------- KPIs (datos reales de MySQL vía consultar_inventario.php) ---------------- */
 function renderKPIs(datos){
@@ -166,9 +167,22 @@ function renderKPIs(datos){
   `).join('');
 }
 
+/* ---------------- Comandos de voz ---------------- */
+// Los destinos que ya viven en esta pantalla se resuelven acá (devolviendo
+// true) para no recargar la página; el resto los resuelve voz_busqueda.js
+// con las rutas por rol.
+function manejarNavegacionPorVoz(destino){
+  if (destino === "inventario" || destino === "administrador"){
+    if (inventarioTabla) inventarioTabla.recargar();
+    return true;
+  }
+  return false;
+}
+
 /* ---------------- Init ---------------- */
-initInventarioTabla(document.getElementById('inventarioContenedor'), {
+const inventarioTabla = initInventarioTabla(document.getElementById('inventarioContenedor'), {
   onDatos: renderKPIs,
+  onNavegar: manejarNavegacionPorVoz,
 });
 </script>
 <script>

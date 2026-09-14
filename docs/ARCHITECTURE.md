@@ -25,6 +25,7 @@ base de datos y las convenciones del proyecto.
 | `roboflow_workflow.py` | Python/IA | Cliente del Workflow de Roboflow (`inference-sdk`, `InferenceHTTPClient.run_workflow`). Encapsula la llamada, reintentos con backoff, y el parseo de la respuesta (predicciones YOLO + texto OCR de marca). |
 | `chatbot_ia.py` | Python/IA | Cliente de la API de Groq (inferencia gratuita con límites de uso, vía el SDK `groq`, formato de tool-calling compatible con OpenAI) con tool-use. Define las 4 herramientas (`consultar_stock`, `consultar_ventas`, `consultar_vencimientos`, `consultar_productos`), restringe cuáles puede usar cada rol (`ROLE_TOOLS`), corre el loop de tool-use, y llama a `registrar_chatbot_log.php` al final. |
 | `chatbot_widget.js` | Frontend | Widget de chat flotante compartido, autocontenido (inyecta su propio CSS). Se incluye igual en `repositor.html`, `cajero.html` y `administrador.html`, inyectado dinámicamente por `auth.js` (`insertarChatbotWidget()`) con el `rol`/`usuario_id` de la sesión real en vez de un `data-rol` fijo por página. |
+| `voz_busqueda.js` | Frontend | Búsqueda y navegación por voz (Speech-to-Text) con la Web Speech API nativa. Componente compartido y autocontenido (inyecta su propio CSS, igual que `chatbot_widget.js`): expone `initBusquedaPorVoz(input, opciones)` —que engancha el botón de micrófono a un input de búsqueda existente— y `VozBusqueda.interpretarComando(texto)`, el parser de comandos, que es una función pura y se puede probar sin micrófono. Lo usa la barra de búsqueda de `inventario_tabla.js`. |
 | `detector.py` | Python/IA (script suelto) | Ejemplo standalone de uso del SDK de Roboflow. No lo importa `main.py`. Tiene una API key hardcodeada — no usar como referencia de configuración. |
 | `debug_roboflow_raw.py` | Python/IA (script suelto) | Vuelca la respuesta cruda del workflow para debugging manual. |
 | `smoke_test_roboflow.py` | Python/IA (script suelto) | Test de humo manual (no pytest) para verificar conectividad con Roboflow. |
@@ -204,6 +205,56 @@ abajo.
    funcionando aunque el chatbot no esté configurado); error de conexión
    con Groq → **502**.
 
+### Flujo búsqueda por voz (Speech-to-Text)
+
+Corre **entero en el navegador**: no pasa por FastAPI ni por PHP, no escribe
+nada en la base y no agrega dependencias (la Web Speech API es nativa).
+
+1. `inventario_tabla.js` renderiza la barra de búsqueda con un botón de
+   micrófono (`[data-invt-voz]`) y una línea de estado
+   (`[data-invt-voz-estado]`), y se los pasa a `initBusquedaPorVoz()`.
+   Si `voz_busqueda.js` no está cargado, saca el botón y la búsqueda escrita
+   sigue igual (*progressive enhancement*).
+2. El usuario toca el micrófono → `SpeechRecognition` arranca en `es-AR`
+   (fallback automático a `es-ES` si el navegador no tiene ese idioma), con
+   `interimResults` para mostrar en vivo lo que va escuchando.
+3. Con el resultado final, `interpretarComando()` normaliza el texto
+   (minúsculas, sin acentos ni puntuación) y devuelve una acción:
+
+   | Dictado | Acción |
+   |---|---|
+   | "buscar Dior", "filtrá Carolina Herrera", "Dior Sauvage" | `{tipo:"buscar", termino}` |
+   | "¿tenemos stock de Eros?", "¿cuánto queda de Le Male?" | `{tipo:"buscar", termino}` |
+   | "ir a inventario", "ver stock" | `{tipo:"navegar", destino:"inventario"}` |
+   | "ir a ventas", "andá a caja" | `{tipo:"navegar", destino:"ventas"}` |
+   | "ir a ajustes", "configuración" | `{tipo:"navegar", destino:"ajustes"}` |
+   | "limpiar", "borrar", "mostrar todo" | `{tipo:"limpiar"}` |
+
+   Lo que no cae en ningún comando se toma como el nombre de un producto
+   (búsqueda). El término conserva los acentos aunque el parsing se haga sin
+   ellos, porque el filtro de la tabla hace un `includes` literal y "unica"
+   no matchearía "Única".
+4. **Búsqueda**: rellena el input y dispara sus eventos `input`/`change`
+   nativos, así el filtrado lo termina haciendo el listener que la tabla ya
+   tenía (el módulo no se acopla a la función de filtrado de cada página).
+5. **Navegación**: primero se le ofrece el destino a la página vía
+   `onNavegar(destino)`; si devuelve `true`, ya lo resolvió por su cuenta
+   (`repositor.html` cambia de pantalla en vez de recargar,
+   `administrador.html` recarga la tabla). Si no, `navegarPorDefecto()` usa
+   una tabla de rutas que **respeta el rol de la sesión** (los mismos
+   permisos que `exigirSesion()` en `auth.js`): si un cajero pide el panel
+   de administrador, se le avisa en vez de mandarlo a una redirección que
+   `exigirSesion()` le iba a rebotar igual.
+6. Estados visuales del botón (CSS propio del módulo, prefijo `voz-`):
+   `.voz-mic` inactivo, `.voz-mic--escuchando` con animación de pulso
+   (desactivada si el usuario pidió `prefers-reduced-motion`), y
+   `disabled` + tooltip explicativo cuando no se puede dictar.
+7. Manejo de errores, siempre con mensaje en la línea de estado: navegador
+   sin la API, contexto inseguro (ni https ni localhost), permiso denegado
+   (`not-allowed`), sin micrófono (`audio-capture`), sin voz detectada
+   (`no-speech`) y sin red (`network`). Además hay un watchdog de 12s que
+   corta el reconocimiento si el navegador se queda escuchando de gusto.
+
 ## Esquema de base de datos
 
 Definido en `schema.sql`, base `stockiate` (utf8mb4).
@@ -309,6 +360,24 @@ Definido en `schema.sql`, base `stockiate` (utf8mb4).
   `localStorage['stockiate_usuario']` y pasar los guards de rol del
   frontend — de nuevo, protege la navegación de la UI, no es un
   reemplazo de autenticación real del lado servidor.
+- **La búsqueda por voz depende del navegador y de internet.** La Web
+  Speech API existe en Chrome, Edge y Safari, pero **no en Firefox**, y
+  necesita contexto seguro (https o `localhost`: abrir por Apache, nunca con
+  `file://`). En Chrome además el audio se transcribe en servidores de
+  Google, así que —a diferencia del resto del flujo, que cae a carga
+  manual— el dictado **no funciona offline**. En todos esos casos el botón
+  del micrófono queda deshabilitado con un tooltip que explica por qué, y la
+  búsqueda escrita sigue funcionando igual.
+- **No hay módulo de ajustes.** El comando de voz "ir a ajustes" /
+  "configuración" está implementado, pero como el proyecto todavía no tiene
+  esa pantalla, abre el menú desplegable de `repositor.html` / `cajero.html`
+  (lo más parecido que hay) y en `administrador.html`, que no tiene menú,
+  avisa que el módulo no existe. Cuando se cree la pantalla, alcanza con
+  manejar el destino `"ajustes"` en el `onNavegar` de la página o agregarlo
+  a `RUTAS` en `voz_busqueda.js`.
+- **`cajero.html` no tiene micrófono** porque no tiene barra de búsqueda:
+  su flujo es foto → Red de Seguridad. Si se le agrega un buscador, el
+  dictado se engancha con una línea (`initBusquedaPorVoz(input)`).
 - **Credenciales de MySQL hardcodeadas** en `conexion.php` (`root`, sin
   password) — es el default de XAMPP en local, pero no está pensado para
   otro entorno.

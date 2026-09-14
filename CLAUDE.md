@@ -90,6 +90,21 @@ Puntos importantes de este diseño:
   `consultar_productos.php`) — el servicio Python sigue sin tocar MySQL
   directamente. Cada intercambio se loguea en `chatbot_conversaciones` vía
   `registrar_chatbot_log.php` (best-effort).
+- **Búsqueda por voz**: `voz_busqueda.js` agrega dictado (Speech-to-Text)
+  con la Web Speech API nativa del navegador — sin dependencias, sin backend
+  y sin tocar la base. Es un componente compartido y autocontenido (inyecta
+  su propio CSS) que engancha un botón de micrófono a un input de búsqueda
+  existente: hoy lo usa la barra de búsqueda de `inventario_tabla.js`, o
+  sea `administrador.html` y la pantalla de inventario de `repositor.html`.
+  Entiende comandos de búsqueda ("buscar Dior", "¿tenemos stock de Eros?"),
+  de navegación ("ir a ventas", "ver stock", "ir a ajustes") y de limpieza
+  ("limpiar"), y la navegación respeta el rol de la sesión igual que
+  `exigirSesion()`. Es *progressive enhancement*: si el navegador no tiene
+  la API (Firefox), la página no está en https/localhost o el usuario niega
+  el micrófono, el botón queda deshabilitado con un tooltip explicativo y la
+  búsqueda escrita sigue funcionando igual. El parser de comandos
+  (`VozBusqueda.interpretarComando`) es una función pura y se puede probar
+  desde la consola del navegador sin micrófono.
 - La configuración está partida entre capas: el lado Python lee `.env`
   (`ROBOFLOW_API_KEY`, `GROQ_API_KEY`, etc.) vía `python-dotenv`; el
   lado PHP tiene las credenciales de MySQL hardcodeadas en `conexion.php`.
