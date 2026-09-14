@@ -117,9 +117,9 @@ Puntos importantes de este diseño:
   `iniciar_sesion.php`/`registrar_usuario.php`, y heredando el mismo gap de
   seguridad ya documentado (confían en `usuario_id`/`rol` del body, sin
   sesión de servidor real). Se entra desde el menú desplegable de
-  `repositor.html`/`cajero.html` o un botón nuevo en `administrador.html`.
-  El comando de voz "ir a ajustes" de `voz_busqueda.js` **todavía no**
-  navega acá — sigue pendiente, ver `docs/ARCHITECTURE.md`.
+  `repositor.html`/`cajero.html`, un botón nuevo en `administrador.html`,
+  o el comando de voz "ir a ajustes"/"configuración" (`voz_busqueda.js`,
+  sin restricción de rol).
 - La configuración está partida entre capas: el lado Python lee `.env`
   (`ROBOFLOW_API_KEY`, `GROQ_API_KEY`, etc.) vía `python-dotenv`; el
   lado PHP tiene las credenciales de MySQL hardcodeadas en `conexion.php`.

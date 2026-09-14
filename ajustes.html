@@ -320,18 +320,5 @@
   }
 </script>
 
-<!--
-  Gancho para la integración futura con voz (a propósito no implementado
-  todavía -- ver docs/ARCHITECTURE.md, "Gaps conocidos"): cuando se
-  actualice voz_busqueda.js, agregar
-
-    ajustes: { url: "ajustes.html", roles: null, etiqueta: "Ajustes" }
-
-  al mapa RUTAS (voz_busqueda.js, cerca de la línea 343) y borrar el caso
-  especial `if (destino === "ajustes")` de navegarPorDefecto() (cerca de
-  la línea 367), que hoy sólo abre el menú desplegable como fallback
-  porque no existía esta página.
--->
-
 </body>
 </html>

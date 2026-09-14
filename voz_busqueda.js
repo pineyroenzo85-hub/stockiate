@@ -346,6 +346,10 @@
     ventas: { url: "cajero.html", roles: ["cajero", "dueño"], etiqueta: "Ventas" },
     repositor: { url: "repositor.html", roles: ["repositor", "dueño"], etiqueta: "Repositor" },
     administrador: { url: "administrador.html", roles: ["dueño"], etiqueta: "Panel de Administrador" },
+    // Sin restricción de rol: es la configuración de la cuenta propia,
+    // accesible a cualquier usuario logueado (ver exigirSesion() en
+    // ajustes.html).
+    ajustes: { url: "ajustes.html", roles: null, etiqueta: "Ajustes" },
   };
 
   function rolDeSesion() {
@@ -364,17 +368,6 @@
    * Devuelve { ok, mensaje } — no navega si el rol no tiene acceso.
    */
   function navegarPorDefecto(destino) {
-    if (destino === "ajustes") {
-      // El proyecto todavía no tiene módulo de ajustes; lo más parecido es
-      // el menú desplegable de repositor.html / cajero.html.
-      var menu = document.getElementById("menu-desplegable");
-      if (menu) {
-        menu.classList.add("activo");
-        return { ok: true, mensaje: "Abrí el menú." };
-      }
-      return { ok: false, mensaje: "Este módulo todavía no tiene panel de ajustes." };
-    }
-
     var ruta = RUTAS[destino];
     if (!ruta) return { ok: false, mensaje: "No sé cómo ir a “" + destino + "”." };
 

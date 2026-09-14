@@ -197,8 +197,9 @@ resultado (mismo patrón `mostrarMensaje()`/`.auth-mensaje` que
    cuando el chatbot no especifica `dias`.
 4. **Sesión** — botón "Cerrar sesión" (`cerrarSesion()` de `auth.js`).
 
-**Pendiente**: el comando de voz "ir a ajustes" de `voz_busqueda.js`
-todavía no navega acá — ver "Gaps conocidos".
+El comando de voz "ir a ajustes"/"configuración" de `voz_busqueda.js`
+navega directo acá (`RUTAS.ajustes` en el mapa de rutas, sin restricción de
+rol) — ver "Flujo búsqueda por voz".
 
 ### Flujo administrador (dashboard mockeado, chatbot real)
 
@@ -429,14 +430,6 @@ Definido en `schema.sql`, base `stockiate` (utf8mb4).
   manual— el dictado **no funciona offline**. En todos esos casos el botón
   del micrófono queda deshabilitado con un tooltip que explica por qué, y la
   búsqueda escrita sigue funcionando igual.
-- **El comando de voz "ir a ajustes" todavía no apunta a `ajustes.html`.**
-  El módulo de ajustes ya existe (ver "Flujo ajustes" más arriba), pero
-  `voz_busqueda.js` sigue sin actualizarse: el destino `"ajustes"` en
-  `navegarPorDefecto()` (`voz_busqueda.js:367-376`) sigue con el caso
-  especial que abre el menú desplegable como fallback, en vez de navegar
-  directo a la página real. Falta: agregar
-  `ajustes: { url: "ajustes.html", roles: null, etiqueta: "Ajustes" }` al
-  mapa `RUTAS` (`voz_busqueda.js:343-348`) y borrar ese caso especial.
 - **`cajero.html` no tiene micrófono** porque no tiene barra de búsqueda:
   su flujo es foto → Red de Seguridad. Si se le agrega un buscador, el
   dictado se engancha con una línea (`initBusquedaPorVoz(input)`).
