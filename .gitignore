@@ -23,3 +23,6 @@ scripts/backup.conf
 # proyecto. La carpeta sí va (con su .htaccess y su .gitkeep), el contenido no.
 uploads/logos/*
 !uploads/logos/.gitkeep
+# Fotos de productos (subir_foto_producto.php): mismo criterio que los logos.
+uploads/productos/*
+!uploads/productos/.gitkeep

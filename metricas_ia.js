@@ -69,7 +69,7 @@ const MIA_ETIQUETAS = {
 
 const MIA_ESTILOS_ID = "mia-estilos";
 const MIA_CSS = `
-.mia-panel{ background:var(--glass-bg); backdrop-filter:blur(20px) saturate(180%); -webkit-backdrop-filter:blur(20px) saturate(180%); border:1px solid var(--glass-border); border-radius:22px; overflow:hidden; color:var(--blanco-puro); font-family:'Plus Jakarta Sans','Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif; margin-top:20px; box-shadow:var(--glass-shadow); }
+.mia-panel{ background:var(--glass-bg); backdrop-filter:blur(20px) saturate(180%); -webkit-backdrop-filter:blur(20px) saturate(180%); border:1px solid var(--glass-border); border-radius:22px; overflow:hidden; color:var(--blanco-puro); font-family:'Plus Jakarta Sans','Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif; box-shadow:var(--glass-shadow); }
 .mia-panel-head{ padding:18px 20px; border-bottom:1px solid var(--divisor); display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
 .mia-panel-head h2{ font-size:15px; font-weight:800; margin:0; }
 .mia-panel-head p{ font-size:12px; color:var(--gris-tenue); margin:2px 0 0; }
@@ -236,7 +236,7 @@ function initMetricasIA(contenedor, opciones = {}) {
       <div>
         <div class="mia-grande">${grande}</div>
         <div class="mia-n">
-          Acierto exacto (producto y cantidad) sobre <b>n = ${r.total}</b> detecciones
+          Acierto exacto · <b>n = ${r.total}</b>
         </div>
       </div>
       <div class="mia-leyenda">
@@ -289,13 +289,9 @@ function initMetricasIA(contenedor, opciones = {}) {
           </div>
           ${tarjeta("no_reconocido", c.no_reconocido)}
         </div>
-        <p class="mia-nota">
-          ${diferencia !== null
-            ? `El modelo llega <b>${diferencia}</b> puntos de confianza más alto cuando acierta que cuando se equivoca.
-               Si la brecha se sostiene al crecer la muestra, el umbral de confianza se puede justificar con datos
-               propios en lugar de un número elegido a ojo.`
-            : `Todavía no hay casos de los dos tipos con confianza guardada, así que no se puede comparar.`}
-        </p>
+        ${diferencia !== null
+          ? `<p class="mia-nota">Cuando acierta, <b>${diferencia}</b> más de confianza.</p>`
+          : ""}
       </div>
     `;
   }
@@ -343,10 +339,6 @@ function initMetricasIA(contenedor, opciones = {}) {
       <div>
         <p class="mia-grupo-titulo">Acierto por tramo de confianza</p>
         <div class="mia-tramos">${filas}</div>
-        <p class="mia-nota">
-          Cada barra es el porcentaje de acierto de las detecciones que cayeron en ese tramo.
-          Los tramos con n chico dicen poco: mirá el n antes que la barra.
-        </p>
       </div>
     `;
   }
@@ -387,10 +379,6 @@ function initMetricasIA(contenedor, opciones = {}) {
             <tbody>${filas}</tbody>
           </table>
         </div>
-        <p class="mia-nota">
-          Cada par es una foto que se corrigió a mano. Si los dos productos son variantes del
-          mismo envase, lo que falta son fotos de esa variante en el dataset, no un umbral distinto.
-        </p>
       </div>
     `;
   }
@@ -407,7 +395,7 @@ function initMetricasIA(contenedor, opciones = {}) {
 
     if (semanas.length < 2) {
       return `<div><p class="mia-grupo-titulo">Evolución semanal del acierto</p>
-              <p class="mia-empty">Hace falta más de una semana con datos para dibujar una evolución.</p></div>`;
+              <p class="mia-empty">Falta más de una semana de datos.</p></div>`;
     }
 
     const W = 720, H = 190;
@@ -453,11 +441,7 @@ function initMetricasIA(contenedor, opciones = {}) {
           ${puntos}
           ${etiquetas}
         </svg>
-        <p class="mia-nota">
-          El tamaño de cada punto es la cantidad de detecciones de esa semana: los puntos chicos
-          se mueven mucho por un solo caso. Eje fijo de 0 a 100 a propósito, para que una mejora
-          de dos puntos no se vea como un salto.
-        </p>
+        <p class="mia-nota">Punto más grande = más detecciones esa semana.</p>
       </div>
     `;
   }
@@ -466,8 +450,8 @@ function initMetricasIA(contenedor, opciones = {}) {
     const r = data.resumen;
 
     subtitulo.textContent = r.total === 0
-      ? "Todavía no hay detecciones registradas en el período."
-      : `${r.total} detecciones validadas por una persona · ${data.desde} a ${data.hasta}`;
+      ? "Sin detecciones todavía."
+      : `${r.total} detecciones · ${data.desde} a ${data.hasta}`;
 
     // El titular se repinta siempre porque es lo único que queda a la vista
     // con el panel plegado.
@@ -484,10 +468,7 @@ function initMetricasIA(contenedor, opciones = {}) {
     if (data.muestra_insuficiente) {
       piezas.push(`
         <div class="mia-aviso">
-          <b>Muestra insuficiente (n = ${r.total}, mínimo ${data.muestra_minima}).</b>
-          Los porcentajes de abajo se mueven varios puntos por cada caso nuevo, así que sirven
-          para ver tendencias pero no para afirmar nada. En el informe van los conteos, no los
-          porcentajes.
+          <b>Muestra chica (n = ${r.total} de ${data.muestra_minima}).</b> Los porcentajes todavía no son confiables.
         </div>
       `);
     }

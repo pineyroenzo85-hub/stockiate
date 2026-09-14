@@ -38,6 +38,11 @@ const CONFIG_INICIAL_NEGOCIO = [
     'ventana_notificaciones_horas' => '24',
     // Con cuánto stock nace un producto nuevo considerado "crítico".
     'stock_minimo_default' => '5',
+    // --- Avisos por mail (segundo canal, al lado de WhatsApp) ---
+    // Arrancan apagados y sin casilla, igual que arrancó WhatsApp: un negocio
+    // recién creado no le manda un mail a nadie hasta que su dueño lo pida.
+    'email_activo' => '0',
+    'email_destino' => '',
     // --- Reposición al proveedor (consultar_reposicion.php) ---
     // Cuántos días tarda el proveedor en entregar. Es el corazón del punto de
     // pedido: si tarda una semana, hay que pedir cuando todavía queda una

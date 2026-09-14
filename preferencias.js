@@ -151,16 +151,46 @@ function initPreferencias(contenedor) {
               <input type="text" id="prfTelefono" placeholder="11 5555-4444" autocomplete="off">
               <span class="prf-hint" id="prfTelefonoHint">Con característica, sin el 0 y sin el 15.</span>
             </div>
+            <label class="prf-switch">
+              <input type="checkbox" id="prfActivo">
+              <span>Activados</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="prf-separador"></div>
+
+        <!-- El segundo canal. Los dos son independientes: se pueden tener los
+             dos, uno, o ninguno. -->
+        <div class="prf-grupo">
+          <p class="prf-grupo-titulo">Avisos por mail</p>
+          <div class="prf-campos">
+            <div class="prf-campo">
+              <label for="prfEmail">Casilla</label>
+              <input type="text" id="prfEmail" placeholder="nombre@gmail.com" autocomplete="off">
+              <span class="prf-hint" id="prfEmailHint">A dónde llegan las alertas.</span>
+            </div>
+            <label class="prf-switch">
+              <input type="checkbox" id="prfEmailActivo">
+              <span>Activados</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="prf-separador"></div>
+
+        <!-- La hora del resumen NO va adentro de ningún canal: es cuándo
+             cierra el día del negocio, no una propiedad de WhatsApp. El botón
+             de prueba tampoco: manda por todos los canales activos. -->
+        <div class="prf-grupo">
+          <p class="prf-grupo-titulo">Resumen diario</p>
+          <div class="prf-campos">
             <div class="prf-campo">
               <label for="prfHora">Hora del resumen</label>
               <input type="time" id="prfHora">
-              <span class="prf-hint">Una vez por día, al cierre.</span>
+              <span class="prf-hint">Una vez por día, al cierre. Vale para los dos canales.</span>
             </div>
-            <label class="prf-switch">
-              <input type="checkbox" id="prfActivo">
-              <span>Activadas</span>
-            </label>
-            <button type="button" class="prf-btn" id="prfProbar">Mandar mensaje de prueba</button>
+            <button type="button" class="prf-btn" id="prfProbar">Mandar aviso de prueba</button>
           </div>
           <div id="prfResultadoPrueba"></div>
         </div>
@@ -246,6 +276,8 @@ function initPreferencias(contenedor) {
   const inputTelefono = contenedor.querySelector("#prfTelefono");
   const inputHora = contenedor.querySelector("#prfHora");
   const inputActivo = contenedor.querySelector("#prfActivo");
+  const inputEmail = contenedor.querySelector("#prfEmail");
+  const inputEmailActivo = contenedor.querySelector("#prfEmailActivo");
   const inputVencimiento = contenedor.querySelector("#prfVencimiento");
   const inputVentana = contenedor.querySelector("#prfVentana");
   const inputStockMinimo = contenedor.querySelector("#prfStockMinimo");
@@ -254,6 +286,7 @@ function initPreferencias(contenedor) {
   const inputFactorSeguridad = contenedor.querySelector("#prfFactorSeguridad");
   const botonProbar = contenedor.querySelector("#prfProbar");
   const hintTelefono = contenedor.querySelector("#prfTelefonoHint");
+  const hintEmail = contenedor.querySelector("#prfEmailHint");
   const avisoServidor = contenedor.querySelector("#prfAvisoServidor");
   const resultadoPrueba = contenedor.querySelector("#prfResultadoPrueba");
   const tbody = contenedor.querySelector("#prfTbody");
@@ -291,11 +324,13 @@ function initPreferencias(contenedor) {
     setTimeout(() => input.classList.remove(clase), 1200);
   }
 
-  function pintarPreferencias(nuevas, servidorConfigurado) {
+  function pintarPreferencias(nuevas, servidorConfigurado, servidorMailConfigurado) {
     prefs = nuevas;
     inputTelefono.value = nuevas.telefono || "";
     inputHora.value = nuevas.hora_resumen || "20:00";
     inputActivo.checked = !!nuevas.activo;
+    inputEmail.value = nuevas.email_destino || "";
+    inputEmailActivo.checked = !!nuevas.email_activo;
     inputVencimiento.value = nuevas.umbral_dias_vencimiento;
     inputVentana.value = nuevas.ventana_notificaciones_horas;
     inputStockMinimo.value = nuevas.stock_minimo_default;
@@ -316,14 +351,36 @@ function initPreferencias(contenedor) {
       hintTelefono.textContent = "Ese número no se entiende.";
     }
 
+    if (!nuevas.email_destino) {
+      hintEmail.className = "prf-hint";
+      hintEmail.textContent = "A dónde llegan las alertas.";
+    } else {
+      hintEmail.className = "prf-hint prf-hint-ok";
+      hintEmail.textContent = `Se envía a ${nuevas.email_destino}`;
+    }
+
     // Falta el `.env` del servidor: es un problema de instalación, no de
     // configuración del negocio, y se arregla en otro lado. Se avisa aparte
     // para no mandar al dueño a revisar su número cuando el número está bien.
-    if (servidorConfigurado === false) {
+    //
+    // Se avisa POR CANAL y sólo del que el negocio realmente usa: con los dos
+    // mensajes siempre visibles, el dueño que sólo quiere mail terminaría
+    // leyendo una advertencia sobre credenciales de Meta que no le importan, y
+    // dejaría de leer las dos.
+    const faltantes = [];
+    if (servidorConfigurado === false && !!nuevas.activo) {
+      faltantes.push("las credenciales de WhatsApp");
+    }
+    if (servidorMailConfigurado === false && !!nuevas.email_activo) {
+      faltantes.push("la configuración de correo (SMTP)");
+    }
+
+    if (faltantes.length > 0) {
       avisoServidor.className = "prf-aviso prf-aviso-warn";
       avisoServidor.textContent =
-        "El servidor todavía no tiene las credenciales de WhatsApp cargadas en el archivo .env, " +
-        "así que no va a salir ningún mensaje. Los avisos se siguen registrando igual.";
+        "El servidor todavía no tiene " + faltantes.join(" ni ") + " en el archivo .env, " +
+        "así que esos avisos no van a salir. Se siguen registrando igual y salen " +
+        "cuando se complete.";
     } else {
       avisoServidor.className = "";
       avisoServidor.textContent = "";
@@ -376,16 +433,16 @@ function initPreferencias(contenedor) {
         alert(data.mensaje || "No se pudo guardar el cambio.");
         // Se vuelve a lo que hay en el servidor: si el valor se rechazó,
         // dejarlo en pantalla haría creer que quedó guardado.
-        pintarPreferencias(prefs, undefined);
+        pintarPreferencias(prefs, undefined, undefined);
         return;
       }
 
-      pintarPreferencias(data.preferencias, data.servidor_configurado);
+      pintarPreferencias(data.preferencias, data.servidor_configurado, data.servidor_mail_configurado);
       marcar(input, "prf-ok");
     } catch (err) {
       marcar(input, "prf-error");
       alert(mensajeDeError(err));
-      pintarPreferencias(prefs, undefined);
+      pintarPreferencias(prefs, undefined, undefined);
     } finally {
       input.disabled = false;
     }
@@ -400,7 +457,7 @@ function initPreferencias(contenedor) {
     const valor = parseInt(input.value, 10);
 
     if (!Number.isFinite(valor)) {
-      pintarPreferencias(prefs, undefined);
+      pintarPreferencias(prefs, undefined, undefined);
       return;
     }
 
@@ -425,6 +482,16 @@ function initPreferencias(contenedor) {
 
   inputActivo.addEventListener("change", () => {
     guardarCampo(inputActivo, "activo", inputActivo.checked);
+  });
+
+  inputEmail.addEventListener("change", () => {
+    const valor = inputEmail.value.trim();
+    if (valor === (prefs.email_destino || "")) return;
+    guardarCampo(inputEmail, "email_destino", valor);
+  });
+
+  inputEmailActivo.addEventListener("change", () => {
+    guardarCampo(inputEmailActivo, "email_activo", inputEmailActivo.checked);
   });
 
   inputVencimiento.addEventListener("change", () => {
@@ -549,7 +616,7 @@ function initPreferencias(contenedor) {
         return;
       }
 
-      pintarPreferencias(data.preferencias, data.servidor_configurado);
+      pintarPreferencias(data.preferencias, data.servidor_configurado, data.servidor_mail_configurado);
     } catch (err) {
       avisoServidor.className = "prf-aviso prf-aviso-error";
       avisoServidor.textContent = mensajeDeError(err);

@@ -138,6 +138,7 @@
 <div id="toast-container" class="toast-container"></div>
 
 <script src="image_utils.js?v=2"></script>
+<script src="foto_producto.js?v=3"></script>
 <script src="recorte_imagen.js?v=3"></script>
 <script>
 if (window.lucide) lucide.createIcons();
@@ -824,7 +825,14 @@ document.getElementById("btn-confirmar").addEventListener("click", async () => {
     }
 
     // Feedback loop de la IA: recién cuando la venta entera quedó registrada.
+    // Un producto que aparece en dos tarjetas sube la foto una sola vez.
+    const conFoto = new Set();
     renglones.filter(r => r.esIA).forEach(r => {
+      if (!conFoto.has(r.producto_id)) {
+        conFoto.add(r.producto_id);
+        // La foto de la cámara pasa a ser la foto del producto (best-effort).
+        subirFotoProducto(r.producto_id, archivoSeleccionado);
+      }
       registrarCorreccion({
         producto_detectado_id: r.productoDetectadoId,
         producto_corregido_id: r.producto_id,

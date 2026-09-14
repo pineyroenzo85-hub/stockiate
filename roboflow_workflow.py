@@ -10,8 +10,43 @@ confirmado con el JSON de definición exportado desde Roboflow:
   input:  image (WorkflowImage)
   steps:
     1. model                -> roboflow_object_detection_model@v3
-                                (model_id: cooppers-workspace/products-vweue-1d62m-1-yolov8n-t1)
-                                detecta envases de forma genérica
+                                (model_id: cooppers-workspace/
+                                 products-vweue-1d62m-1-yolov8n-t1)
+
+       ⚠️ EL model_id NO VIVE EN ESTE REPO: se elige en el editor del workflow
+       de Roboflow, así que puede cambiar sin que se toque una línea de acá.
+       Con `use_cache=False` (más abajo) el cambio aplica en la llamada
+       siguiente. Antes de creerle a este comentario, verificalo contra la
+       definición viva:
+
+           GET https://api.roboflow.com/{workspace}/workflows/{workflow_id}
+               ?api_key=...
+
+       y mirá `specification.steps[0].model_id`. La forma rápida de darse
+       cuenta sin salir del código: si las clases que llegan son las 80 de
+       COCO ('remote', 'cell phone', 'person'...), está corriendo un YOLO de
+       fábrica; si son shampoo/makeup/perfume/Soin, está corriendo el modelo
+       del proyecto.
+
+       POR QUÉ IMPORTA CUÁL DE LOS DOS CORRE. Medido sobre las fotos de
+       `images/`, detecciones por foto:
+
+           foto                  COCO (yolov8n-640)   modelo del proyecto
+           local.jpeg            1  ('remote')        5  (shampoo, .79-.95)
+           5rexonasiguales.png   0                    5  (los cinco Dove)
+           sauvage.png           0                    1  (perfume, .92)
+           hawas.png             1  ('cell phone')    1  (Soin, .42)
+           rasta.png             0                    0
+
+       Con COCO un producto se detecta sólo si se parece a alguna de sus
+       clases, así que la tasa depende de la foto y no del producto -- de ahí
+       la sensación de que "anda a veces". El modelo del proyecto acierta los
+       conteos (cinco envases = cinco detecciones) y con confianzas mucho más
+       altas.
+
+       La clase que devuelva, sea la que sea, NO se usa como nombre de
+       producto: eso sale siempre del OCR. Viaja al frontend sólo como dato de
+       diagnóstico (campo `clase_yolo`).
     2. dynamic_crop          -> recorta cada detección de la imagen original
     3. glm_ocr                -> lee texto (marca) sobre cada recorte
     4. detection_visualization / annotated_image -> imagen anotada (no la usamos por ahora)

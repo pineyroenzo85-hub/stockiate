@@ -58,6 +58,15 @@ todo:
      `reposicion_dias_objetivo`, `reposicion_factor_seguridad`). Aditiva e
      idempotente; sin ella los lectores caen igual al default de
      `CONFIG_INICIAL_NEGOCIO`, así que no rompe nada correrla tarde.
+   - `migracion_notificaciones_email.sql` — el **mail como segundo canal** de
+     avisos: columna `notificaciones.canal`, `destino` ensanchada a
+     VARCHAR(150) (un email no entra en 20), los dos tipos que le faltaban al
+     ENUM, el índice de deduplicación ahora por canal, y las claves
+     `email_activo`/`email_destino` por negocio. Aditiva e idempotente; deja
+     todo **desactivado**. Ojo con el orden de los índices: hay que CREAR el
+     nuevo antes de BORRAR el viejo, porque el viejo empieza con `negocio_id`
+     y MariaDB lo está usando para sostener la FK (`ERROR 1553`). El archivo
+     lo explica.
    - `migracion_reset_password.sql` — la tabla `password_resets` (los tokens
      del "olvidé mi contraseña") y la columna `usuarios.password_cambiado_en`,
      que es lo que echa a las sesiones abiertas al resetear. Aditiva: crea una
@@ -69,7 +78,12 @@ todo:
      con los mismos valores que ya eran el comportamiento hardcodeado. No
      toca tablas y es idempotente: no pisa lo que el dueño haya configurado.
 
-   Las cuatro últimas son aditivas y con DEFAULT: se corren de una sola vez y
+   - `migracion_productos_foto.sql` — la columna `productos.foto`, la foto de
+     la cámara que aparece al pasar el mouse por un producto. Aditiva e
+     idempotente. Necesita `extension=gd` y `uploads/productos/` con escritura,
+     igual que el logo de los carteles.
+
+   Las cuatro anteriores a ésa son aditivas y con DEFAULT: se corren de una sola vez y
    son seguras con el código viejo andando.
    **Ojo: `migracion_multitenant.sql` se corre en dos
    tandas** — la PARTE A es segura con el código viejo andando, la PARTE B
@@ -199,6 +213,22 @@ Puntos importantes de este diseño:
 - Los flujos de repositor y cajero implementan la pantalla de validación
   ("Red de Seguridad") **cada uno por su cuenta** — no es un componente
   compartido, hay lógica duplicada entre `repositor.html` y `cajero.html`.
+- **La foto del producto sale de la Red de Seguridad.** Al confirmar una carga
+  (`repositor.html`) o una venta (`cajero.html`), cada tarjeta que vino de la
+  foto (`esIA`) sube esa foto con `subirFotoProducto()` (`foto_producto.js`) a
+  `subir_foto_producto.php`, que la reprocesa con las mismas barreras que
+  `subir_logo.php` y la guarda en `uploads/productos/` pisando la anterior. Es
+  best-effort, como `registrarCorreccion()`: si falla, la carga ya se hizo.
+  Es la foto **entera** (ya encuadrada por `recorte_imagen.js`) y no el recorte
+  del envase, porque el servicio de IA no devuelve la caja de cada detección.
+  La tabla de inventario marca con 📷 los productos que tienen foto y la
+  muestra al pasar el mouse (`data-foto-url`, listener delegado en
+  `foto_producto.js`). Los productos cargados antes de esto no tenían ninguna
+  foto, y la vista previa sólo andaba en el único que se había probado —se
+  leía como un bug—. Por eso cada fila tiene además un botón 📷 que saca o
+  sube una foto en el momento (mismo endpoint). Un producto sin foto no
+  muestra nada al pasar el mouse: se probó un cartel de "Sin foto todavía" y
+  se sacó a pedido, por ruido.
 - **Los productos NO se borran: se archivan.** El botón 📦 de la tabla de
   inventario le pega a `archivar_producto.php`, que pone `productos.activo =
   0`. Antes había un `eliminar_producto.php` con un DELETE real, pero
@@ -272,6 +302,18 @@ Puntos importantes de este diseño:
   y **no hay auto-login** al terminar, a diferencia de
   `aceptar_invitacion.php`, porque el objetivo es que después del reseteo no
   quede ninguna sesión viva.
+  **`APP_BASE_URL` es la CARPETA, no una página.** El código le agrega
+  `/recuperar.html?token=...`, así que poner ahí lo que dice la barra del
+  navegador (que termina en `/olvide_password.html`) genera
+  `.../olvide_password.html/recuperar.html` y da un `Not Found` de Apache —
+  en silencio, con el mail ya mandado y sin ninguna pista de qué está mal.
+  Pasó. `url_base_app()` ahora recorta un `.html` final, pero el valor correcto
+  es la carpeta: `http://192.168.1.13/stockiate/tesis_enzo`.
+  **Y tiene que ser alcanzable desde el teléfono**, que es donde se lee el
+  mail: con `localhost` el link abre contra el propio celular y da "conexión
+  rechazada". Va la IP de LAN (ojo que es DHCP y puede cambiar) o la URL de
+  ngrok — pero la de ngrok gratis cambia en cada reinicio del túnel, y ahí
+  todos los links vivos quedan rotos.
 - **Cambiar la contraseña echa a las sesiones abiertas, y eso es lo que hace
   que el reseteo sirva de algo.** El caso a cubrir es "me entraron a la
   cuenta": si el atacante ya tiene su cookie, cambiar la contraseña sin
@@ -286,8 +328,11 @@ Puntos importantes de este diseño:
   decide nada**: la sesión sigue. Un hipo de MySQL no puede desloguear a todo
   el mundo.
 - `administrador.html` **usa datos reales** de MySQL (KPIs y tabla de
-  inventario salen de `consultar_inventario.php` vía `inventario_tabla.js`);
-  lo único fijo es la KPI "Estado del Servidor IA". El chatbot tampoco es
+  inventario salen de `consultar_inventario.php` vía `inventario_tabla.js`).
+  La KPI fija "Estado del Servidor IA" se sacó: era un "Online" escrito a mano
+  que no medía nada. Arriba de todo van los paneles accionables (riesgo de
+  quiebre, costos, reposición) y debajo gráficos, inventario y métricas; las
+  aclaraciones largas viven en tooltips ⓘ, no en párrafos. El chatbot tampoco es
   mock: es un asistente real (Groq, inferencia gratuita con límites de uso)
   que responde con datos de la base.
 - **Notificaciones por WhatsApp**: cuatro avisos (stock crítico, producto sin
@@ -310,6 +355,37 @@ Puntos importantes de este diseño:
   las últimas 10 notificaciones con el error crudo de Meta — es la herramienta
   de diagnóstico de "no me llega nada", que tiene como cinco causas distintas
   y todas se ven igual desde afuera.
+- **Los avisos salen por DOS canales: WhatsApp y mail.** Son independientes,
+  cada uno con su interruptor y su destino en Preferencias; un negocio puede
+  tener los dos, uno o ninguno. **El mail se agregó porque WhatsApp, estando
+  entero, no manda nada**: las tres plantillas nunca se aprobaron en Meta y
+  cada intento vuelve con `(#132001) Template name does not exist`. Sobre la
+  base real había **50 avisos encolados desde el 03/09/2026** con ese error.
+  Un mail no necesita que nadie lo apruebe. WhatsApp NO se sacó: el día que
+  las plantillas estén, empieza a andar sin tocar una línea.
+  El envío vive en `mailer.php` (el mismo que usa la recuperación de
+  contraseña) y el cuerpo de cada aviso en `armar_mail_notificacion()`
+  (`notificaciones.php`), al lado de `PLANTILLA_POR_TIPO` y a propósito: las
+  dos traducen el MISMO array posicional y tienen que moverse juntas.
+  Cuatro cosas que parecen detalles y no lo son:
+  **una fila por canal, no una fila con dos destinos** — cada envío tiene su
+  estado, sus intentos y su error, y con una sola fila habría que elegir cuál
+  de los dos resultados guardar;
+  **la deduplicación es POR CANAL** (`clave_dedup` + `canal`): sin eso, la
+  fila del WhatsApp deduplica a la del mail y activar el segundo canal no
+  manda nada, sin ningún error en ningún lado;
+  **la guarda de los disparadores es `avisos_habilitados()` y no
+  `whatsapp_habilitado()`** — con la vieja, un negocio que sólo tiene el mail
+  activado no recibe nada;
+  y **el vaciado de la cola filtra por canal enviable** en vez de cortar
+  entero: antes, sin token de Meta el script se iba sin mandar nada, y eso
+  dejaría un mail perfectamente enviable trabado por una credencial que no
+  tiene nada que ver.
+  Los parámetros siguen siendo **posicionales** porque la Cloud API los quiere
+  así; `CAMPOS_POR_TIPO` documenta qué es cada posición. Es el acople de este
+  diseño y está a la vista: si alguien agrega un parámetro a un aviso y toca
+  sólo uno de los dos renderizadores, el otro canal manda un mensaje con un
+  hueco.
 - **Preferencias del negocio**: los ajustes que el dueño puede cambiar sin que
   nadie toque código ni base viven todos en la tabla `configuracion` (PK
   `(negocio_id, clave)`) y se editan desde un solo lugar
@@ -338,7 +414,16 @@ Puntos importantes de este diseño:
   debajo, chiquito, quién está logueado), y al tocarlo abre un panel
   superpuesto (`menu_negocio.js`, prefijo `mng-`) con las preferencias del
   negocio adentro, más "Equipo" y "Cerrar sesión" — los dos botones que antes
-  estaban sueltos en la barra. Las preferencias **ya no son un card del
+  estaban sueltos en la barra. **Carteles y Equipo ya no navegan a otra
+  página**: se abren en una ventana flotante con el fondo difuminado
+  (`abrirFlotante()` en `menu_negocio.js`) que carga la página real en un
+  `<iframe>`. `embebido.js`, en el `<head>` de las dos, detecta que está adentro
+  de un iframe, esconde su `<header>` y reenvía Escape a la ventana de atrás.
+  Se eligió iframe y no reescribirlas como componente porque así
+  `window.print()` imprime sólo la hoja de carteles, con su CSS de impresión, y
+  las dos páginas siguen andando igual si se abren por URL directa. Si la sesión
+  venció y el iframe termina en `login.html`, el panel entero navega al login.
+  Las preferencias **ya no son un card del
   `.main-grid`**: `initPreferencias()` se monta **recién la primera vez que se
   abre el panel** (después sólo `recargar()`), así que sus dos fetch dejaron de
   pagarse en cada carga de la página. Detalles que importan si se toca:

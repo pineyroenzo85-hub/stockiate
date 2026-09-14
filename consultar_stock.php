@@ -11,29 +11,33 @@
  *   "categoria": "Perfume Hombre", // opcional
  *   "solo_bajo": true          // opcional, filtra stock_actual <= stock_minimo
  * }
+ *
+ * Aunque a este endpoint le pega el servicio Python (no el navegador), la
+ * sesión igual se exige: chatbot_ia.py reenvía la cookie del usuario, así
+ * que el negocio se resuelve acá y no hay que confiar en nada que mande el
+ * cliente. Ver la sección "Chatbot" en CLAUDE.md.
  */
 
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
-header("Content-Type: application/json");
+require_once 'sesion.php'; // trae también conexion.php ($pdo)
 
-// Preflight CORS
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
+cabeceras_json();
+exigir_metodo('POST');
 
-require_once 'conexion.php'; // debe exponer $pdo (PDO conectado a MySQL/XAMPP)
+// Los tres roles pueden consultar stock (coincide con ROLE_TOOLS en
+// chatbot_ia.py), pero la restricción real vive acá, no en Python.
+$negocio_id = exigir_sesion()['negocio_id'];
 
-$body = json_decode(file_get_contents("php://input"), true) ?? [];
+$body = cuerpo_json();
 
 $termino = !empty($body['termino']) ? trim($body['termino']) : null;
 $categoria = !empty($body['categoria']) ? trim($body['categoria']) : null;
 $solo_bajo = !empty($body['solo_bajo']);
 
-$condiciones = [];
-$parametros = [];
+// El filtro por negocio no es opcional ni condicional: es la primera
+// condición y siempre está. `activo = 1` también: el stock de un producto
+// archivado no se repone ni se reporta.
+$condiciones = ["negocio_id = :negocio_id", "activo = 1"];
+$parametros = [':negocio_id' => $negocio_id];
 
 if ($termino !== null) {
     // Placeholders con nombre distinto por cada ocurrencia: con
@@ -55,7 +59,7 @@ if ($solo_bajo) {
     $condiciones[] = "stock_actual <= stock_minimo";
 }
 
-$where = count($condiciones) > 0 ? "WHERE " . implode(" AND ", $condiciones) : "";
+$where = "WHERE " . implode(" AND ", $condiciones);
 
 try {
     $stmt = $pdo->prepare(
@@ -74,10 +78,9 @@ try {
         "total" => count($productos),
     ]);
 } catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode([
+    responder([
         "ok" => false,
         "mensaje" => "Error al consultar el stock",
         "error" => $e->getMessage(),
-    ]);
+    ], 500);
 }

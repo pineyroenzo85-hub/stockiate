@@ -231,9 +231,13 @@ try {
     // Acá sólo se hace un INSERT local (microsegundos). Quien le pega a la
     // API de Meta es tareas_notificaciones.php, después y por su cuenta.
     try {
-        $config = config_whatsapp($pdo, $negocio_id);
+        $config = config_avisos($pdo, $negocio_id);
 
-        if (whatsapp_habilitado($config)) {
+        // `avisos_habilitados()` y no `whatsapp_habilitado()`: con el segundo,
+        // un negocio que sólo tiene el mail activado no recibiría nada. Es el
+        // error más fácil de cometer al sumar un canal y el más difícil de
+        // ver, porque no deja ni un error en ningún lado.
+        if (avisos_habilitados($config)) {
             $negocio_nombre = nombre_negocio($pdo, $negocio_id);
             // Cada cuántas horas el dueño acepta que se repita el aviso del
             // mismo producto. Se lee una sola vez para todo el ticket, no una

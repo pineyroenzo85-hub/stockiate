@@ -26,7 +26,7 @@
 
 require_once 'sesion.php'; // trae también conexion.php ($pdo)
 require_once 'configuracion.php';
-require_once 'notificaciones.php'; // config_whatsapp(), whatsapp_configurado()
+require_once 'notificaciones.php'; // config_avisos(), whatsapp_configurado(), mail_configurado()
 
 cabeceras_json();
 exigir_metodo('POST');
@@ -34,18 +34,23 @@ exigir_metodo('POST');
 $negocio_id = exigir_sesion(['dueño'])['negocio_id'];
 
 try {
-    $whatsapp = config_whatsapp($pdo, $negocio_id);
+    $avisos = config_avisos($pdo, $negocio_id);
 
     responder([
         'ok' => true,
         'preferencias' => [
-            'telefono' => $whatsapp['telefono'],
-            'activo' => $whatsapp['activo'],
-            'hora_resumen' => $whatsapp['hora_resumen'],
+            'telefono' => $avisos['telefono'],
+            'activo' => $avisos['activo'],
+            'hora_resumen' => $avisos['hora_resumen'],
             // Cómo va a quedar el número que se manda a Meta. El panel lo
             // muestra al lado del input: es la forma más rápida de darse
             // cuenta de que faltó un dígito o sobró el 15.
-            'telefono_normalizado' => normalizar_telefono($whatsapp['telefono']),
+            'telefono_normalizado' => normalizar_telefono($avisos['telefono']),
+            // El segundo canal. Mismos dos campos que WhatsApp (a dónde y si
+            // está prendido); la hora del resumen es compartida, porque es
+            // cuándo cierra el día del negocio y no una propiedad del canal.
+            'email_destino' => $avisos['email'],
+            'email_activo' => $avisos['email_activo'],
             'umbral_dias_vencimiento' => leer_config_int($pdo, $negocio_id, 'umbral_dias_vencimiento'),
             'ventana_notificaciones_horas' => leer_config_int($pdo, $negocio_id, 'ventana_notificaciones_horas'),
             'stock_minimo_default' => leer_config_int($pdo, $negocio_id, 'stock_minimo_default'),
@@ -60,6 +65,10 @@ try {
         // no tiene credenciales de Meta", que se arreglan en lugares
         // distintos y por personas distintas.
         'servidor_configurado' => whatsapp_configurado(),
+        // Lo mismo para el otro canal: el SMTP también es del servidor, y sin
+        // él el mail no sale por más que el negocio lo tenga activado. Son dos
+        // banderas y no una porque se arreglan por separado.
+        'servidor_mail_configurado' => mail_configurado(),
     ]);
 } catch (PDOException $e) {
     responder([

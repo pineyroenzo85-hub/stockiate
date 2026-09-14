@@ -1,0 +1,30 @@
+C:\xampp\htdocs\stockiate\tesis_enzo\.claude\skills\run\SKILL.md
+C:\xampp\htdocs\stockiate\tesis_enzo\CLAUDE.md
+C:\xampp\htdocs\stockiate\tesis_enzo\README.md
+C:\xampp\htdocs\stockiate\tesis_enzo\administrador.html
+C:\xampp\htdocs\stockiate\tesis_enzo\cajero.html
+C:\xampp\htdocs\stockiate\tesis_enzo\diagnostico_foto.html
+C:\xampp\htdocs\stockiate\tesis_enzo\docs\ARCHITECTURE.md
+C:\xampp\htdocs\stockiate\tesis_enzo\equipo.html
+C:\xampp\htdocs\stockiate\tesis_enzo\invitacion.html
+C:\xampp\htdocs\stockiate\tesis_enzo\landing_page.html
+C:\xampp\htdocs\stockiate\tesis_enzo\login.html
+C:\xampp\htdocs\stockiate\tesis_enzo\registro.html
+C:\xampp\htdocs\stockiate\tesis_enzo\repositor.html
+C:\xampp\htdocs\stockiate\tesis_enzo\requirements.txt
+C:\xampp\htdocs\stockiate\tesis_enzo\images\5rexonasiguales.png
+C:\xampp\htdocs\stockiate\tesis_enzo\images\Captura de pantalla 2026-07-14 002256.png
+C:\xampp\htdocs\stockiate\tesis_enzo\images\Captura de pantalla 2026-07-14 014347.png
+C:\xampp\htdocs\stockiate\tesis_enzo\images\Captura de pantalla 2026-08-12 154413.png
+C:\xampp\htdocs\stockiate\tesis_enzo\images\hawas.png
+C:\xampp\htdocs\stockiate\tesis_enzo\images\local.jpeg
+C:\xampp\htdocs\stockiate\tesis_enzo\images\rasta.png
+C:\xampp\htdocs\stockiate\tesis_enzo\images\sauvage.png
+C:\xampp\htdocs\stockiate\tesis_enzo\mascota\ajustes.png
+C:\xampp\htdocs\stockiate\tesis_enzo\mascota\buscando-producto.png
+C:\xampp\htdocs\stockiate\tesis_enzo\mascota\cargando.png
+C:\xampp\htdocs\stockiate\tesis_enzo\mascota\escaneando-producto.png
+C:\xampp\htdocs\stockiate\tesis_enzo\mascota\logo.png
+C:\xampp\htdocs\stockiate\tesis_enzo\mascota\pose-principal.png
+C:\xampp\htdocs\stockiate\tesis_enzo\mascota\saludo.png
+C:\xampp\htdocs\stockiate\tesis_enzo\mascota\stock-critico.png

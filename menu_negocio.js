@@ -97,6 +97,42 @@ const MNG_CSS = `
 .mng-accion-salir:hover{ color:var(--error, #E88F97); }
 .mng-overlay button:focus-visible{ outline:2px solid var(--lila-dark, #B87FD9); outline-offset:2px; }
 
+/* Ventana flotante de Carteles / Equipo. Es la página completa en un iframe
+   (ver embebido.js), sobre un fondo más difuminado que el del menú. Mismo
+   z-index que el menú: al abrirse, el menú se cierra. */
+.mng-flot-overlay{
+  position:fixed; inset:0; z-index:1000000;
+  display:flex; align-items:center; justify-content:center; padding:24px;
+  background:rgba(26,22,37,0.45);
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  font-family:"Plus Jakarta Sans","Inter",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  animation:mng-aparecer .18s ease-out;
+}
+.mng-flot-overlay[hidden]{ display:none; }
+.mng-flot{
+  width:min(1240px, 100%); height:min(90vh, 1000px);
+  display:flex; flex-direction:column;
+  background:var(--superficie, #F3EFF7);
+  border:1px solid var(--glass-border, rgba(255,255,255,0.75));
+  border-radius:22px; box-shadow:0 30px 80px rgba(0,0,0,0.35);
+  color:var(--blanco-puro, #453B5C); overflow:hidden; outline:none;
+  animation:mng-subir .22s ease-out;
+}
+.mng-flot-head{ display:flex; align-items:center; gap:12px; padding:14px 18px 14px 22px; border-bottom:1px solid var(--divisor, rgba(0,0,0,0.08)); }
+.mng-flot-head h2{ flex:1; font-size:15px; font-weight:800; margin:0; }
+.mng-flot-marco{ position:relative; flex:1; min-height:0; }
+.mng-flot-marco iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; background:transparent; }
+.mng-flot-cargando{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--gris-tenue, #8B7FA8); }
+@keyframes mng-aparecer{ from{ opacity:0; } to{ opacity:1; } }
+@keyframes mng-subir{ from{ opacity:0; transform:translateY(12px) scale(.985); } to{ opacity:1; transform:none; } }
+@media (prefers-reduced-motion: reduce){
+  .mng-flot-overlay, .mng-flot{ animation:none; }
+}
+@media (max-width: 560px){
+  .mng-flot-overlay{ padding:8px; }
+  .mng-flot{ height:96vh; border-radius:18px; }
+}
+
 /* El bloqueo del scroll del fondo va como clase en <html> y no como estilo
    inline, para no pisar (ni tener que restaurar) lo que hubiera antes. */
 .mng-sin-scroll{ overflow:hidden; }
@@ -255,12 +291,90 @@ function initMenuNegocio(chip) {
     if (e.key === "Escape" && abierto) cerrar();
   });
 
+  // ------------------------------------------------------------------
+  // Ventana flotante: Carteles y Equipo sin salir del panel
+  // ------------------------------------------------------------------
+  const flotOverlay = document.createElement("div");
+  flotOverlay.className = "mng-flot-overlay";
+  flotOverlay.hidden = true;
+  flotOverlay.innerHTML = `
+    <div class="mng-flot" role="dialog" aria-modal="true" aria-labelledby="mngFlotTitulo" tabindex="-1">
+      <div class="mng-flot-head">
+        <h2 id="mngFlotTitulo"></h2>
+        <button type="button" class="mng-cerrar" data-mng-flot-cerrar aria-label="Cerrar">&#10005;</button>
+      </div>
+      <div class="mng-flot-marco"><div class="mng-flot-cargando">Cargando...</div></div>
+    </div>
+  `;
+  document.body.appendChild(flotOverlay);
+
+  const flot = flotOverlay.querySelector(".mng-flot");
+  const flotTitulo = flotOverlay.querySelector("#mngFlotTitulo");
+  const flotMarco = flotOverlay.querySelector(".mng-flot-marco");
+  let flotAbierta = false;
+
+  function abrirFlotante(pagina, titulo) {
+    if (abierto) {
+      // Se cierra el menú sin devolverle el foco al chip: lo toma la ventana.
+      abierto = false;
+      overlay.hidden = true;
+      chip.setAttribute("aria-expanded", "false");
+    }
+    flotAbierta = true;
+    flotTitulo.textContent = titulo;
+
+    // Iframe nuevo en cada apertura: Equipo y el catálogo de carteles se leen
+    // frescos, y al cerrar no queda una página viva escuchando atrás.
+    const iframe = document.createElement("iframe");
+    iframe.title = titulo;
+    iframe.src = pagina;
+    iframe.addEventListener("load", () => {
+      // Si la sesión venció, exigirSesion() redirige a login.html ADENTRO del
+      // iframe: el login tiene que ocupar la pestaña, no la ventanita.
+      try {
+        const ruta = iframe.contentWindow.location.pathname;
+        if (!ruta.endsWith("/" + pagina)) {
+          window.location.href = iframe.contentWindow.location.href;
+        }
+      } catch (e) { /* mismo origen siempre; por las dudas */ }
+    });
+    flotMarco.querySelectorAll("iframe").forEach(n => n.remove());
+    flotMarco.appendChild(iframe);
+
+    flotOverlay.hidden = false;
+    document.documentElement.classList.add("mng-sin-scroll");
+    flot.focus();
+  }
+
+  // Al cerrar Carteles o Equipo se vuelve al menú del negocio (preferencias,
+  // avisos), que es de donde se abrieron, y no directo al panel.
+  function cerrarFlotante() {
+    if (!flotAbierta) return;
+    flotAbierta = false;
+    flotOverlay.hidden = true;
+    flotMarco.querySelectorAll("iframe").forEach(n => n.remove());
+    abrir(); // mantiene el bloqueo de scroll y le da el foco al menú
+  }
+
+  flotOverlay.querySelector("[data-mng-flot-cerrar]").addEventListener("click", cerrarFlotante);
+  flotOverlay.addEventListener("click", (e) => {
+    if (e.target === flotOverlay) cerrarFlotante();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && flotAbierta) cerrarFlotante();
+  });
+  // Escape apretado con el foco adentro del iframe (lo reenvía embebido.js).
+  window.addEventListener("message", (e) => {
+    if (e.origin !== window.location.origin) return;
+    if (e.data && e.data.tipo === "stockiate-cerrar-flotante") cerrarFlotante();
+  });
+
   overlay.querySelector("[data-mng-carteles]").addEventListener("click", () => {
-    window.location.href = "carteles.html";
+    abrirFlotante("carteles.html", "🏷 Carteles de góndola");
   });
 
   overlay.querySelector("[data-mng-equipo]").addEventListener("click", () => {
-    window.location.href = "equipo.html";
+    abrirFlotante("equipo.html", "👥 Equipo");
   });
 
   // cerrarSesion() (auth.js) navega a login.html por su cuenta: no hace falta

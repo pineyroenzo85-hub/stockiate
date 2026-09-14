@@ -37,11 +37,13 @@ const REP_CLAVE_PLEGADO = "stockiate_reposicion_plegado";
 
 const REP_ESTILOS_ID = "rep-estilos";
 const REP_CSS = `
-.rep-panel{ background:var(--glass-bg); backdrop-filter:blur(20px) saturate(180%); -webkit-backdrop-filter:blur(20px) saturate(180%); border:1px solid var(--glass-border); border-radius:22px; overflow:hidden; color:var(--blanco-puro); font-family:'Plus Jakarta Sans','Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif; margin-top:20px; box-shadow:var(--glass-shadow); }
+.rep-panel{ background:var(--glass-bg); backdrop-filter:blur(20px) saturate(180%); -webkit-backdrop-filter:blur(20px) saturate(180%); border:1px solid var(--glass-border); border-radius:22px; overflow:hidden; color:var(--blanco-puro); font-family:'Plus Jakarta Sans','Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif; box-shadow:var(--glass-shadow); }
 .rep-panel-head{ padding:18px 20px; border-bottom:1px solid var(--divisor); display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
 .rep-panel-head h2{ font-size:15px; font-weight:800; margin:0; }
 .rep-panel-head p{ font-size:12px; color:var(--gris-tenue); margin:2px 0 0; }
-.rep-head-acciones{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.rep-head-acciones{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-left:auto; }
+.rep-info{ cursor:help; color:var(--gris-tenue); font-weight:600; font-size:13px; margin-left:4px; }
+.rep-panel-head p:empty{ display:none; }
 .rep-btn{ background:var(--superficie); box-shadow:var(--neu-sombra-chica); border:none; color:var(--blanco-puro); border-radius:10px; padding:8px 13px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; transition:all .15s; }
 .rep-btn:hover:not(:disabled){ color:var(--lila-dark); }
 .rep-btn:disabled{ opacity:.5; cursor:default; }
@@ -75,12 +77,17 @@ const REP_CSS = `
    (pasa fuera de https), el texto igual tiene que poder salir de acá. */
 .rep-texto{ width:calc(100% - 40px); margin:14px 20px 0; min-height:160px; background:var(--superficie); box-shadow:var(--neu-inset); border:none; border-radius:12px; padding:12px 14px; color:var(--blanco-puro); font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; line-height:1.55; resize:vertical; }
 
-/* Plegado: queda el pie, que es el resumen (cuántos productos y cuánta plata). */
+/* Plegado: queda el pie, que es el resumen (cuántos productos y cuánta plata).
+   El botón de plegar va FUERA de .rep-head-acciones: cuando estaba adentro,
+   esta regla lo escondía también y el panel plegado no se podía volver a abrir. */
 .rep-panel.rep-plegado .rep-tabla-wrap,
-.rep-panel.rep-plegado .rep-head-acciones .rep-btn,
-.rep-panel.rep-plegado .rep-head-acciones .rep-select,
+.rep-panel.rep-plegado .rep-head-acciones,
 .rep-panel.rep-plegado .rep-texto,
 .rep-panel.rep-plegado .rep-aviso{ display:none; }
+/* Sin nada para pedir no se dibuja la tabla vacía: el pie ya lo dice. */
+.rep-panel.rep-vacio .rep-tabla-wrap{ display:none; }
+/* Sin tabla en el medio, el borde del head y el del pie hacían doble línea. */
+.rep-panel.rep-plegado .rep-panel-head{ border-bottom:none; }
 `;
 
 function asegurarEstilosReposicion() {
@@ -114,16 +121,16 @@ function initReposicionTabla(contenedor, opciones = {}) {
     <div class="rep-panel ${arrancaPlegado ? "rep-plegado" : ""}">
       <div class="rep-panel-head">
         <div>
-          <h2>Reposición al proveedor</h2>
-          <p id="repSubtitulo">Calculando qué hay que pedir...</p>
+          <h2>Reposición al proveedor<span class="rep-info" id="repInfo" tabindex="0" role="note" hidden>ⓘ</span></h2>
+          <p id="repSubtitulo">Calculando...</p>
         </div>
         <div class="rep-head-acciones">
           <select class="rep-select" id="repProveedor" title="Filtrar por proveedor">
             <option value="">Todos los proveedores</option>
           </select>
           <button type="button" class="rep-btn" id="repCopiar">Copiar para WhatsApp</button>
-          ${usaPlegable ? `<button type="button" class="rep-btn" data-rep-toggle-pleg></button>` : ""}
         </div>
+        ${usaPlegable ? `<button type="button" class="rep-btn" data-rep-toggle-pleg></button>` : ""}
       </div>
       <div id="repAviso"></div>
       <div class="rep-tabla-wrap">
@@ -149,6 +156,7 @@ function initReposicionTabla(contenedor, opciones = {}) {
 
   const panel = contenedor.querySelector(".rep-panel");
   const subtitulo = contenedor.querySelector("#repSubtitulo");
+  const info = contenedor.querySelector("#repInfo");
   const tbody = contenedor.querySelector("#repTbody");
   const pie = contenedor.querySelector("#repPie");
   const aviso = contenedor.querySelector("#repAviso");
@@ -182,12 +190,9 @@ function initReposicionTabla(contenedor, opciones = {}) {
   function renderTabla() {
     const filas = visibles();
 
+    panel.classList.toggle("rep-vacio", !filas.length);
     if (!filas.length) {
-      tbody.innerHTML = `<tr><td colspan="6" class="rep-empty">
-        ${datos && datos.resultados.length
-          ? "Ningún producto de este proveedor necesita reposición."
-          : "No hay nada para pedir: todos los productos que se venden tienen stock por encima de su punto de pedido."}
-      </td></tr>`;
+      tbody.innerHTML = "";
       return;
     }
 
@@ -224,13 +229,18 @@ function initReposicionTabla(contenedor, opciones = {}) {
     const unidades = filas.reduce((acc, r) => acc + r.sugerido, 0);
     const sinCosto = filas.length - conCosto.length;
 
+    if (!filas.length) {
+      pie.innerHTML = `<span style="color:var(--ok); font-weight:700">✓ Nada para pedir</span>`;
+      return;
+    }
+
     pie.innerHTML = `
-      <span><b>${filas.length}</b> producto(s) para pedir</span>
-      <span><b>${unidades}</b> unidades en total</span>
-      <span>Costo estimado: <b>${repPesos(total)}</b>${
+      <span><b>${filas.length}</b> ${filas.length === 1 ? "producto" : "productos"}</span>
+      <span><b>${unidades}</b> unidades</span>
+      <span>Costo: <b>${repPesos(total)}</b>${
         // Un total que parece completo pero se saltea productos sin costo
         // cargado es un número que engaña. Se dice en el mismo renglón.
-        sinCosto > 0 ? ` <span style="color:var(--alerta)">(faltan ${sinCosto} sin costo)</span>` : ""
+        sinCosto > 0 ? ` <span style="color:var(--alerta)">(${sinCosto} sin costo)</span>` : ""
       }</span>
     `;
   }
@@ -238,33 +248,25 @@ function initReposicionTabla(contenedor, opciones = {}) {
   function renderAviso() {
     const partes = [];
 
+    const p = datos.parametros;
+
     if (datos.parametros_contradictorios) {
       partes.push(
-        `Los parámetros no cierran entre sí: estás pidiendo para <b>${datos.parametros.dias_objetivo} días</b> ` +
-        `pero el punto de pedido cubre más que eso (entrega de ${datos.parametros.dias_entrega} días ` +
-        `con un colchón de ${datos.parametros.factor_seguridad}). Hay productos con sugerencia 0. ` +
-        `Subí los días a pedir o bajá el colchón, en Preferencias del negocio.`
+        `Hay sugerencias en 0: ${p.dias_objetivo} días a pedir no cubren la entrega con colchón. ` +
+        `Ajustalo en Preferencias.`
       );
     }
 
+    // Por qué falta un producto, en una sola línea: sin ventas no se repone
+    // (se liquida) y con poca historia la venta diaria sería inventada.
     const d = datos.diagnostico;
-    if (d.sin_ventas > 0) {
-      partes.push(
-        `<b>${d.sin_ventas} producto(s) quedaron afuera por no haber vendido nada</b> en los últimos ` +
-        `${datos.parametros.dias_historia_venta} días. No es un olvido: lo que no se vende no se repone, ` +
-        `se liquida.`
-      );
-    }
-    if (d.sin_historia > 0) {
-      partes.push(
-        `${d.sin_historia} producto(s) quedaron afuera por tener menos de ` +
-        `${datos.parametros.antiguedad_minima_dias} días de historia: sin eso, la venta diaria que ` +
-        `saldría es un número inventado.`
-      );
-    }
+    const afuera = [];
+    if (d.sin_ventas > 0) afuera.push(`${d.sin_ventas} sin ventas en ${p.dias_historia_venta} días`);
+    if (d.sin_historia > 0) afuera.push(`${d.sin_historia} con menos de ${p.antiguedad_minima_dias} días de historia`);
+    if (afuera.length) partes.push(`No se incluyen: ${afuera.join(" · ")}.`);
 
     aviso.innerHTML = partes.length
-      ? `<div class="rep-aviso">${partes.join("<br><br>")}</div>`
+      ? `<div class="rep-aviso">${partes.join("<br>")}</div>`
       : "";
   }
 
@@ -362,10 +364,16 @@ function initReposicionTabla(contenedor, opciones = {}) {
 
       datos = data;
 
+      // Los parámetros de la cuenta van al tooltip del ⓘ: a la vista eran dos
+      // oraciones que el resumen del pie ya no necesita.
       const p = data.parametros;
-      subtitulo.textContent =
-        `Pedido para ${p.dias_objetivo} días, con entrega de ${p.dias_entrega} días ` +
-        `y un colchón de ${p.factor_seguridad}. Ritmo medido sobre los últimos ${p.dias_historia_venta} días.`;
+      const detalle =
+        `Pedido para ${p.dias_objetivo} días, entrega en ${p.dias_entrega} días, colchón ${p.factor_seguridad}. ` +
+        `Ritmo de los últimos ${p.dias_historia_venta} días. Se cambia en Preferencias.`;
+      info.title = detalle;
+      info.setAttribute("aria-label", detalle);
+      info.hidden = false;
+      subtitulo.textContent = "";
 
       renderProveedores();
       renderAviso();
@@ -373,6 +381,7 @@ function initReposicionTabla(contenedor, opciones = {}) {
       renderPie();
       botonCopiar.disabled = data.resultados.length === 0;
     } catch (err) {
+      panel.classList.remove("rep-vacio");
       subtitulo.textContent = mensajeDeError(err);
       tbody.innerHTML = `<tr><td colspan="6" class="rep-empty">Verificá que Apache y MySQL estén corriendo.</td></tr>`;
     }

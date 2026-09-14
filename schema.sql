@@ -60,6 +60,11 @@ CREATE TABLE usuarios (
     apellido VARCHAR(100) NOT NULL,
     email VARCHAR(150) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
+    -- Cuándo cambió la contraseña por última vez. NULL = nunca la cambió.
+    -- No es un dato de auditoría: es lo que echa a las sesiones abiertas
+    -- cuando alguien resetea su contraseña. Ver sesion_actual() en sesion.php
+    -- y password_resets más abajo.
+    password_cambiado_en DATETIME NULL DEFAULT NULL,
     rol ENUM('repositor', 'cajero', 'dueño') NOT NULL,  -- 'dueño' = rol Administrador en la UI
     creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (negocio_id) REFERENCES negocios(id),
@@ -91,6 +96,37 @@ CREATE TABLE invitaciones (
     FOREIGN KEY (negocio_id) REFERENCES negocios(id),
     FOREIGN KEY (creado_por) REFERENCES usuarios(id),
     INDEX idx_invitaciones_negocio (negocio_id, usada_at)
+);
+
+-- ------------------------------------------------------------
+-- RESETEO DE CONTRASEÑA (recuperación por email)
+-- ------------------------------------------------------------
+-- Tokens de un solo uso que viajan en el link del mail de "olvidé mi
+-- contraseña". Los escribe solicitar_reset.php y los canjea
+-- restablecer_password.php.
+--
+-- SE GUARDA EL HASH DEL TOKEN, NO EL TOKEN. `invitaciones` guarda el suyo en
+-- claro y está bien (sólo sirve para crear una cuenta que todavía no existe);
+-- éste abre una cuenta EXISTENTE con las ventas del comercio adentro, así que
+-- si alguien lee esta tabla no se puede llevar nada. El token en claro vive
+-- sólo en el mail.
+--
+-- ES LA EXCEPCIÓN A "toda tabla lleva negocio_id": se consulta antes de que
+-- exista una sesión, o sea sin ningún negocio_id con el cual filtrar. La
+-- búsqueda es por token, que es un secreto global (mismo criterio que el
+-- `token` de invitaciones). El negocio se deriva del usuario.
+CREATE TABLE password_resets (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    token_hash CHAR(64) NOT NULL UNIQUE,   -- SHA-256 en hex del token real
+    expira_at DATETIME NOT NULL,           -- 1 hora, no 7 días como la invitación
+    usada_at DATETIME NULL,                -- NULL = todavía se puede canjear
+    enviado_at DATETIME NULL,              -- cuándo salió el mail (NULL = no salió)
+    error TEXT NULL,                       -- el error crudo del SMTP, si falló
+    ip_solicitud VARCHAR(45) NULL,         -- 45 = IPv6 con formato largo
+    creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
+    INDEX idx_password_resets_usuario (usuario_id, creado_en)
 );
 
 -- ------------------------------------------------------------
@@ -143,6 +179,9 @@ CREATE TABLE productos (
     -- El SKU de un archivado sigue ocupado (el UNIQUE de abajo aplica igual).
     activo TINYINT(1) NOT NULL DEFAULT 1,
     archivado_en DATETIME NULL,
+    -- Última foto sacada con la cámara en la Red de Seguridad (nombre del
+    -- archivo en uploads/productos/). La guarda subir_foto_producto.php.
+    foto VARCHAR(100) NULL,
     creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_productos_negocio_sku (negocio_id, sku),
     -- Clave candidata redundante: habilita las FK compuestas de lotes_stock,

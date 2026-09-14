@@ -158,7 +158,7 @@
   @media (prefers-color-scheme: dark) { :root:not([data-tema="claro"]) .toggle-tema-knob svg{ display: block; } }
 
   /* KPI Grid */
-  .kpi-grid{ display:grid; grid-template-columns: repeat(4, 1fr); gap:16px; }
+  .kpi-grid{ display:grid; grid-template-columns: repeat(3, 1fr); gap:16px; }
   .kpi-card{
     background: var(--superficie);
     box-shadow: var(--neu-sombra);
@@ -176,18 +176,16 @@
   .kpi-sub{ font-size:12px; color:var(--gris-tenue); margin-top:4px; }
   .kpi-sub.ok{ color:var(--ok); }
   .kpi-sub.warn{ color:var(--alerta); }
-  .pulse-dot{ width:8px; height:8px; border-radius:50%; background:var(--ok); display:inline-block; margin-right:6px; box-shadow:0 0 8px var(--ok); animation:pulse 1.6s infinite; }
-  @keyframes pulse{ 0%{opacity:1;} 50%{opacity:.35;} 100%{opacity:1;} }
 
   /* Main grid */
   .main-grid{ display:grid; grid-template-columns: 1fr; gap:20px; align-items:start; }
 
-  @media (max-width: 1080px){
-    .kpi-grid{ grid-template-columns: repeat(2,1fr); }
-    .main-grid{ grid-template-columns: 1fr; }
+  /* Tres KPI: de tres columnas pasan directo a una, sin el 2+1 con una tarjeta
+     huérfana. */
+  @media (max-width: 720px){
+    .kpi-grid{ grid-template-columns: 1fr; }
   }
   @media (max-width: 560px){
-    .kpi-grid{ grid-template-columns: 1fr; }
     body{ padding:14px; }
   }
 </style>
@@ -230,18 +228,19 @@
   <div class="kpi-grid" id="kpiGrid"></div>
 
   <div class="main-grid">
-    <!-- Gráficos: stock, capital por proveedor y ventas del último mes -->
-    <div id="graficosContenedor"></div>
-    <!-- Inventario -->
-    <div id="inventarioContenedor"></div>
+    <!-- Arriba lo accionable: qué se agota, cuánta plata hay parada y qué
+         pedir. Los gráficos y la tabla completa quedan debajo. -->
     <!-- Riesgo de quiebre: productos que se agotan pronto según el ritmo de
          venta, aunque todavía no estén en stock crítico -->
     <div id="prediccionContenedor"></div>
     <!-- Costos y márgenes: carga rápida de precio de costo / proveedor -->
     <div id="costosContenedor"></div>
-    <!-- Reposición: qué pedirle al proveedor y cuánto. Va pegado al riesgo
-         de quiebre porque contestan la misma pregunta en dos tiempos -->
+    <!-- Reposición: qué pedirle al proveedor y cuánto -->
     <div id="reposicionContenedor"></div>
+    <!-- Gráficos: stock, capital por proveedor y ventas del último mes -->
+    <div id="graficosContenedor"></div>
+    <!-- Inventario -->
+    <div id="inventarioContenedor"></div>
     <!-- Rendimiento del modelo de IA: lo que la Red de Seguridad viene
          guardando en correcciones_ia desde que arrancó el piloto -->
     <div id="metricasIaContenedor"></div>
@@ -253,14 +252,16 @@
 <script src="vendor/chart.umd.min.js"></script>
 <script src="vendor/jspdf.umd.min.js"></script>
 <script src="plegable.js?v=1"></script>
-<script src="inventario_tabla.js?v=6"></script>
-<script src="prediccion_tabla.js?v=1"></script>
-<script src="costos_tabla.js?v=2"></script>
-<script src="metricas_ia.js?v=3"></script>
-<script src="reposicion_tabla.js?v=2"></script>
-<script src="graficos.js?v=5"></script>
-<script src="preferencias.js?v=3"></script>
-<script src="menu_negocio.js?v=1"></script>
+<script src="inventario_tabla.js?v=10"></script>
+<script src="image_utils.js?v=2"></script>
+<script src="foto_producto.js?v=3"></script>
+<script src="prediccion_tabla.js?v=2"></script>
+<script src="costos_tabla.js?v=3"></script>
+<script src="metricas_ia.js?v=4"></script>
+<script src="reposicion_tabla.js?v=3"></script>
+<script src="graficos.js?v=6"></script>
+<script src="preferencias.js?v=4"></script>
+<script src="menu_negocio.js?v=3"></script>
 <script>
 /* ---------------- KPIs (datos reales de MySQL vía consultar_inventario.php) ---------------- */
 function renderKPIs(datos){
@@ -271,23 +272,19 @@ function renderKPIs(datos){
 
   const cards = [
     {
-      label: "Ventas Estimadas Hoy", value: `$${ventasHoyMonto.toLocaleString('es-AR')}`,
-      sub: `≈ ${ventasHoyUnidades} unidades`, subClass:"ok", icon:"💰", glow:"rgba(184,232,206,0.35)"
+      label: "Ventas de hoy", value: `$${ventasHoyMonto.toLocaleString('es-AR')}`,
+      sub: `${ventasHoyUnidades} unidades`, subClass:"ok", icon:"💰", glow:"rgba(184,232,206,0.35)"
     },
     {
-      label: "Alertas de Stock Crítico", value: criticos,
-      sub: criticos > 0 ? `${criticos} producto(s) requieren reposición` : "Todo bajo control",
+      label: "Stock crítico", value: criticos,
+      sub: criticos > 0 ? "Para reponer" : "Todo en orden",
       subClass: criticos > 0 ? "warn" : "ok", icon:"⚠️", glow:"rgba(242,191,196,0.35)"
     },
     {
-      label: "Producto Más Vendido",
-      value: masVendido ? masVendido.nombre.split(' ').slice(0,3).join(' ') : "Sin ventas este mes",
-      sub: masVendido ? `${masVendido.marca || ''} · ${masVendido.unidades_vendidas} u/mes` : "",
+      label: "Más vendido del mes",
+      value: masVendido ? masVendido.nombre.split(' ').slice(0,3).join(' ') : "Sin ventas",
+      sub: masVendido ? `${masVendido.marca ? masVendido.marca + ' · ' : ''}${masVendido.unidades_vendidas} u.` : "",
       subClass:"", icon:"🏆", glow:"rgba(245,227,174,0.35)"
-    },
-    {
-      label: "Estado del Servidor IA", value: "Online",
-      sub: "Modo simulado · latencia 180ms", subClass:"ok", icon:"🛰️", glow:"rgba(217,191,234,0.35)", pulse:true
     },
   ];
 
@@ -298,7 +295,7 @@ function renderKPIs(datos){
         <span class="kpi-label">${c.label}</span>
         <span class="kpi-icon">${c.icon}</span>
       </div>
-      <div class="kpi-value">${c.pulse ? '<span class="pulse-dot"></span>' : ''}${c.value}</div>
+      <div class="kpi-value">${c.value}</div>
       <div class="kpi-sub ${c.subClass}">${c.sub}</div>
     </div>
   `).join('');

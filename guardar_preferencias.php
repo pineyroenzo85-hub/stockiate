@@ -99,6 +99,28 @@ if (array_key_exists('activo', $body)) {
     $cambios['whatsapp_activo'] = !empty($body['activo']) ? '1' : '0';
 }
 
+if (array_key_exists('email_destino', $body)) {
+    $email = is_string($body['email_destino']) ? trim($body['email_destino']) : '';
+
+    // Vacío es válido y significa "no quiero avisos por mail": es la forma de
+    // borrar la casilla sin tener que apagar el interruptor aparte. Lo que no
+    // se acepta es una dirección que no lo sea — guardarla dejaría el aviso
+    // fallando en silencio en cada corrida del cron, que es justo el modo de
+    // falla que el panel existe para evitar.
+    if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        responder([
+            'ok' => false,
+            'mensaje' => 'Ese email no parece válido. Ejemplo: nombre@gmail.com',
+        ], 400);
+    }
+
+    $cambios['email_destino'] = $email;
+}
+
+if (array_key_exists('email_activo', $body)) {
+    $cambios['email_activo'] = !empty($body['email_activo']) ? '1' : '0';
+}
+
 if (array_key_exists('hora_resumen', $body)) {
     $hora = is_string($body['hora_resumen']) ? trim($body['hora_resumen']) : '';
 
@@ -195,15 +217,17 @@ try {
 
     // Se relee en vez de devolver lo que mandó el cliente, mismo criterio que
     // actualizar_costo.php: el panel repinta contra lo que quedó guardado.
-    $whatsapp = config_whatsapp($pdo, $negocio_id);
+    $avisos = config_avisos($pdo, $negocio_id);
 
     responder([
         'ok' => true,
         'preferencias' => [
-            'telefono' => $whatsapp['telefono'],
-            'activo' => $whatsapp['activo'],
-            'hora_resumen' => $whatsapp['hora_resumen'],
-            'telefono_normalizado' => normalizar_telefono($whatsapp['telefono']),
+            'telefono' => $avisos['telefono'],
+            'activo' => $avisos['activo'],
+            'hora_resumen' => $avisos['hora_resumen'],
+            'telefono_normalizado' => normalizar_telefono($avisos['telefono']),
+            'email_destino' => $avisos['email'],
+            'email_activo' => $avisos['email_activo'],
             'umbral_dias_vencimiento' => leer_config_int($pdo, $negocio_id, 'umbral_dias_vencimiento'),
             'ventana_notificaciones_horas' => leer_config_int($pdo, $negocio_id, 'ventana_notificaciones_horas'),
             'stock_minimo_default' => leer_config_int($pdo, $negocio_id, 'stock_minimo_default'),
@@ -212,6 +236,7 @@ try {
             'reposicion_factor_seguridad' => leer_config_float($pdo, $negocio_id, 'reposicion_factor_seguridad'),
         ],
         'servidor_configurado' => whatsapp_configurado(),
+        'servidor_mail_configurado' => mail_configurado(),
     ]);
 } catch (PDOException $e) {
     responder([

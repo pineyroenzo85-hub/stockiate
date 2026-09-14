@@ -151,7 +151,8 @@
 <div id="toast-container" class="toast-container"></div>
 
 <script src="plegable.js?v=1"></script>
-<script src="inventario_tabla.js?v=6"></script>
+<script src="inventario_tabla.js?v=10"></script>
+<script src="foto_producto.js?v=3"></script>
 <script src="image_utils.js?v=2"></script>
 <script src="recorte_imagen.js?v=3"></script>
 <script>
@@ -794,6 +795,7 @@ btnEliminar.addEventListener("click", () => {
     });
 
     let huboError = false;
+    const conFoto = new Set();
 
     for (const pedido of pedidos) {
       try {
@@ -815,6 +817,12 @@ btnEliminar.addEventListener("click", () => {
         }
 
         if (pedido.esIA) {
+          // La foto de la cámara pasa a ser la foto del producto (best-effort).
+          // Una sola vez por producto aunque aparezca en dos tarjetas.
+          if (!conFoto.has(pedido.producto_id)) {
+            conFoto.add(pedido.producto_id);
+            subirFotoProducto(pedido.producto_id, archivoSeleccionado);
+          }
           registrarCorreccion({
             producto_detectado_id: pedido.productoDetectadoId,
             producto_corregido_id: pedido.producto_id,

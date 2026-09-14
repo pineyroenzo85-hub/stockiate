@@ -168,6 +168,55 @@ function establecer_sesion(array $usuario): void
         // te deja adentro del usuario que tenga ESE id en la base real, con
         // sus datos y su rol. Ver sesion_actual().
         'base' => STOCKIATE_BASE,
+        // Cuándo se había cambiado la contraseña en el momento de abrir esta
+        // sesión. Es la foto contra la que sesion_actual() compara en cada
+        // request para echar a las sesiones viejas después de un reseteo (ver
+        // restablecer_password.php). Se busca acá y no lo manda quien llama,
+        // así ningún caller de establecer_sesion() tuvo que cambiar.
+        'pwd_at' => (estado_usuario_en_base((int) $usuario['id'])['pwd_at'] ?? null),
+    ];
+}
+
+/**
+ * Lee de la base lo que hace falta para validar una sesión ya abierta:
+ * si el usuario sigue existiendo y cuándo cambió su contraseña por última vez.
+ *
+ * Devuelve `['pwd_at' => ?string]`, o **false** si no se pudo preguntar.
+ * Esa distinción importa: `false` significa "no sé", y quien llama no tiene
+ * que tomar ninguna decisión con eso. Dos casos reales caen ahí — la base
+ * caída, y una instalación donde todavía no se corrió
+ * `migracion_reset_password.sql` y la columna no existe. En los dos, lo
+ * correcto es dejar la sesión como está: si un hipo de MySQL desloguease a
+ * todo el mundo, el remedio sería peor que la enfermedad.
+ *
+ * Que el usuario NO exista es otra cosa: ahí sí se sabe, y la respuesta es
+ * que esa sesión no vale (la cuenta se borró, o la sesión venía de otra base).
+ *
+ * @return array{pwd_at: ?string}|false
+ */
+function estado_usuario_en_base(int $usuario_id)
+{
+    global $pdo;
+
+    try {
+        $stmt = $pdo->prepare(
+            "SELECT password_cambiado_en FROM usuarios WHERE id = :id LIMIT 1"
+        );
+        $stmt->execute([':id' => $usuario_id]);
+        $fila = $stmt->fetch();
+    } catch (PDOException $e) {
+        return false;
+    }
+
+    if ($fila === false) {
+        return ['pwd_at' => null, 'existe' => false];
+    }
+
+    return [
+        'pwd_at' => $fila['password_cambiado_en'] === null
+            ? null
+            : (string) $fila['password_cambiado_en'],
+        'existe' => true,
     ];
 }
 
@@ -218,9 +267,33 @@ function sesion_actual(): ?array
         return null;
     }
 
-    // No forma parte del usuario para el resto del sistema: es metadato de la
-    // sesión, y sesion_actual.php serializa este array tal cual al frontend.
-    unset($usuario['base']);
+    // ¿Le cambiaron la contraseña desde que se abrió esta sesión?
+    //
+    // Es lo que hace que resetear la contraseña sirva de algo cuando alguien
+    // te entró a la cuenta: sin este chequeo, el atacante se queda adentro con
+    // su cookie intacta y el reseteo no lo toca. Las sesiones de PHP son
+    // archivos en disco y no se pueden barrer por usuario, así que la
+    // invalidación es indirecta: restablecer_password.php estampa
+    // `usuarios.password_cambiado_en` y acá se compara contra la foto que la
+    // sesión guardó al abrirse.
+    //
+    // Cuesta un SELECT por PK en cada request de cada endpoint. Se paga a
+    // propósito: es el precio de que "cambié la contraseña" signifique de
+    // verdad "el otro ya no está adentro", y no "el otro ya no está adentro
+    // cuando se le venza la cookie".
+    $estado = estado_usuario_en_base((int) $usuario['id']);
+
+    if ($estado !== false
+        && (!$estado['existe'] || ($usuario['pwd_at'] ?? null) !== $estado['pwd_at'])) {
+        $_SESSION['usuario'] = null;
+        unset($_SESSION['usuario']);
+        return null;
+    }
+
+    // No forman parte del usuario para el resto del sistema: son metadatos de
+    // la sesión, y sesion_actual.php serializa este array tal cual al
+    // frontend.
+    unset($usuario['base'], $usuario['pwd_at']);
 
     return $usuario;
 }
