@@ -205,12 +205,23 @@ CREATE TABLE lotes_stock (
     negocio_id INT NOT NULL,
     producto_id INT NOT NULL,
     cantidad INT NOT NULL,
+    -- Proveedor y costo de ESTE lote puntual (no confundir con
+    -- productos.proveedor_id/precio_costo, que es el "último usado", el
+    -- default que se precarga en el formulario). Acá quedan congelados para
+    -- siempre: si un lote se compró a Distribuidora Sur a $2000 y el
+    -- siguiente a Mayorista Norte a $2300, cada fila mantiene el suyo aunque
+    -- el default del producto cambie después. Ver migracion_lotes_proveedor_costo.sql.
+    proveedor_id INT NULL,
+    precio_costo DECIMAL(10,2) NULL,
     fecha_carga DATETIME DEFAULT CURRENT_TIMESTAMP,
     fecha_vencimiento DATE NULL,   -- opcional: si es NULL, no se controla vencimiento
     usuario_id INT NULL,           -- quién cargó el lote (repositor)
     FOREIGN KEY (negocio_id) REFERENCES negocios(id),
     -- Compuesta: el lote no puede apuntar a un producto de otro negocio.
     FOREIGN KEY (producto_id, negocio_id) REFERENCES productos(id, negocio_id),
+    -- Compuesta, mismo criterio que productos.proveedor_id: el lote no puede
+    -- apuntar a un proveedor de otro negocio.
+    FOREIGN KEY (proveedor_id, negocio_id) REFERENCES proveedores(id, negocio_id),
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
 );
 

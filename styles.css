@@ -1042,3 +1042,54 @@ select#modo-entrada:disabled {
 .btn-conectar-serial:active {
   transform: scale(0.98);
 }
+
+/* ---------- Selector de cantidad (+/-) ---------- */
+/* Menos a la izquierda, más a la derecha: botones grandes pensados para el
+   pulgar en el teléfono, no para mouse. El input del medio sigue siendo el
+   mismo .input-cantidad de siempre (misma clase, mismo evento "input"), así
+   que todo el código que ya lo lee (actualizarResumen, el armado del
+   pedido) sigue funcionando sin tocarlo. */
+.stepper-cantidad {
+  display: flex;
+  align-items: stretch;
+  border-radius: var(--radio-chico);
+  box-shadow: var(--neu-inset);
+  overflow: hidden;
+}
+
+.btn-stepper {
+  flex: 0 0 48px;
+  min-width: 48px;
+  border: none;
+  background: var(--superficie);
+  color: var(--azul-acento);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.12s ease;
+}
+
+.btn-stepper:active {
+  background: var(--lila-tenue);
+}
+
+.stepper-cantidad .input-cantidad {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  border-radius: 0;
+  box-shadow: none;
+  -moz-appearance: textfield;
+}
+
+.stepper-cantidad .input-cantidad::-webkit-outer-spin-button,
+.stepper-cantidad .input-cantidad::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}

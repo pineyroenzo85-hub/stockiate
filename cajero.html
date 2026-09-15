@@ -525,7 +525,11 @@ function crearItemCard({ productoDetectadoId = null, confianza = null, cantidad 
     <div class="fila-doble">
       <div>
         <label>Cantidad</label>
-        <input type="number" class="input-cantidad" value="${cantidad}" min="1">
+        <div class="stepper-cantidad">
+          <button type="button" class="btn-stepper btn-stepper-menos" aria-label="Restar unidad">−</button>
+          <input type="number" class="input-cantidad" value="${cantidad}" min="1" inputmode="numeric">
+          <button type="button" class="btn-stepper btn-stepper-mas" aria-label="Sumar unidad">+</button>
+        </div>
       </div>
     </div>
   `;
@@ -537,7 +541,18 @@ function crearItemCard({ productoDetectadoId = null, confianza = null, cantidad 
     actualizarResumen();
   });
 
-  card.querySelector(".input-cantidad").addEventListener("input", actualizarResumen);
+  const inputCantidad = card.querySelector(".input-cantidad");
+  inputCantidad.addEventListener("input", actualizarResumen);
+  card.querySelector(".btn-stepper-menos").addEventListener("click", () => {
+    const actual = parseInt(inputCantidad.value || "1", 10);
+    inputCantidad.value = Math.max(1, actual - 1);
+    inputCantidad.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  card.querySelector(".btn-stepper-mas").addEventListener("click", () => {
+    const actual = parseInt(inputCantidad.value || "0", 10);
+    inputCantidad.value = actual + 1;
+    inputCantidad.dispatchEvent(new Event("input", { bubbles: true }));
+  });
 
   const selectProducto = card.querySelector(".select-producto");
   const formNuevo = card.querySelector(".form-nuevo-producto");

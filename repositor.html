@@ -542,11 +542,25 @@
       <div class="fila-doble">
         <div>
           <label>Cantidad</label>
-          <input type="number" class="input-cantidad" value="${cantidad}" min="1">
+          <div class="stepper-cantidad">
+            <button type="button" class="btn-stepper btn-stepper-menos" aria-label="Restar unidad">−</button>
+            <input type="number" class="input-cantidad" value="${cantidad}" min="1" inputmode="numeric">
+            <button type="button" class="btn-stepper btn-stepper-mas" aria-label="Sumar unidad">+</button>
+          </div>
         </div>
         <div>
           <label>Vencimiento <span class="campo-opcional-tag">opcional</span></label>
           <input type="date" class="input-vencimiento">
+        </div>
+      </div>
+      <div class="fila-doble fila-proveedor-lote" style="display:none;">
+        <div>
+          <label>Proveedor de este lote <span class="campo-opcional-tag">opcional</span></label>
+          <input type="text" class="input-lote-proveedor" list="lista-proveedores" placeholder="Ej: Distribuidora Sur">
+        </div>
+        <div>
+          <label>Precio de costo de este lote <span class="campo-opcional-tag">opcional</span></label>
+          <input type="number" class="input-lote-costo" min="0" step="0.01" placeholder="0">
         </div>
       </div>
     `;
@@ -557,14 +571,47 @@ btnEliminar.addEventListener("click", () => {
   card.remove();
   actualizarResumen();
 });
-    card.querySelector(".input-cantidad").addEventListener("input", actualizarResumen);
+    const inputCantidad = card.querySelector(".input-cantidad");
+    inputCantidad.addEventListener("input", actualizarResumen);
+    card.querySelector(".btn-stepper-menos").addEventListener("click", () => {
+      const actual = parseInt(inputCantidad.value || "1", 10);
+      inputCantidad.value = Math.max(1, actual - 1);
+      inputCantidad.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    card.querySelector(".btn-stepper-mas").addEventListener("click", () => {
+      const actual = parseInt(inputCantidad.value || "0", 10);
+      inputCantidad.value = actual + 1;
+      inputCantidad.dispatchEvent(new Event("input", { bubbles: true }));
+    });
 
     const selectProducto = card.querySelector(".select-producto");
     const formNuevo = card.querySelector(".form-nuevo-producto");
+    const filaProveedorLote = card.querySelector(".fila-proveedor-lote");
+    const inputLoteProveedor = card.querySelector(".input-lote-proveedor");
+    const inputLoteCosto = card.querySelector(".input-lote-costo");
 
+    // Prefill con lo último usado para ESE producto: el catálogo ya trae
+    // proveedor/precio_costo (consultar_productos.php hace el JOIN), así que
+    // no hace falta ningún pedido extra al servidor.
+    function prefillProveedorCosto(producto) {
+      inputLoteProveedor.value = producto?.proveedor || "";
+      inputLoteCosto.value = producto?.precio_costo ?? "";
+    }
+
+    // La fila de proveedor/costo del LOTE es mutuamente excluyente con el
+    // formulario de "crear producto nuevo" (que ya tiene su propio par
+    // Proveedor/Precio de costo, para el alta inicial): mostrar los dos a la
+    // vez duplicaría los campos en la misma tarjeta.
     selectProducto.addEventListener("change", () => {
-      formNuevo.style.display = selectProducto.value === "__nuevo__" ? "flex" : "none";
-      if (selectProducto.value === "__nuevo__") precargarDesdeIA();
+      const esNuevo = selectProducto.value === "__nuevo__";
+      formNuevo.style.display = esNuevo ? "flex" : "none";
+      filaProveedorLote.style.display = (!esNuevo && selectProducto.value !== "") ? "flex" : "none";
+      if (esNuevo) {
+        precargarDesdeIA();
+      } else if (selectProducto.value !== "") {
+        const productoId = parseInt(selectProducto.value, 10);
+        prefillProveedorCosto(CATALOGO.find(p => p.id === productoId));
+      }
     });
 
     const inputNombreNuevo = card.querySelector(".input-nuevo-nombre");
@@ -645,6 +692,8 @@ btnEliminar.addEventListener("click", () => {
         }
         selectProducto.innerHTML = opcionesCatalogo(data.producto.id);
         formNuevo.style.display = "none";
+        prefillProveedorCosto(data.producto);
+        filaProveedorLote.style.display = "flex";
         mostrarToast(`Producto creado con SKU ${data.producto.sku}.`, "exito");
       } catch (err) {
         mostrarToast(mensajeDeError(err), "error");
@@ -784,10 +833,15 @@ btnEliminar.addEventListener("click", () => {
       const productoId = parseInt(card.querySelector(".select-producto").value, 10);
       const cantidad = parseInt(card.querySelector(".input-cantidad").value || "0", 10);
       const vencimiento = card.querySelector(".input-vencimiento").value || null;
+      const proveedorLote = card.querySelector(".input-lote-proveedor")?.value.trim() || null;
+      const costoLoteRaw = card.querySelector(".input-lote-costo")?.value;
+      const costoLote = costoLoteRaw === "" || costoLoteRaw === undefined ? null : parseFloat(costoLoteRaw);
       return {
         producto_id: productoId,
         cantidad,
         fecha_vencimiento: vencimiento,
+        proveedor: proveedorLote,
+        precio_costo: costoLote,
         esIA: card.dataset.esIa === "1",
         productoDetectadoId: card.dataset.productoDetectadoId ? parseInt(card.dataset.productoDetectadoId, 10) : null,
         cantidadDetectada: parseInt(card.dataset.cantidadDetectada || "0", 10),
@@ -807,6 +861,8 @@ btnEliminar.addEventListener("click", () => {
             producto_id: pedido.producto_id,
             cantidad: pedido.cantidad,
             fecha_vencimiento: pedido.fecha_vencimiento,
+            proveedor: pedido.proveedor,
+            precio_costo: pedido.precio_costo,
           }),
         });
         const data = await resp.json();
