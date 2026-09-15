@@ -234,17 +234,14 @@
     <!-- Riesgo de quiebre: productos que se agotan pronto según el ritmo de
          venta, aunque todavía no estén en stock crítico -->
     <div id="prediccionContenedor"></div>
-    <!-- Costos y márgenes: carga rápida de precio de costo / proveedor -->
-    <div id="costosContenedor"></div>
-    <!-- Reposición: qué pedirle al proveedor y cuánto -->
-    <div id="reposicionContenedor"></div>
-    <!-- Gráficos: stock, capital por proveedor y ventas del último mes -->
-    <div id="graficosContenedor"></div>
     <!-- Inventario -->
     <div id="inventarioContenedor"></div>
-    <!-- Rendimiento del modelo de IA: lo que la Red de Seguridad viene
-         guardando en correcciones_ia desde que arrancó el piloto -->
-    <div id="metricasIaContenedor"></div>
+    <!-- Costos y márgenes: carga rápida de precio de costo / proveedor -->
+    <div id="costosContenedor"></div>
+    <!-- Gráficos: stock, capital por proveedor y ventas del último mes -->
+    <div id="graficosContenedor"></div>
+    <!-- Reposición: qué pedirle al proveedor y cuánto -->
+    <div id="reposicionContenedor"></div>
     <!-- Las preferencias del negocio ya no son un card de esta grilla: se abren
          desde el chip de la topbar (menu_negocio.js). -->
   </div>
@@ -314,9 +311,6 @@ const costosTabla = initCostosTabla(document.getElementById('costosContenedor'),
   onDatos: (datos) => graficos.actualizarRentabilidad(datos),
 });
 const prediccionQuiebre = initPrediccionQuiebre(document.getElementById('prediccionContenedor'));
-// Plegable como los otros paneles grandes: plegado queda a la vista el acierto
-// exacto con su n, que es el número que se mira de un vistazo.
-initMetricasIA(document.getElementById('metricasIaContenedor'), { plegable: true });
 const reposicion = initReposicionTabla(document.getElementById('reposicionContenedor'), { plegable: true });
 // Las preferencias dejaron de ser un card de la grilla: viven adentro del panel
 // que abre el chip de la topbar, y initMenuNegocio() monta initPreferencias()
