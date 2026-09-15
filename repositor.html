@@ -200,6 +200,29 @@
   // crear_producto.php da de alta el proveedor nuevo.
   let PROVEEDORES = [];
 
+  // "Último usado" a nivel SESIÓN (no por producto): sirve para cuando se
+  // descarga una caja de un mismo proveedor con productos mezclados, nuevos
+  // y viejos -- así no hay que retipear el proveedor en cada tarjeta nueva
+  // sólo porque ese producto en particular nunca se cargó antes. Vive en
+  // localStorage (no en memoria) porque una entrega grande a veces se carga
+  // en varias fotos/sesiones separadas.
+  const CLAVE_ULTIMO_PROVEEDOR_LOTE = "stockiate_ultimo_proveedor_lote";
+  const CLAVE_ULTIMO_COSTO_LOTE = "stockiate_ultimo_costo_lote";
+
+  function leerUltimoProveedorCostoSesion() {
+    return {
+      proveedor: localStorage.getItem(CLAVE_ULTIMO_PROVEEDOR_LOTE) || "",
+      costo: localStorage.getItem(CLAVE_ULTIMO_COSTO_LOTE) || "",
+    };
+  }
+
+  function guardarUltimoProveedorCostoSesion(proveedor, costo) {
+    if (proveedor) localStorage.setItem(CLAVE_ULTIMO_PROVEEDOR_LOTE, proveedor);
+    if (costo !== null && costo !== undefined && costo !== "") {
+      localStorage.setItem(CLAVE_ULTIMO_COSTO_LOTE, String(costo));
+    }
+  }
+
   function refrescarDatalistProveedores() {
     const datalist = document.getElementById("lista-proveedores");
     if (!datalist) return;
@@ -590,12 +613,26 @@ btnEliminar.addEventListener("click", () => {
     const inputLoteProveedor = card.querySelector(".input-lote-proveedor");
     const inputLoteCosto = card.querySelector(".input-lote-costo");
 
-    // Prefill con lo último usado para ESE producto: el catálogo ya trae
-    // proveedor/precio_costo (consultar_productos.php hace el JOIN), así que
-    // no hace falta ningún pedido extra al servidor.
+    // Prefill con lo último usado: primero lo propio de ESE producto (el
+    // catálogo ya trae proveedor/precio_costo, consultar_productos.php hace
+    // el JOIN), y si el producto no tiene nada propio (recién creado, o
+    // nunca tuvo un lote con estos datos), cae al "último usado en la
+    // sesión" -- así una tarjeta de un producto nuevo, dentro de la misma
+    // entrega, no arranca vacía.
     function prefillProveedorCosto(producto) {
-      inputLoteProveedor.value = producto?.proveedor || "";
-      inputLoteCosto.value = producto?.precio_costo ?? "";
+      const ultimo = leerUltimoProveedorCostoSesion();
+      inputLoteProveedor.value = producto?.proveedor || ultimo.proveedor;
+      const costoProducto = producto?.precio_costo;
+      inputLoteCosto.value = (costoProducto !== null && costoProducto !== undefined) ? costoProducto : ultimo.costo;
+    }
+
+    // Estado inicial: si la IA ya matcheó un producto (productoDetectadoId
+    // presente) desde el arranque, el <select> nace con ese valor ya
+    // seleccionado sin disparar "change" -- hay que precargar la fila a
+    // mano, con el mismo criterio que el handler de más abajo.
+    if (selectProducto.value && selectProducto.value !== "__nuevo__") {
+      filaProveedorLote.style.display = "flex";
+      prefillProveedorCosto(CATALOGO.find(p => p.id === parseInt(selectProducto.value, 10)));
     }
 
     // La fila de proveedor/costo del LOTE es mutuamente excluyente con el
@@ -608,6 +645,11 @@ btnEliminar.addEventListener("click", () => {
       filaProveedorLote.style.display = (!esNuevo && selectProducto.value !== "") ? "flex" : "none";
       if (esNuevo) {
         precargarDesdeIA();
+        // Mismo criterio que la fila del lote: si el usuario ya escribió
+        // algo acá, no se lo pisamos.
+        const ultimo = leerUltimoProveedorCostoSesion();
+        if (inputNuevoProveedor.value.trim() === "") inputNuevoProveedor.value = ultimo.proveedor;
+        if (inputNuevoCosto.value.trim() === "" && ultimo.costo !== "") inputNuevoCosto.value = ultimo.costo;
       } else if (selectProducto.value !== "") {
         const productoId = parseInt(selectProducto.value, 10);
         prefillProveedorCosto(CATALOGO.find(p => p.id === productoId));
@@ -617,6 +659,8 @@ btnEliminar.addEventListener("click", () => {
     const inputNombreNuevo = card.querySelector(".input-nuevo-nombre");
     const inputMarcaNueva = card.querySelector(".input-nuevo-marca");
     const inputSkuNuevo = card.querySelector(".input-nuevo-sku");
+    const inputNuevoProveedor = card.querySelector(".input-nuevo-proveedor");
+    const inputNuevoCosto = card.querySelector(".input-nuevo-costo");
 
     // El SKU se sugiere solo mientras el usuario no lo toque; si lo edita a mano,
     // dejamos de pisárselo (y crear_producto.php lo respeta tal cual, avisando si
@@ -653,8 +697,8 @@ btnEliminar.addEventListener("click", () => {
       const marcaNueva = inputMarcaNueva.value.trim();
       const skuNuevo = inputSkuNuevo.value.trim();
       const precioNuevo = parseFloat(card.querySelector(".input-nuevo-precio").value || "0");
-      const costoNuevo = card.querySelector(".input-nuevo-costo").value.trim();
-      const proveedorNuevo = card.querySelector(".input-nuevo-proveedor").value.trim();
+      const costoNuevo = inputNuevoCosto.value.trim();
+      const proveedorNuevo = inputNuevoProveedor.value.trim();
 
       if (!nombreNuevo) {
         mostrarToast("Completá el nombre para crear el producto.", "error");
@@ -685,6 +729,7 @@ btnEliminar.addEventListener("click", () => {
         }
 
         CATALOGO.push(data.producto);
+        guardarUltimoProveedorCostoSesion(proveedorNuevo, costoNuevo);
         // Un proveedor recién creado queda disponible en el datalist por el resto de la sesión.
         if (data.producto.proveedor && !PROVEEDORES.some(p => p.nombre === data.producto.proveedor)) {
           PROVEEDORES.push({ id: data.producto.proveedor_id, nombre: data.producto.proveedor });
@@ -872,6 +917,8 @@ btnEliminar.addEventListener("click", () => {
           mostrarToast(data.mensaje || "No se pudo guardar un producto del lote.", "error");
           continue;
         }
+
+        guardarUltimoProveedorCostoSesion(pedido.proveedor, pedido.precio_costo);
 
         if (pedido.esIA) {
           // La foto de la cámara pasa a ser la foto del producto (best-effort).
