@@ -214,6 +214,7 @@
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#F0EAF7" stroke-width="2.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"></path></svg>
       </span>
     </button>
+    <button type="button" class="btn-texto" style="padding:6px 4px;" onclick="window.location.href='ajustes.html'">Ajustes</button>
     <button type="button" class="user-chip" id="btn-negocio"
             aria-haspopup="dialog" aria-expanded="false" aria-controls="mngDialogo"
             title="Preferencias del negocio">
@@ -365,6 +366,7 @@ menuNegocio.pintarSesion(usuarioSesion);
     }
   });
   insertarChatbotWidget(usuarioSesion);
+  inicializarLectorCodigoBarras();
 </script>
 
 </body>

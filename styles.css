@@ -844,3 +844,201 @@ footer {
     width:100%;
     max-height:350px;
 }
+
+/* ---------- Ajustes ---------- */
+.ajustes-titulo {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--crema-clean);
+  margin: 0 0 2px;
+}
+
+/* ---------- Periféricos y Herramientas ---------- */
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  gap: 12px;
+}
+
+.panel-header .titulo {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--crema-clean);
+  margin: 0;
+}
+
+.fila-ajuste {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--divisor);
+}
+
+.fila-ajuste:first-child {
+  padding-top: 0;
+}
+
+.fila-ajuste:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.fila-ajuste-texto {
+  flex: 1;
+}
+
+.fila-ajuste-texto .titulo {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--blanco-puro);
+  margin: 0;
+}
+
+.fila-ajuste-texto .desc {
+  font-size: 11px;
+  color: var(--gris-tenue);
+  margin-top: 3px;
+  line-height: 1.35;
+}
+
+/* --- Switch custom --- */
+.switch {
+  position: relative;
+  width: 44px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch .track {
+  position: absolute;
+  inset: 0;
+  background: var(--gris-tenue-bg);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  border: 1px solid rgba(139, 122, 168, 0.2);
+}
+
+.switch .track::before {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+
+.switch input:checked + .track {
+  background: var(--lila);
+  box-shadow: 0 0 12px rgba(184, 127, 217, 0.3);
+}
+
+.switch input:checked + .track::before {
+  transform: translateX(18px);
+}
+
+.switch input:disabled + .track {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.switch input:focus-visible + .track {
+  outline: 2px solid var(--azul-glow);
+  outline-offset: 2px;
+}
+
+/* --- Badge de estado --- */
+.perif-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 11px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.perif-badge-on {
+  color: var(--ok);
+  background: var(--ok-bg);
+}
+
+.perif-badge-pendiente {
+  color: var(--alerta);
+  background: var(--alerta-bg);
+}
+
+.perif-badge-off {
+  color: var(--gris-tenue);
+  background: var(--gris-tenue-bg);
+}
+
+/* --- Sub-opciones que dependen del toggle maestro --- */
+#sub-opciones {
+  transition: opacity 0.2s ease;
+}
+
+#sub-opciones.deshabilitado {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+select#modo-entrada {
+  background: var(--azul-input);
+  border: 1px solid rgba(139, 122, 168, 0.2);
+  border-radius: var(--radio-chico);
+  color: var(--blanco-puro);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 13px;
+  padding: 10px 12px;
+}
+
+select#modo-entrada:focus {
+  outline: none;
+  border-color: var(--lila);
+  box-shadow: 0 0 0 2px var(--lila-tenue);
+}
+
+select#modo-entrada:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-conectar-serial {
+  margin-top: 10px;
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--radio-chico);
+  border: 1px solid rgba(184, 127, 217, 0.3);
+  background: rgba(184, 127, 217, 0.1);
+  color: var(--azul-glow);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: none;
+  transition: background 0.2s ease, transform 0.1s ease;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.btn-conectar-serial.visible {
+  display: block;
+}
+
+.btn-conectar-serial:hover {
+  background: rgba(184, 127, 217, 0.18);
+}
+
+.btn-conectar-serial:active {
+  transform: scale(0.98);
+}

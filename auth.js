@@ -279,6 +279,31 @@ function insertarChatbotWidget(usuario) {
 }
 
 /**
+ * Inyecta barcode-manager.js una sola vez por página, igual que
+ * insertarChatbotWidget(): así el lector de código de barras (herramienta
+ * opcional, ver "Ajustes > Periféricos y Herramientas") corre en TODAS las
+ * pantallas autenticadas sin que cada una lo agregue a mano, y no vive
+ * atado a ninguna pantalla en particular (ni siquiera a la de Cámara/IA).
+ *
+ * El propio barcode-manager.js decide, leyendo BarcodeSettings de
+ * localStorage, si arma el listener de teclado o no — acá sólo se carga el
+ * script.
+ */
+function inicializarLectorCodigoBarras(alCargar) {
+  const script = document.createElement("script");
+  script.src = "barcode-manager.js?v=1";
+  // El script se inyecta dinámicamente -> carga async. La pantalla de
+  // Ajustes necesita el callback para recién ahí conectar sus controles a
+  // `barcodeManager` (que barcode-manager.js crea como variable global al
+  // final de su propio bootstrap); el resto de las pantallas no lo necesita
+  // y puede omitirlo.
+  if (typeof alCargar === "function") {
+    script.addEventListener("load", alCargar);
+  }
+  document.body.appendChild(script);
+}
+
+/**
  * Banda de "modo demostración" arriba de todo.
  *
  * En modo demo el sistema anda contra `stockiate_demo`, una base separada con
