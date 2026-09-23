@@ -14,78 +14,92 @@
      ancho/padding/tamaño de fuente. Ver la nota de "Clases con prefijo" en
      inventario_tabla.js / costos_tabla.js / preferencias.js. */
   :root {
-    --fondo-grad:   linear-gradient(135deg, #F3E9FA 0%, #F7F4FA 30%, #EFF9F1 65%, #FBF6E9 100%);
-    --superficie:   #F3EFF7;
-    --glass-bg:     rgba(255, 255, 255, 0.55);
-    --glass-border: rgba(255, 255, 255, 0.75);
-    --glass-shadow: 0 10px 34px rgba(139, 122, 168, 0.16);
-    --divisor:      rgba(139, 122, 168, 0.12);
-    --blanco-puro:  #453B5C;
-    --gris-tenue:   #8B7FA3;
-    --ok: #3E7A5C; --alerta: #8A6D1F; --error: #B4636F;
-    --neu-sombra:       6px 6px 14px rgba(163, 150, 190, 0.22), -6px -6px 14px rgba(255, 255, 255, 0.9);
-    --neu-sombra-chica: 4px 4px 10px rgba(163, 150, 190, 0.22), -4px -4px 10px rgba(255, 255, 255, 0.9);
-    --neu-inset:        inset 3px 3px 6px rgba(163, 150, 190, 0.22), inset -3px -3px 6px rgba(255, 255, 255, 0.9);
-    --lila: #D9BFEA; --lila-dark: #B87FD9; --lila-shadow: rgba(184, 127, 217, 0.4);
-    --menta: #B8E8CE; --menta-dark: #8FD9B0;
-    --dorado: #F5E3AE; --dorado-dark: #E8C468;
-    --coral: #F2BFC4; --coral-dark: #E88A93;
-    --ok-bg: rgba(184, 232, 206, 0.6); --ok-border: rgba(111, 203, 159, 0.4);
-    --alerta-bg: rgba(245, 227, 174, 0.6);
-    --error-bg: rgba(242, 191, 196, 0.6); --error-border: rgba(242, 191, 196, 0.65);
-    --lila-tenue: rgba(217, 191, 234, 0.35);
-    --gris-tenue-bg: rgba(139, 122, 168, 0.14);
-    --texto-sobre-acento: #2F5C42;
+    --fondo-grad:   linear-gradient(135deg, #F4EFF3 0%, #DCD3E0 48%, #B7AEC9 100%);
+    --superficie:   #DCD3E0;
+    --glass-bg:     rgba(220, 211, 224, 0.72);
+    --glass-border: rgba(244, 239, 243, 0.75);
+    --glass-shadow: 0 10px 30px rgba(88, 82, 114, 0.16);
+    --divisor:      rgba(58, 53, 80, 0.12);
+    --azul-deep:    #F4EFF3;
+    --azul-card:    var(--superficie);
+    --azul-input:   var(--superficie);
+    --azul-acento:  #585272;
+    --azul-glow:    #453E6B;
+    --blanco-puro:  #3A3550;
+    --crema-clean:  #474352;
+    --gris-tenue:   #6E6A7A;
+    --ok: #356E4F; --alerta: #7D6218; --error: #A8414F;
+    --neu-sombra:       6px 6px 14px rgba(138, 130, 166, 0.30), -6px -6px 14px rgba(244, 239, 243, 0.95);
+    --neu-sombra-chica: 4px 4px 10px rgba(138, 130, 166, 0.30), -4px -4px 10px rgba(244, 239, 243, 0.95);
+    --neu-inset:        inset 3px 3px 6px rgba(138, 130, 166, 0.28), inset -3px -3px 6px rgba(244, 239, 243, 0.95);
+    --lila: #8A82A6; --lila-dark: #585272; --lila-shadow: rgba(138, 130, 166, 0.45);
+    --menta: #A9DCC2; --menta-dark: #6FBF97;
+    --dorado: #EFDCAE; --dorado-dark: #C9A23F;
+    --coral: #EEBAC3; --coral-dark: #C25A67;
+    --ok-bg: rgba(169, 220, 194, 0.55); --ok-border: rgba(111, 191, 151, 0.45);
+    --alerta-bg: rgba(239, 220, 174, 0.55);
+    --error-bg: rgba(238, 186, 195, 0.55); --error-border: rgba(238, 186, 195, 0.70);
+    --lila-tenue: rgba(138, 130, 166, 0.28);
+    --gris-tenue-bg: rgba(58, 53, 80, 0.08);
+    --texto-sobre-acento: #3A3550;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-tema="claro"]) {
-      --fondo-grad:   linear-gradient(135deg, #241D33 0%, #1E1B2E 30%, #1A2620 65%, #241C15 100%);
-      --superficie:   #241F30;
-      --glass-bg:     rgba(42, 36, 58, 0.55);
-      --glass-border: rgba(255, 255, 255, 0.09);
-      --glass-shadow: 0 10px 34px rgba(0, 0, 0, 0.4);
-      --divisor:      rgba(255, 255, 255, 0.07);
-      --blanco-puro:  #F2EDF9;
-      --gris-tenue:   #A99BC0;
-      --ok: #8FE0B8; --alerta: #E8C468; --error: #F0A0A8;
-      --neu-sombra:       6px 6px 14px rgba(0, 0, 0, 0.5), -6px -6px 14px rgba(255, 255, 255, 0.035);
-      --neu-sombra-chica: 4px 4px 10px rgba(0, 0, 0, 0.5), -4px -4px 10px rgba(255, 255, 255, 0.035);
-      --neu-inset:        inset 3px 3px 6px rgba(0, 0, 0, 0.45), inset -3px -3px 6px rgba(255, 255, 255, 0.03);
-      --lila: #B98AE0; --lila-dark: #9F5FC4; --lila-shadow: rgba(159, 95, 196, 0.5);
-      --menta: #5FB88C; --menta-dark: #4EA57C;
-      --dorado: #E8C468; --dorado-dark: #C9A23F;
-      --coral: #E8828C; --coral-dark: #D45C68;
-      --ok-bg: rgba(111, 203, 159, 0.16); --ok-border: rgba(111, 203, 159, 0.3);
-      --alerta-bg: rgba(232, 196, 104, 0.14);
-      --error-bg: rgba(232, 130, 140, 0.16); --error-border: rgba(232, 130, 140, 0.3);
-      --lila-tenue: rgba(185, 138, 224, 0.22);
-      --gris-tenue-bg: rgba(255, 255, 255, 0.06);
-      --texto-sobre-acento: #1A1625;
+      --fondo-grad:   linear-gradient(135deg, #00030E 0%, #0B0E1A 48%, #2C1B2F 100%);
+      --superficie:   #0B0E1A;
+      --glass-bg:     rgba(44, 27, 47, 0.55);
+      --glass-border: rgba(243, 233, 236, 0.10);
+      --glass-shadow: 0 10px 30px rgba(0, 3, 14, 0.55);
+      --divisor:      rgba(243, 233, 236, 0.09);
+      --azul-deep:    #00030E;
+      --azul-acento:  #B47A9A;
+      --azul-glow:    #CDA6BB;
+      --blanco-puro:  #F3E9EC;
+      --crema-clean:  #DFD3D9;
+      --gris-tenue:   #A9959F;
+      --ok: #7ED6A4; --alerta: #E3BE6E; --error: #F4545F;
+      --neu-sombra:       6px 6px 14px rgba(0, 0, 0, 0.6), -6px -6px 14px rgba(243, 233, 236, 0.035);
+      --neu-sombra-chica: 4px 4px 10px rgba(0, 0, 0, 0.6), -4px -4px 10px rgba(243, 233, 236, 0.035);
+      --neu-inset:        inset 3px 3px 6px rgba(0, 0, 0, 0.55), inset -3px -3px 6px rgba(243, 233, 236, 0.03);
+      --lila: #B47A9A; --lila-dark: #895A7B; --lila-shadow: rgba(94, 58, 92, 0.55);
+      --menta: #4FA97D; --menta-dark: #3E8E67;
+      --dorado: #E3BE6E; --dorado-dark: #C09A42;
+      --coral: #D9737F; --coral-dark: #BC5462;
+      --ok-bg: rgba(126, 214, 164, 0.14); --ok-border: rgba(126, 214, 164, 0.28);
+      --alerta-bg: rgba(227, 190, 110, 0.13);
+      --error-bg: rgba(244, 84, 95, 0.17); --error-border: rgba(244, 84, 95, 0.38);
+      --lila-tenue: rgba(180, 122, 154, 0.20);
+      --gris-tenue-bg: rgba(243, 233, 236, 0.06);
+      --texto-sobre-acento: #00030E;
     }
   }
   :root[data-tema="oscuro"] {
-    --fondo-grad:   linear-gradient(135deg, #241D33 0%, #1E1B2E 30%, #1A2620 65%, #241C15 100%);
-    --superficie:   #241F30;
-    --glass-bg:     rgba(42, 36, 58, 0.55);
-    --glass-border: rgba(255, 255, 255, 0.09);
-    --glass-shadow: 0 10px 34px rgba(0, 0, 0, 0.4);
-    --divisor:      rgba(255, 255, 255, 0.07);
-    --blanco-puro:  #F2EDF9;
-    --gris-tenue:   #A99BC0;
-    --ok: #8FE0B8; --alerta: #E8C468; --error: #F0A0A8;
-    --neu-sombra:       6px 6px 14px rgba(0, 0, 0, 0.5), -6px -6px 14px rgba(255, 255, 255, 0.035);
-    --neu-sombra-chica: 4px 4px 10px rgba(0, 0, 0, 0.5), -4px -4px 10px rgba(255, 255, 255, 0.035);
-    --neu-inset:        inset 3px 3px 6px rgba(0, 0, 0, 0.45), inset -3px -3px 6px rgba(255, 255, 255, 0.03);
-    --lila: #B98AE0; --lila-dark: #9F5FC4; --lila-shadow: rgba(159, 95, 196, 0.5);
-    --menta: #5FB88C; --menta-dark: #4EA57C;
-    --dorado: #E8C468; --dorado-dark: #C9A23F;
-    --coral: #E8828C; --coral-dark: #D45C68;
-    --ok-bg: rgba(111, 203, 159, 0.16); --ok-border: rgba(111, 203, 159, 0.3);
-    --alerta-bg: rgba(232, 196, 104, 0.14);
-    --error-bg: rgba(232, 130, 140, 0.16); --error-border: rgba(232, 130, 140, 0.3);
-    --lila-tenue: rgba(185, 138, 224, 0.22);
-    --gris-tenue-bg: rgba(255, 255, 255, 0.06);
-    --texto-sobre-acento: #1A1625;
+    --fondo-grad:   linear-gradient(135deg, #00030E 0%, #0B0E1A 48%, #2C1B2F 100%);
+    --superficie:   #0B0E1A;
+    --glass-bg:     rgba(44, 27, 47, 0.55);
+    --glass-border: rgba(243, 233, 236, 0.10);
+    --glass-shadow: 0 10px 30px rgba(0, 3, 14, 0.55);
+    --divisor:      rgba(243, 233, 236, 0.09);
+    --azul-deep:    #00030E;
+    --azul-acento:  #B47A9A;
+    --azul-glow:    #CDA6BB;
+    --blanco-puro:  #F3E9EC;
+    --crema-clean:  #DFD3D9;
+    --gris-tenue:   #A9959F;
+    --ok: #7ED6A4; --alerta: #E3BE6E; --error: #F4545F;
+    --neu-sombra:       6px 6px 14px rgba(0, 0, 0, 0.6), -6px -6px 14px rgba(243, 233, 236, 0.035);
+    --neu-sombra-chica: 4px 4px 10px rgba(0, 0, 0, 0.6), -4px -4px 10px rgba(243, 233, 236, 0.035);
+    --neu-inset:        inset 3px 3px 6px rgba(0, 0, 0, 0.55), inset -3px -3px 6px rgba(243, 233, 236, 0.03);
+    --lila: #B47A9A; --lila-dark: #895A7B; --lila-shadow: rgba(94, 58, 92, 0.55);
+    --menta: #4FA97D; --menta-dark: #3E8E67;
+    --dorado: #E3BE6E; --dorado-dark: #C09A42;
+    --coral: #D9737F; --coral-dark: #BC5462;
+    --ok-bg: rgba(126, 214, 164, 0.14); --ok-border: rgba(126, 214, 164, 0.28);
+    --alerta-bg: rgba(227, 190, 110, 0.13);
+    --error-bg: rgba(244, 84, 95, 0.17); --error-border: rgba(244, 84, 95, 0.38);
+    --lila-tenue: rgba(180, 122, 154, 0.20);
+    --gris-tenue-bg: rgba(243, 233, 236, 0.06);
+    --texto-sobre-acento: #00030E;
   }
   *{box-sizing:border-box; margin:0; padding:0;}
   /* Reserva el canal de la barra de scroll siempre. Sin esto, cuando el modal
@@ -139,6 +153,27 @@
   .user-chip .avatar{ width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,var(--coral),var(--coral-dark)); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color: var(--blanco-puro); }
   .user-chip .info{ display:block; font-size:12.5px; line-height:1.25; color: var(--gris-tenue); }
   .user-chip .info b{ display:block; font-size:13px; color: var(--blanco-puro); }
+
+  /* Botones "Carteles"/"Equipo"/"Ajustes" de la topbar: administrador.html
+     no carga styles.css (ver comentario arriba), así que .btn-texto de ahí
+     no existe acá y salían con el chrome blanco por defecto del navegador.
+     Mismo acabado neumórfico que .user-chip, al lado del cual viven. */
+  .btn-topbar{
+    background: var(--superficie);
+    box-shadow: var(--neu-sombra-chica);
+    border: none;
+    border-radius: 30px;
+    padding: 9px 16px;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--gris-tenue);
+    cursor: pointer;
+    transition: box-shadow .15s, transform .15s, color .15s;
+  }
+  .btn-topbar:hover{ box-shadow: var(--neu-sombra); color: var(--blanco-puro); }
+  .btn-topbar:active{ transform: translateY(1px); }
+  .btn-topbar:focus-visible{ outline:2px solid var(--lila-dark); outline-offset:3px; }
 
   /* Toggle de tema, junto al user-chip */
   .toggle-tema{
@@ -208,13 +243,15 @@
     <span style="color:var(--gris-tenue);">El fin de los códigos de barra. El inicio del stock inteligente.</span>
   </div>
 </div>
-    <div style="display:flex; align-items:center; gap:16px;">
+    <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap; justify-content:flex-end;">
     <button type="button" class="toggle-tema" onclick="window.stockiateTema.alternar()" title="Cambiar tema" aria-label="Cambiar tema claro/oscuro">
       <span class="toggle-tema-knob">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#F0EAF7" stroke-width="2.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"></path></svg>
       </span>
     </button>
-    <button type="button" class="btn-texto" style="padding:6px 4px;" onclick="window.location.href='ajustes.html'">Ajustes</button>
+    <button type="button" class="btn-topbar" onclick="menuNegocio.abrirFlotante('carteles.html','🏷 Carteles de góndola')">Carteles</button>
+    <button type="button" class="btn-topbar" onclick="menuNegocio.abrirFlotante('equipo.html','👥 Equipo')">Equipo</button>
+    <button type="button" class="btn-topbar" onclick="menuNegocio.abrirFlotante('ajustes.html','Ajustes')">Ajustes</button>
     <button type="button" class="user-chip" id="btn-negocio"
             aria-haspopup="dialog" aria-expanded="false" aria-controls="mngDialogo"
             title="Preferencias del negocio">
@@ -250,7 +287,7 @@
 <script src="vendor/chart.umd.min.js"></script>
 <script src="vendor/jspdf.umd.min.js"></script>
 <script src="plegable.js?v=1"></script>
-<script src="inventario_tabla.js?v=10"></script>
+<script src="inventario_tabla.js?v=11"></script>
 <script src="image_utils.js?v=2"></script>
 <script src="foto_producto.js?v=3"></script>
 <script src="prediccion_tabla.js?v=2"></script>
@@ -258,8 +295,8 @@
 <script src="metricas_ia.js?v=4"></script>
 <script src="reposicion_tabla.js?v=3"></script>
 <script src="graficos.js?v=6"></script>
-<script src="preferencias.js?v=4"></script>
-<script src="menu_negocio.js?v=3"></script>
+<script src="preferencias.js?v=5"></script>
+<script src="menu_negocio.js?v=6"></script>
 <script>
 /* ---------------- KPIs (datos reales de MySQL vía consultar_inventario.php) ---------------- */
 function renderKPIs(datos){
@@ -320,6 +357,9 @@ const menuNegocio = initMenuNegocio(document.getElementById('btn-negocio'));
 initInventarioTabla(document.getElementById('inventarioContenedor'), {
   // Plegable sólo acá: en repositor.html esta misma tabla ES la pantalla entera.
   plegable: true,
+  // Sólo acá: tabla de 3 columnas + flotante de detalle al hacer click en una
+  // fila + paginado de 10. repositor.html sigue con las 5 columnas de siempre.
+  vistaDetalle: true,
   onDatos: (datos) => { renderKPIs(datos); graficos.actualizarInventario(datos); },
   // Archivar o restaurar cambia qué productos existen, así que la tabla de
   // costos y la predicción de quiebre (que leen del mismo catálogo por otros
@@ -360,6 +400,7 @@ menuNegocio.pintarSesion(usuarioSesion);
     }
   });
   insertarChatbotWidget(usuarioSesion);
+  insertarMascotaTour(usuarioSesion);
   inicializarLectorCodigoBarras();
 </script>
 

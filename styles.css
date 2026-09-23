@@ -1,40 +1,40 @@
 :root {
-  /* ---------- Paleta pastel — modo claro (default) ---------- */
-  --fondo-grad:   linear-gradient(160deg, #F3E9FA 0%, #F7F4FA 28%, #EFF9F1 62%, #FBF6E9 100%);
-  --superficie:   #F3EFF7;   /* base neumórfica: cards, inputs, botones secundarios */
-  --glass-bg:     rgba(255, 255, 255, 0.55);
-  --glass-border: rgba(255, 255, 255, 0.75);
-  --glass-shadow: 0 10px 30px rgba(139, 122, 168, 0.18);
-  --divisor:      rgba(139, 122, 168, 0.15);
+  /* ---------- Paleta gris-lavanda — modo claro (default) ---------- */
+  --fondo-grad:   linear-gradient(160deg, #F4EFF3 0%, #DCD3E0 45%, #B7AEC9 100%);
+  --superficie:   #DCD3E0;   /* base de cards, inputs, botones secundarios */
+  --glass-bg:     rgba(220, 211, 224, 0.72);
+  --glass-border: rgba(244, 239, 243, 0.75);
+  --glass-shadow: 0 10px 30px rgba(88, 82, 114, 0.16);
+  --divisor:      rgba(58, 53, 80, 0.12);
 
-  --azul-deep:    #F7F4FA;   /* alias legado: fondo de página */
+  --azul-deep:    #F4EFF3;   /* alias legado: fondo de página */
   --azul-card:    var(--superficie);
   --azul-input:   var(--superficie);
-  --azul-acento:  #B87FD9;   /* lila — acción primaria */
-  --azul-glow:    #C9A0DC;   /* lila claro — hover / resaltados */
-  --blanco-puro:  #453B5C;   /* texto de mayor jerarquía (morado oscuro, no negro puro) */
-  --crema-clean:  #55496E;   /* texto de lectura general */
-  --gris-tenue:   #8B7FA3;   /* texto secundario / leyendas */
+  --azul-acento:  #585272;   /* acción primaria */
+  --azul-glow:    #453E6B;   /* hover / resaltados */
+  --blanco-puro:  #3A3550;   /* texto de mayor jerarquía */
+  --crema-clean:  #474352;   /* texto de lectura general */
+  --gris-tenue:   #6E6A7A;   /* texto secundario / leyendas */
 
-  --ok:           #3E7A5C;
-  --alerta:       #8A6D1F;
-  --error:        #B4636F;
+  --ok:           #356E4F;
+  --alerta:       #7D6218;
+  --error:        #A8414F;
 
-  --neu-sombra:       6px 6px 14px rgba(163, 150, 190, 0.25), -6px -6px 14px rgba(255, 255, 255, 0.9);
-  --neu-sombra-chica: 4px 4px 10px rgba(163, 150, 190, 0.25), -4px -4px 10px rgba(255, 255, 255, 0.9);
-  --neu-inset:        inset 3px 3px 6px rgba(163, 150, 190, 0.22), inset -3px -3px 6px rgba(255, 255, 255, 0.9);
+  --neu-sombra:       6px 6px 14px rgba(138, 130, 166, 0.30), -6px -6px 14px rgba(244, 239, 243, 0.95);
+  --neu-sombra-chica: 4px 4px 10px rgba(138, 130, 166, 0.30), -4px -4px 10px rgba(244, 239, 243, 0.95);
+  --neu-inset:        inset 3px 3px 6px rgba(138, 130, 166, 0.28), inset -3px -3px 6px rgba(244, 239, 243, 0.95);
 
-  --lila: #D9BFEA; --lila-dark: #B87FD9; --lila-shadow: rgba(184, 127, 217, 0.4);
-  --menta: #B8E8CE; --menta-dark: #8FD9B0;
-  --dorado: #F5E3AE; --dorado-dark: #E8C468;
-  --coral: #F2BFC4; --coral-dark: #E88A93;
+  --lila: #8A82A6; --lila-dark: #585272; --lila-shadow: rgba(138, 130, 166, 0.45);
+  --menta: #A9DCC2; --menta-dark: #6FBF97;
+  --dorado: #EFDCAE; --dorado-dark: #C9A23F;
+  --coral: #EEBAC3; --coral-dark: #C25A67;
 
-  --ok-bg: rgba(184, 232, 206, 0.6); --ok-border: rgba(111, 203, 159, 0.4);
-  --alerta-bg: rgba(245, 227, 174, 0.6);
-  --error-bg: rgba(242, 191, 196, 0.6); --error-border: rgba(242, 191, 196, 0.65);
-  --lila-tenue: rgba(217, 191, 234, 0.35);
-  --gris-tenue-bg: rgba(139, 122, 168, 0.14);
-  --texto-sobre-acento: #2F5C42;
+  --ok-bg: rgba(169, 220, 194, 0.55); --ok-border: rgba(111, 191, 151, 0.45);
+  --alerta-bg: rgba(239, 220, 174, 0.55);
+  --error-bg: rgba(238, 186, 195, 0.55); --error-border: rgba(238, 186, 195, 0.70);
+  --lila-tenue: rgba(138, 130, 166, 0.28);
+  --gris-tenue-bg: rgba(58, 53, 80, 0.08);
+  --texto-sobre-acento: #3A3550;
 
   --radio: 18px;
   --radio-chico: 12px;
@@ -43,73 +43,73 @@
 /* ---------- Modo oscuro: automático por sistema, salvo override manual ---------- */
 @media (prefers-color-scheme: dark) {
   :root:not([data-tema="claro"]) {
-    --fondo-grad:   linear-gradient(160deg, #241D33 0%, #1E1B2E 28%, #1A2620 62%, #241C15 100%);
-    --superficie:   #241F30;
-    --glass-bg:     rgba(42, 36, 58, 0.55);
-    --glass-border: rgba(255, 255, 255, 0.09);
-    --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-    --divisor:      rgba(255, 255, 255, 0.08);
+    --fondo-grad:   linear-gradient(160deg, #00030E 0%, #0B0E1A 45%, #2C1B2F 100%);
+    --superficie:   #0B0E1A;
+    --glass-bg:     rgba(44, 27, 47, 0.55);
+    --glass-border: rgba(243, 233, 236, 0.10);
+    --glass-shadow: 0 10px 30px rgba(0, 3, 14, 0.55);
+    --divisor:      rgba(243, 233, 236, 0.09);
 
-    --azul-deep:    #1E1B2E;
-    --azul-acento:  #B98AE0;
-    --azul-glow:    #C9A0DC;
-    --blanco-puro:  #F2EDF9;
-    --crema-clean:  #E4DCF0;
-    --gris-tenue:   #A99BC0;
+    --azul-deep:    #00030E;
+    --azul-acento:  #B47A9A;
+    --azul-glow:    #CDA6BB;
+    --blanco-puro:  #F3E9EC;
+    --crema-clean:  #DFD3D9;
+    --gris-tenue:   #A9959F;
 
-    --ok: #8FE0B8; --alerta: #E8C468; --error: #F0A0A8;
+    --ok: #7ED6A4; --alerta: #E3BE6E; --error: #F4545F;
 
-    --neu-sombra:       6px 6px 14px rgba(0, 0, 0, 0.5), -6px -6px 14px rgba(255, 255, 255, 0.035);
-    --neu-sombra-chica: 4px 4px 10px rgba(0, 0, 0, 0.5), -4px -4px 10px rgba(255, 255, 255, 0.035);
-    --neu-inset:        inset 3px 3px 6px rgba(0, 0, 0, 0.45), inset -3px -3px 6px rgba(255, 255, 255, 0.03);
+    --neu-sombra:       6px 6px 14px rgba(0, 0, 0, 0.6), -6px -6px 14px rgba(243, 233, 236, 0.035);
+    --neu-sombra-chica: 4px 4px 10px rgba(0, 0, 0, 0.6), -4px -4px 10px rgba(243, 233, 236, 0.035);
+    --neu-inset:        inset 3px 3px 6px rgba(0, 0, 0, 0.55), inset -3px -3px 6px rgba(243, 233, 236, 0.03);
 
-    --lila: #B98AE0; --lila-dark: #9F5FC4; --lila-shadow: rgba(159, 95, 196, 0.5);
-    --menta: #5FB88C; --menta-dark: #4EA57C;
-    --dorado: #E8C468; --dorado-dark: #C9A23F;
-    --coral: #E8828C; --coral-dark: #D45C68;
+    --lila: #B47A9A; --lila-dark: #895A7B; --lila-shadow: rgba(94, 58, 92, 0.55);
+    --menta: #4FA97D; --menta-dark: #3E8E67;
+    --dorado: #E3BE6E; --dorado-dark: #C09A42;
+    --coral: #D9737F; --coral-dark: #BC5462;
 
-    --ok-bg: rgba(111, 203, 159, 0.16); --ok-border: rgba(111, 203, 159, 0.3);
-    --alerta-bg: rgba(232, 196, 104, 0.14);
-    --error-bg: rgba(232, 130, 140, 0.16); --error-border: rgba(232, 130, 140, 0.3);
-    --lila-tenue: rgba(185, 138, 224, 0.22);
-    --gris-tenue-bg: rgba(255, 255, 255, 0.06);
-    --texto-sobre-acento: #1A1625;
+    --ok-bg: rgba(126, 214, 164, 0.14); --ok-border: rgba(126, 214, 164, 0.28);
+    --alerta-bg: rgba(227, 190, 110, 0.13);
+    --error-bg: rgba(244, 84, 95, 0.17); --error-border: rgba(244, 84, 95, 0.38);
+    --lila-tenue: rgba(180, 122, 154, 0.20);
+    --gris-tenue-bg: rgba(243, 233, 236, 0.06);
+    --texto-sobre-acento: #00030E;
   }
 }
 
 /* Override manual: gana siempre, sin importar el sistema */
 :root[data-tema="oscuro"] {
-  --fondo-grad:   linear-gradient(160deg, #241D33 0%, #1E1B2E 28%, #1A2620 62%, #241C15 100%);
-  --superficie:   #241F30;
-  --glass-bg:     rgba(42, 36, 58, 0.55);
-  --glass-border: rgba(255, 255, 255, 0.09);
-  --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-  --divisor:      rgba(255, 255, 255, 0.08);
+  --fondo-grad:   linear-gradient(160deg, #00030E 0%, #0B0E1A 45%, #2C1B2F 100%);
+  --superficie:   #0B0E1A;
+  --glass-bg:     rgba(44, 27, 47, 0.55);
+  --glass-border: rgba(243, 233, 236, 0.10);
+  --glass-shadow: 0 10px 30px rgba(0, 3, 14, 0.55);
+  --divisor:      rgba(243, 233, 236, 0.09);
 
-  --azul-deep:    #1E1B2E;
-  --azul-acento:  #B98AE0;
-  --azul-glow:    #C9A0DC;
-  --blanco-puro:  #F2EDF9;
-  --crema-clean:  #E4DCF0;
-  --gris-tenue:   #A99BC0;
+  --azul-deep:    #00030E;
+  --azul-acento:  #B47A9A;
+  --azul-glow:    #CDA6BB;
+  --blanco-puro:  #F3E9EC;
+  --crema-clean:  #DFD3D9;
+  --gris-tenue:   #A9959F;
 
-  --ok: #8FE0B8; --alerta: #E8C468; --error: #F0A0A8;
+  --ok: #7ED6A4; --alerta: #E3BE6E; --error: #F4545F;
 
-  --neu-sombra:       6px 6px 14px rgba(0, 0, 0, 0.5), -6px -6px 14px rgba(255, 255, 255, 0.035);
-  --neu-sombra-chica: 4px 4px 10px rgba(0, 0, 0, 0.5), -4px -4px 10px rgba(255, 255, 255, 0.035);
-  --neu-inset:        inset 3px 3px 6px rgba(0, 0, 0, 0.45), inset -3px -3px 6px rgba(255, 255, 255, 0.03);
+  --neu-sombra:       6px 6px 14px rgba(0, 0, 0, 0.6), -6px -6px 14px rgba(243, 233, 236, 0.035);
+  --neu-sombra-chica: 4px 4px 10px rgba(0, 0, 0, 0.6), -4px -4px 10px rgba(243, 233, 236, 0.035);
+  --neu-inset:        inset 3px 3px 6px rgba(0, 0, 0, 0.55), inset -3px -3px 6px rgba(243, 233, 236, 0.03);
 
-  --lila: #B98AE0; --lila-dark: #9F5FC4; --lila-shadow: rgba(159, 95, 196, 0.5);
-  --menta: #5FB88C; --menta-dark: #4EA57C;
-  --dorado: #E8C468; --dorado-dark: #C9A23F;
-  --coral: #E8828C; --coral-dark: #D45C68;
+  --lila: #B47A9A; --lila-dark: #895A7B; --lila-shadow: rgba(94, 58, 92, 0.55);
+  --menta: #4FA97D; --menta-dark: #3E8E67;
+  --dorado: #E3BE6E; --dorado-dark: #C09A42;
+  --coral: #D9737F; --coral-dark: #BC5462;
 
-  --ok-bg: rgba(111, 203, 159, 0.16); --ok-border: rgba(111, 203, 159, 0.3);
-  --alerta-bg: rgba(232, 196, 104, 0.14);
-  --error-bg: rgba(232, 130, 140, 0.16); --error-border: rgba(232, 130, 140, 0.3);
-  --lila-tenue: rgba(185, 138, 224, 0.22);
-  --gris-tenue-bg: rgba(255, 255, 255, 0.06);
-  --texto-sobre-acento: #1A1625;
+  --ok-bg: rgba(126, 214, 164, 0.14); --ok-border: rgba(126, 214, 164, 0.28);
+  --alerta-bg: rgba(227, 190, 110, 0.13);
+  --error-bg: rgba(244, 84, 95, 0.17); --error-border: rgba(244, 84, 95, 0.38);
+  --lila-tenue: rgba(180, 122, 154, 0.20);
+  --gris-tenue-bg: rgba(243, 233, 236, 0.06);
+  --texto-sobre-acento: #00030E;
 }
 
 * { box-sizing: border-box; }
@@ -149,6 +149,15 @@ header {
   backdrop-filter: blur(18px) saturate(180%);
   -webkit-backdrop-filter: blur(18px) saturate(180%);
   border-bottom: 1px solid var(--glass-border);
+  /* El backdrop-filter ya crea un stacking context para el header, pero sin
+     z-index explícito queda ordenado por posición en el DOM contra el de
+     .pantalla (animation también crea uno) — y .pantalla, al ir después en
+     el HTML, terminaba pintándose ENCIMA del header entero, tapando
+     .menu-desplegable pese a su z-index:999 (ese z-index sólo compite
+     puertas adentro del contexto del header). Con z-index explícito acá, el
+     header gana la comparación en el nivel de arriba y no en el de adentro. */
+  position: relative;
+  z-index: 2;
 }
 
 .marca {
@@ -599,6 +608,91 @@ footer {
 .menu-desplegable.activo{
     display:block;
 }
+
+/* ---------- Ventana flotante (Ajustes desde repositor/cajero) ----------
+   Mismo patrón que .mng-flot-overlay/.mng-flot de menu_negocio.js (la
+   ventana de Carteles/Equipo en administrador.html), pero sin fallback en
+   los var() porque acá styles.css siempre está cargada. z-index:1000000
+   sigue la misma escala documentada del proyecto (chatbot flotante
+   999999, ventanas flotantes 1000000). */
+.vflot-overlay{
+  position: fixed;
+  inset: 0;
+  z-index: 1000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(26, 22, 37, 0.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: vflot-aparecer 0.18s ease-out;
+}
+/* Obligatorio: el display:flex de arriba le gana al [hidden] nativo, así
+   que sin esta línea la ventana nace abierta y no cierra nunca. */
+.vflot-overlay[hidden]{ display: none; }
+
+.vflot-ventana{
+  width: min(720px, 100%);
+  height: min(88vh, 900px);
+  display: flex;
+  flex-direction: column;
+  background: var(--superficie);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radio);
+  box-shadow: var(--glass-shadow);
+  overflow: hidden;
+  outline: none;
+  animation: vflot-subir 0.22s ease-out;
+}
+
+.vflot-cabecera{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--divisor);
+}
+.vflot-cabecera h2{
+  flex: 1;
+  font-size: 15px;
+  font-weight: 800;
+  margin: 0;
+  color: var(--blanco-puro);
+}
+.vflot-cerrar{
+  background: none;
+  border: none;
+  color: var(--gris-tenue);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 9px;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.vflot-cerrar:hover{ color: var(--blanco-puro); }
+
+.vflot-marco{ position: relative; flex: 1; min-height: 0; }
+.vflot-marco iframe{ position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: transparent; }
+.vflot-cargando{ position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--gris-tenue); }
+
+@keyframes vflot-aparecer{ from{ opacity: 0; } to{ opacity: 1; } }
+@keyframes vflot-subir{ from{ opacity: 0; transform: translateY(12px) scale(.985); } to{ opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce){
+  .vflot-overlay, .vflot-ventana{ animation: none; }
+}
+
+/* El bloqueo del scroll del fondo va como clase en <html>, no como estilo
+   inline, para no pisar (ni tener que restaurar) lo que hubiera antes. */
+.vflot-sin-scroll{ overflow: hidden; }
+
+@media (max-width: 560px){
+  .vflot-overlay{ padding: 8px; }
+  .vflot-ventana{ height: 96vh; border-radius: 18px; }
+}
+
 .landing{
     text-align:center;
     padding:40px 20px;
