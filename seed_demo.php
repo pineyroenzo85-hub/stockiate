@@ -99,6 +99,16 @@ function abortar(string $mensaje): void
 // ------------------------------------------------------------------
 // 1. Guarda: ¿estamos apuntando a la base de demo?
 // ------------------------------------------------------------------
+// En una base administrada (Heroku) la "real" y la "demo" son la MISMA base, así
+// que la comparación de nombres de abajo siempre da igual y no protege nada. Lo
+// que protege ahí es exigir el modo demo explícito: STOCKIATE_MODO=demo.
+if (STOCKIATE_DB_REMOTA && !STOCKIATE_MODO_DEMO) {
+    abortar(
+        "La base es administrada (" . STOCKIATE_BASE . ") y STOCKIATE_MODO no es 'demo'. " .
+        "Este script vacía la base entera: poné STOCKIATE_MODO=demo si es lo que querés."
+    );
+}
+
 if (STOCKIATE_BASE !== STOCKIATE_BASE_DEMO) {
     abortar(
         "La configuración apunta a la base '" . STOCKIATE_BASE . "'. " .
@@ -107,7 +117,9 @@ if (STOCKIATE_BASE !== STOCKIATE_BASE_DEMO) {
 }
 
 try {
-    $servidor = conectar_mysql(null);
+    // Base administrada: no hay permiso para DROP/CREATE DATABASE, y la base ya
+    // existe, así que se conecta directo a ella.
+    $servidor = conectar_mysql(STOCKIATE_DB_REMOTA ? STOCKIATE_BASE : null);
 } catch (PDOException $e) {
     abortar('No se pudo conectar a MySQL. ¿Está levantado XAMPP?');
 }
@@ -169,9 +181,24 @@ function sentencias_sql(string $sql): array
     return $sentencias;
 }
 
-$servidor->exec("DROP DATABASE IF EXISTS " . STOCKIATE_BASE_DEMO);
-$servidor->exec("CREATE DATABASE " . STOCKIATE_BASE_DEMO . " CHARACTER SET utf8mb4");
-log_demo("Base " . STOCKIATE_BASE_DEMO . " recreada.");
+if (STOCKIATE_DB_REMOTA) {
+    // Equivalente de recrear la base, sin poder dropearla: se borran todas sus
+    // tablas (con las FK apagadas, porque se dropean en cualquier orden).
+    $servidor->exec('SET FOREIGN_KEY_CHECKS = 0');
+    $existentes = $servidor->query(
+        "SELECT TABLE_NAME FROM information_schema.TABLES
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_TYPE = 'BASE TABLE'"
+    )->fetchAll(PDO::FETCH_COLUMN);
+    foreach ($existentes as $tabla) {
+        $servidor->exec('DROP TABLE `' . str_replace('`', '``', $tabla) . '`');
+    }
+    $servidor->exec('SET FOREIGN_KEY_CHECKS = 1');
+    log_demo("Base " . STOCKIATE_BASE_DEMO . " vaciada (" . count($existentes) . " tablas).");
+} else {
+    $servidor->exec("DROP DATABASE IF EXISTS " . STOCKIATE_BASE_DEMO);
+    $servidor->exec("CREATE DATABASE " . STOCKIATE_BASE_DEMO . " CHARACTER SET utf8mb4");
+    log_demo("Base " . STOCKIATE_BASE_DEMO . " recreada.");
+}
 
 $pdo = conectar_mysql(STOCKIATE_BASE_DEMO);
 

@@ -1,0 +1,130 @@
+{
+  "version": "1.0",
+  "inputs": [
+    {
+      "type": "WorkflowImage",
+      "name": "image"
+    }
+  ],
+  "steps": [
+    {
+      "type": "roboflow_core/roboflow_object_detection_model@v3",
+      "name": "model",
+      "images": "$inputs.image",
+      "model_id": "cooppers-workspace/products-vweue-1d62m-1-yolov8n-t1"
+    },
+    {
+      "type": "roboflow_core/bounding_box_visualization@v1",
+      "name": "detection_visualization",
+      "image": "$inputs.image",
+      "predictions": "$steps.model.predictions"
+    },
+    {
+      "type": "roboflow_core/dynamic_crop@v1",
+      "name": "dynamic_crop",
+      "images": "$inputs.image",
+      "predictions": "$steps.model.predictions"
+    },
+    {
+      "type": "roboflow_core/glm_ocr@v1",
+      "name": "glm_ocr",
+      "images": "$steps.dynamic_crop.crops",
+      "task_type": "text-recognition",
+      "model_version": "glm-ocr",
+      "max_new_tokens": 200
+    }
+  ],
+  "outputs": [
+    {
+      "type": "JsonField",
+      "name": "predictions",
+      "coordinates_system": "own",
+      "selector": "$steps.model.predictions"
+    },
+    {
+      "type": "JsonField",
+      "name": "dynamic_crop",
+      "coordinates_system": "own",
+      "selector": "$steps.dynamic_crop.crops"
+    },
+    {
+      "type": "JsonField",
+      "name": "recognized_text",
+      "coordinates_system": "own",
+      "selector": "$steps.glm_ocr.parsed_output"
+    },
+    {
+      "type": "JsonField",
+      "name": "detection_visualization_output",
+      "coordinates_system": "own",
+      "selector": "$steps.detection_visualization.image"
+    }
+  ],
+  "metadata": {
+    "ui": {
+      "nodes": {
+        "$inputs": {
+          "x": 137.25449262082054,
+          "y": -31.096285050885818
+        },
+        "$steps.model": {
+          "x": 136,
+          "y": 213
+        },
+        "$steps.detection_visualization": {
+          "x": 9.433706278528575,
+          "y": 421.43790597971315
+        },
+        "$steps.dynamic_crop": {
+          "x": 325.7948111620893,
+          "y": 365.7048824182089
+        },
+        "$steps.glm_ocr": {
+          "x": 317.31628830522595,
+          "y": 468.7172721570752
+        },
+        "$outputs": {
+          "x": 166.73992845343844,
+          "y": 578.5237204212011
+        }
+      },
+      "edges": [
+        {
+          "source": "$inputs",
+          "target": "$steps.model",
+          "inputProperty": "images",
+          "sourceSelector": "image"
+        },
+        {
+          "source": "$steps.model",
+          "target": "$steps.detection_visualization",
+          "inputProperty": "predictions",
+          "sourceSelector": "predictions"
+        },
+        {
+          "source": "$steps.model",
+          "target": "$steps.dynamic_crop",
+          "inputProperty": "predictions",
+          "sourceSelector": "predictions"
+        },
+        {
+          "source": "$steps.dynamic_crop",
+          "target": "$steps.glm_ocr",
+          "inputProperty": "images",
+          "sourceSelector": "crops"
+        },
+        {
+          "source": "$steps.glm_ocr",
+          "target": "$outputs",
+          "sourceSelector": "parsed_output"
+        },
+        {
+          "source": "$steps.detection_visualization",
+          "target": "$outputs",
+          "sourceSelector": "image"
+        }
+      ],
+      "groups": []
+    }
+  }
+}

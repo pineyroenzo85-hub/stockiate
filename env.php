@@ -40,7 +40,15 @@ function leer_env(string $clave, ?string $default = null): ?string
         $valores = cargar_env(__DIR__ . '/.env');
     }
 
-    $valor = $valores[$clave] ?? '';
+    // El entorno real del proceso gana sobre el archivo: es la convención de
+    // dotenv y es lo que hace andar el despliegue en Heroku, donde NO hay
+    // `.env` (está gitignoreado, no viaja con el código) y la configuración
+    // llega como "config vars". En local la variable no existe y se usa el
+    // archivo, así que nada cambia para XAMPP.
+    $del_entorno = getenv($clave);
+    $valor = ($del_entorno !== false && $del_entorno !== '')
+        ? $del_entorno
+        : ($valores[$clave] ?? '');
 
     return $valor === '' ? $default : $valor;
 }

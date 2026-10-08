@@ -1,0 +1,9 @@
+# Lo que NO viaja al dyno de Heroku (el limite del slug es 500 MB y esto no
+# lo usa la app en produccion).
+.claude/
+docs/
+graphify-out/
+scripts/
+*.zip
+*.py
+requirements.txt

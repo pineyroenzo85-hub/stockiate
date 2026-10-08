@@ -59,12 +59,14 @@ base de datos y las convenciones del proyecto.
 | `menu_negocio.js` | Frontend | El chip de la topbar de `administrador.html` y el panel superpuesto que abre, sólo `dueño`. Es dueño de los dos para que el nombre del negocio y sus iniciales se calculen en un solo lugar (`pintarSesion()`, llamada dos veces: sincrónica con el caché de `localStorage` para que el chip nazca con el nombre real, y de nuevo cuando contesta `sesion_actual.php`). Adentro monta `initPreferencias()` de forma **perezosa** — la primera apertura lo monta, las siguientes sólo `recargar()` —, así que sus dos fetch dejaron de pagarse en cada carga. Cierra con ✕, con clic en el fondo y con Escape (el primero del proyecto), bloquea el scroll de atrás y devuelve el foco al chip. z-index 1000000: lo único que lo deja por encima del botón del chatbot (999999). Prefijo `mng-`. |
 | `preferencias.js` | Frontend | El contenido del panel "Preferencias del negocio" (lo monta `menu_negocio.js`; hasta que existió el panel era un card del `.main-grid`), sólo `dueño`. Reemplaza a `notificaciones_config.js`, que configuraba sólo WhatsApp: al exponer los umbrales que estaban en el código, la alternativa era un segundo card al lado del primero para lo que el dueño vive como una sola cosa. Dos grupos — **Avisos por WhatsApp** (teléfono con el número ya normalizado debajo del input para ver de una si faltó un dígito, switch de activado, hora del resumen, botón de prueba) y **Umbrales** (días de vencimiento, horas entre avisos repetidos, stock mínimo por defecto) — más la tabla de las últimas 10 notificaciones con el error crudo de Meta. Guarda campo por campo al salir del input, igual que `costos_tabla.js`. Pide los ajustes y el historial por separado, así uno puede fallar sin llevarse al otro. Prefijo `prf-`. |
 | `recorte_imagen.js` | Frontend | Recortador táctil que se abre entre elegir la foto y mandarla al detector: recuadro movible y estirable con pointer events (anda con dedo y con mouse), máscara oscura afuera y guías de tercios. Devuelve el recorte ya escalado a 1280px en JPEG q=0.97 — un solo re-encode en todo el pipeline — o el archivo original si se elige "Usar toda la foto". Autocontenido, prefijo `rci-`. |
-| `chatbot_widget.js` | Frontend | Widget de chat flotante compartido, autocontenido (inyecta su propio CSS). Se incluye igual en `repositor.html`, `cajero.html` y `administrador.html`, inyectado dinámicamente por `auth.js` (`insertarChatbotWidget()`) con el `rol` de la sesión real y el `data-contexto` de la página (`repositor` / `cajero` / `admin`), en vez de un `data-rol` fijo por página. El contexto elige el copy y los chips, y viaja al backend para recortar las herramientas. |
+| `chatbot_widget.js` | Frontend | Widget de chat flotante compartido, autocontenido (inyecta su propio CSS). Se incluye igual en `repositor.html`, `cajero.html`, `administrador.html` y `ajustes.html`, inyectado dinámicamente por `auth.js` (`insertarChatbotWidget()`) con el `rol` de la sesión real y el `data-contexto` de la página (`repositor` / `cajero` / `admin`), en vez de un `data-rol` fijo por página. El contexto elige el copy y los chips (la última de cada sección es de ayuda de uso), y viaja al backend para recortar las herramientas y la guía de uso. Es dueño del botón y del panel; **el botón es Cajita** (se engancha a `window.Cajita` con `Cajita.montar()`) y vuelve a ser el 🤖 si la mascota está apagada. Suma el 🎯 (señalar un panel → `foco` en el body), el 🔕 y el respaldo local cuando la IA no responde. |
+| `mascota_tour.js` | Frontend | Cajita: el personaje y la guía visual del asistente (`window.Cajita`). Tour de bienvenida con spotlight (`GUION_TOUR`, una vez por rol), modo 🎯, burbuja de avisos que se retira sola, reacciones animadas al evento `stockiate:captura-ia` y `setEstado()` para el "pensando" real del chat. No tiene conversación propia ni caja de pregunta: eso es de `chatbot_widget.js`. Lee `ayuda.json` para el 🎯 y para el respaldo local (`respuestaLocal()`). Config mínima en `localStorage` (`stockiate_mascota_config`: `visible`, `tamano`). En `ajustes.html` se carga a mano para conectar el card "Cajita". Prefijo `mtour-`. |
+| `ayuda.json` | Frontend + Python | Fuente única del contenido de ayuda de Cajita: `senalables` (panel, selector, texto, por sección) y `faq` (palabras clave, respuesta, `contextos` que lo recortan por sección). Lo leen `mascota_tour.js` y `chatbot_ia.py` (`_guia_de_uso()`, que arma la guía de uso que recibe el modelo). Si cambia un texto, cambia en los dos lados. |
 | `debug_roboflow_raw.py` | Python/IA (script suelto) | Vuelca la respuesta cruda del workflow para debugging manual. |
 | `smoke_test_roboflow.py` | Python/IA (script suelto) | Test de humo manual (no pytest) para verificar conectividad con Roboflow. |
 | `login.html` | Frontend | Formulario de login (email + contraseña). Pega a `iniciar_sesion.php`, guarda el usuario devuelto en `localStorage` (`auth.js`) y redirige al módulo de su rol. |
 | `registro.html` | Frontend | Formulario de registro (nombre, apellido, email, contraseña, rol). Pega a `registrar_usuario.php`; si sale bien, inicia sesión automáticamente igual que `login.html`. |
-| `auth.js` | Frontend | Sesión de usuario en `localStorage` (sin backend de sesión). Expone `exigirSesion(rolesPermitidos)` — usado como guard sincrónico en `<head>` de cada página protegida —, `cerrarSesion()`, `rutaParaRol()` e `insertarChatbotWidget()`. Lo cargan `landing_page.html`, `login.html`, `registro.html`, `repositor.html`, `cajero.html` y `administrador.html`. |
+| `auth.js` | Frontend | Sesión de usuario en `localStorage` (sin backend de sesión). Expone `exigirSesion(rolesPermitidos)` — usado como guard sincrónico en `<head>` de cada página protegida —, `cerrarSesion()`, `rutaParaRol()` e `insertarChatbotWidget()` (que carga Cajita y el chat, en ese orden, con `async = false`). Lo cargan `landing_page.html`, `login.html`, `registro.html`, `repositor.html`, `cajero.html` y `administrador.html`. |
 | `landing_page.html` | Frontend | Selector de módulo, ahora detrás de `exigirSesion()`: exige sesión iniciada y sólo muestra los paneles que le corresponden al rol logueado (`dueño`/Administrador ve los tres; `repositor`/`cajero` sólo el suyo). |
 | `repositor.html` | Frontend | Flujo de carga de stock (versión vigente). Protegido con `exigirSesion(["repositor", "dueño"])`. |
 | `cajero.html` | Frontend | Flujo de venta. Protegido con `exigirSesion(["cajero", "dueño"])`. |
@@ -363,18 +365,28 @@ a migrar el JSON de las filas ya encoladas; se dejó como está, documentado.
    sección de la página (`CONTEXTO_CHATBOT_POR_PAGINA` en `auth.js`) —
    `chatbot_widget.js` los lee de `document.currentScript` al cargar, por eso
    el `<script>` se crea recién con esos atributos ya puestos, en vez de
-   editarlos después sobre uno estático.
+   editarlos después sobre uno estático. La misma función inyecta antes
+   `mascota_tour.js` (Cajita), con `async = false` para que el orden de
+   ejecución sea el de inserción: el chat se engancha a `window.Cajita` al
+   iniciarse y su botón pasa a ser la mascota.
 2. El widget mantiene un historial corto en memoria (no persiste entre
    recargas) y hace `POST` a `/chatbot` con:
    ```json
    {
      "pregunta": "¿qué productos tienen stock bajo?",
      "contexto": "repositor",
+     "foco": "riesgo_quiebre",
      "historial": [{"role": "user", "content": "..."}, {"role": "assistant", "content": "..."}]
    }
    ```
    `rol` y `usuario_id` **no** viajan en el body: los resuelve el backend
-   reenviando la cookie de sesión a `sesion_actual.php`.
+   reenviando la cookie de sesión a `sesion_actual.php`. `foco` es opcional:
+   el **id** del panel que se señaló con el 🎯, nunca su texto (el servidor lo
+   resuelve contra `ayuda.json`; uno desconocido se ignora). Además de datos,
+   el asistente contesta cómo se usa el sistema, con la guía de la sección que
+   `chatbot_ia.py` arma desde `ayuda.json`. Si `/chatbot` responde 429/502/503,
+   algo que no es JSON o no hay red, el widget prueba el FAQ local
+   (`Cajita.respuestaLocal()`) antes de mostrar el error.
 3. `main.py` (endpoint `/chatbot`) resuelve el rol desde la sesión y llama a
    `chatbot_ia.responder_pregunta()`, que arma un mensaje a Groq
    (inferencia gratuita con límites de uso, API compatible con el formato

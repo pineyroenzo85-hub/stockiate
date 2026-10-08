@@ -38,6 +38,14 @@
         Header set Cache-Control "no-cache, must-revalidate"
     </FilesMatch>
 
+    # ayuda.json (el contenido de ayuda de Cajita): sin esto el navegador
+    # puede servir un texto viejo mientras chatbot_ia.py ya lee el nuevo, y la
+    # app y el asistente se contradicen. Es público a propósito: son textos de
+    # ayuda, no datos del negocio.
+    <FilesMatch "^ayuda\.json$">
+        Header set Cache-Control "no-cache, must-revalidate"
+    </FilesMatch>
+
     # Los endpoints PHP nunca deben cachearse: devuelven datos por sesión.
     # Una respuesta cacheada de un negocio podría reaparecer en otro.
     <FilesMatch "\.php$">

@@ -206,6 +206,76 @@ if (array_key_exists('reposicion_factor_seguridad', $body)) {
     $cambios['reposicion_factor_seguridad'] = (string) round((float) $factor, 1);
 }
 
+/**
+ * Valida un decimal dentro de un rango. Mismo criterio que exigir_entero():
+ * corta con 400 en vez de recortar en silencio, porque el valor se GUARDA.
+ */
+function exigir_decimal($valor, float $min, float $max, string $mensaje): float
+{
+    if (!is_numeric($valor)) {
+        responder(['ok' => false, 'mensaje' => $mensaje], 400);
+    }
+
+    $numero = (float) $valor;
+
+    if ($numero < $min || $numero > $max) {
+        responder(['ok' => false, 'mensaje' => $mensaje], 400);
+    }
+
+    return $numero;
+}
+
+if (array_key_exists('inflacion_mensual', $body)) {
+    // 0 es válido ("no espero inflación este mes"). 100 de tope: una
+    // inflación mensual mayor no es un valor que alguien vaya a cargar a
+    // propósito, es un dedo que se resbaló en el stepper.
+    $inflacion = exigir_decimal(
+        $body['inflacion_mensual'],
+        0,
+        100,
+        'La inflación mensual tiene que ser un número entre 0 y 100.'
+    );
+    $cambios['inflacion_mensual'] = (string) round($inflacion, 2);
+}
+
+if (array_key_exists('alicuota_iva', $body)) {
+    // No es un rango libre: sólo existen tres alícuotas de IVA vigentes en
+    // Argentina. Guardar cualquier otro número dejaría el desglose fiscal
+    // del panel y el "IVA contenido" del ticket mostrando algo que no
+    // corresponde a ninguna categoría real.
+    $iva = is_numeric($body['alicuota_iva']) ? (float) $body['alicuota_iva'] : null;
+    if ($iva === null || !in_array($iva, [21.0, 10.5, 27.0], true)) {
+        responder([
+            'ok' => false,
+            'mensaje' => 'El IVA tiene que ser 21, 10.5 o 27.',
+        ], 400);
+    }
+    $cambios['alicuota_iva'] = (string) $iva;
+}
+
+if (array_key_exists('alicuota_iibb', $body)) {
+    $iibb = exigir_decimal(
+        $body['alicuota_iibb'],
+        0,
+        100,
+        'Ingresos Brutos tiene que ser un número entre 0 y 100.'
+    );
+    $cambios['alicuota_iibb'] = (string) round($iibb, 2);
+}
+
+if (array_key_exists('umbral_atraso_precio', $body)) {
+    // El piso de 0.1 no es decorativo: en 0 CUALQUIER inflación acumulada
+    // (por mínima que sea) marcaría todo el catálogo como atrasado, que es
+    // ruido y no una alerta.
+    $umbral = exigir_decimal(
+        $body['umbral_atraso_precio'],
+        0.1,
+        100,
+        'El umbral de atraso tiene que ser un número entre 0.1 y 100.'
+    );
+    $cambios['umbral_atraso_precio'] = (string) round($umbral, 1);
+}
+
 if (count($cambios) === 0) {
     responder(['ok' => false, 'mensaje' => 'No hay nada para actualizar'], 400);
 }
@@ -234,6 +304,10 @@ try {
             'reposicion_dias_entrega' => leer_config_int($pdo, $negocio_id, 'reposicion_dias_entrega'),
             'reposicion_dias_objetivo' => leer_config_int($pdo, $negocio_id, 'reposicion_dias_objetivo'),
             'reposicion_factor_seguridad' => leer_config_float($pdo, $negocio_id, 'reposicion_factor_seguridad'),
+            'inflacion_mensual' => leer_config_float($pdo, $negocio_id, 'inflacion_mensual'),
+            'alicuota_iva' => leer_config_float($pdo, $negocio_id, 'alicuota_iva'),
+            'alicuota_iibb' => leer_config_float($pdo, $negocio_id, 'alicuota_iibb'),
+            'umbral_atraso_precio' => leer_config_float($pdo, $negocio_id, 'umbral_atraso_precio'),
         ],
         'servidor_configurado' => whatsapp_configurado(),
         'servidor_mail_configurado' => mail_configurado(),

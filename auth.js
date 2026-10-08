@@ -269,10 +269,33 @@ function contextoChatbotDeLaPagina() {
  * El rol que va acá es sólo para elegir el copy y las preguntas sugeridas del
  * widget: el backend ya no le cree (ver chatbot_ia.py, que resuelve el rol
  * real reenviando la cookie a sesion_actual.php).
+ *
+ * CAJITA Y EL CHATBOT SON UN SOLO ASISTENTE, así que esta función carga las
+ * dos piezas: mascota_tour.js (el personaje, window.Cajita) y
+ * chatbot_widget.js (el botón y el panel, que se engancha a Cajita al
+ * iniciarse). Antes eran dos funciones —ésta y una insertarMascotaTour()—
+ * porque se pensaban como dos features con ciclos de vida distintos; ya no.
+ *
+ * `script.async = false` NO es opcional: los <script> creados desde JS son
+ * async por defecto y se ejecutan en el orden en que terminan de bajar. Si el
+ * chat corre antes que Cajita, `window.Cajita` no existe todavía y el botón
+ * se queda en 🤖 sin ningún error a la vista. Con async=false se ejecutan en
+ * el orden en que se insertaron.
+ *
+ * ajustes.html carga mascota_tour.js a mano para conectar su panel; si ya
+ * está (window.Cajita), no se inyecta de nuevo.
  */
 function insertarChatbotWidget(usuario) {
+  if (!window.Cajita) {
+    const mascota = document.createElement("script");
+    mascota.src = "mascota_tour.js?v=8";
+    mascota.async = false;
+    document.body.appendChild(mascota);
+  }
+
   const script = document.createElement("script");
-  script.src = "chatbot_widget.js?v=4";
+  script.src = "chatbot_widget.js?v=5";
+  script.async = false;
   script.dataset.rol = usuario.rol;
   script.dataset.contexto = contextoChatbotDeLaPagina();
   document.body.appendChild(script);

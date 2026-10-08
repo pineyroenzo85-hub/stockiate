@@ -89,13 +89,14 @@ const MNG_CSS = `
 .mng-pie{ display:flex; align-items:center; flex-wrap:wrap; gap:10px; padding:14px 20px; border-top:1px solid var(--divisor, rgba(0,0,0,0.08)); }
 .mng-accion{ background:var(--superficie, #F3EFF7); box-shadow:var(--neu-sombra-chica, 0 2px 6px rgba(0,0,0,0.10)); border:none; color:var(--gris-tenue, #8B7FA8); border-radius:10px; padding:9px 14px; font-size:12.5px; font-weight:700; cursor:pointer; font-family:inherit; transition:all .15s; }
 .mng-accion:hover{ color:var(--blanco-puro, #453B5C); }
-/* margin-left:auto en vez de justify-content:space-between: con tres botones,
-   el space-between deja el del medio flotando en el centro. Así los dos de
-   navegación quedan juntos a la izquierda y salir queda solo a la derecha.
+/* margin-left:auto: "Cerrar sesión" es el único botón que queda en el pie
+   (Carteles/Equipo se movieron a la topbar), y así queda pegado a la
+   derecha en vez de a la izquierda por defecto -- el lugar donde ya lo
+   buscaba la gente cuando había más de un botón acá.
    (Sin acentos graves acá: este CSS vive dentro de un template literal.) */
 .mng-accion-salir{ margin-left:auto; }
 .mng-accion-salir:hover{ color:var(--error, #E88F97); }
-.mng-overlay button:focus-visible{ outline:2px solid var(--lila-dark, #B87FD9); outline-offset:2px; }
+.mng-overlay button:focus-visible{ outline:2px solid var(--azul-acento, #7C3AED); outline-offset:2px; }
 
 /* Ventana flotante de Carteles / Equipo. Es la página completa en un iframe
    (ver embebido.js), sobre un fondo más difuminado que el del menú. Mismo
@@ -192,8 +193,6 @@ function initMenuNegocio(chip) {
       </div>
       <div class="mng-body"><div data-mng-preferencias></div></div>
       <div class="mng-pie">
-        <button type="button" class="mng-accion" data-mng-carteles>🏷 Carteles</button>
-        <button type="button" class="mng-accion" data-mng-equipo>👥 Equipo</button>
         <button type="button" class="mng-accion mng-accion-salir" data-mng-salir>Cerrar sesión</button>
       </div>
     </div>
@@ -312,13 +311,23 @@ function initMenuNegocio(chip) {
   const flotTitulo = flotOverlay.querySelector("#mngFlotTitulo");
   const flotMarco = flotOverlay.querySelector(".mng-flot-marco");
   let flotAbierta = false;
+  // Carteles/Equipo sólo se abren DESDE el menú del negocio, así que cerrar
+  // vuelve ahí. "Ajustes" de la topbar llama a abrirFlotante() directo, sin
+  // pasar por el menú -- si igual volviéramos a abrir(), aparecería un menú
+  // que la persona nunca pidió. Se guarda de dónde vino cada apertura para
+  // saber a dónde volver (o a quién devolverle el foco) al cerrar.
+  let flotVuelveAlMenu = false;
+  let flotDisparador = null;
 
   function abrirFlotante(pagina, titulo) {
+    flotVuelveAlMenu = abierto;
     if (abierto) {
       // Se cierra el menú sin devolverle el foco al chip: lo toma la ventana.
       abierto = false;
       overlay.hidden = true;
       chip.setAttribute("aria-expanded", "false");
+    } else {
+      flotDisparador = document.activeElement;
     }
     flotAbierta = true;
     flotTitulo.textContent = titulo;
@@ -347,13 +356,23 @@ function initMenuNegocio(chip) {
   }
 
   // Al cerrar Carteles o Equipo se vuelve al menú del negocio (preferencias,
-  // avisos), que es de donde se abrieron, y no directo al panel.
+  // avisos), que es de donde se abrieron, y no directo al panel. Ajustes,
+  // en cambio, se abre directo desde la topbar -- cerrar tiene que volver
+  // ahí y no destapar un menú que nadie pidió.
   function cerrarFlotante() {
     if (!flotAbierta) return;
     flotAbierta = false;
     flotOverlay.hidden = true;
     flotMarco.querySelectorAll("iframe").forEach(n => n.remove());
-    abrir(); // mantiene el bloqueo de scroll y le da el foco al menú
+    if (flotVuelveAlMenu) {
+      abrir(); // mantiene el bloqueo de scroll y le da el foco al menú
+    } else {
+      document.documentElement.classList.remove("mng-sin-scroll");
+      if (flotDisparador && typeof flotDisparador.focus === "function") {
+        flotDisparador.focus();
+      }
+      flotDisparador = null;
+    }
   }
 
   flotOverlay.querySelector("[data-mng-flot-cerrar]").addEventListener("click", cerrarFlotante);
@@ -369,17 +388,11 @@ function initMenuNegocio(chip) {
     if (e.data && e.data.tipo === "stockiate-cerrar-flotante") cerrarFlotante();
   });
 
-  overlay.querySelector("[data-mng-carteles]").addEventListener("click", () => {
-    abrirFlotante("carteles.html", "🏷 Carteles de góndola");
-  });
-
-  overlay.querySelector("[data-mng-equipo]").addEventListener("click", () => {
-    abrirFlotante("equipo.html", "👥 Equipo");
-  });
-
   // cerrarSesion() (auth.js) navega a login.html por su cuenta: no hace falta
   // cerrar el modal antes.
   overlay.querySelector("[data-mng-salir]").addEventListener("click", cerrarSesion);
 
-  return { abrir, cerrar, pintarSesion };
+  // Expuesta para que los botones "Carteles"/"Equipo"/"Ajustes" de la topbar (administrador.html)
+  // reuse esta misma ventanita en vez de navegar a página completa.
+  return { abrir, cerrar, pintarSesion, abrirFlotante };
 }

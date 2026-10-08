@@ -14,92 +14,95 @@
      ancho/padding/tamaño de fuente. Ver la nota de "Clases con prefijo" en
      inventario_tabla.js / costos_tabla.js / preferencias.js. */
   :root {
-    --fondo-grad:   linear-gradient(135deg, #F4EFF3 0%, #DCD3E0 48%, #B7AEC9 100%);
-    --superficie:   #DCD3E0;
-    --glass-bg:     rgba(220, 211, 224, 0.72);
-    --glass-border: rgba(244, 239, 243, 0.75);
-    --glass-shadow: 0 10px 30px rgba(88, 82, 114, 0.16);
-    --divisor:      rgba(58, 53, 80, 0.12);
-    --azul-deep:    #F4EFF3;
+    color-scheme: light;
+    --fondo-grad:   linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 50%, #DDD6FE 100%);
+    --superficie:   #EDE9FE;
+    --glass-bg:     rgba(255, 255, 255, 0.72);
+    --glass-border: rgba(124, 58, 237, 0.20);
+    --glass-shadow: 0 10px 30px rgba(76, 29, 149, 0.14);
+    --divisor:      rgba(27, 23, 64, 0.12);
+    --azul-deep:    #F5F3FF;
     --azul-card:    var(--superficie);
     --azul-input:   var(--superficie);
-    --azul-acento:  #585272;
-    --azul-glow:    #453E6B;
-    --blanco-puro:  #3A3550;
-    --crema-clean:  #474352;
-    --gris-tenue:   #6E6A7A;
-    --ok: #356E4F; --alerta: #7D6218; --error: #A8414F;
-    --neu-sombra:       6px 6px 14px rgba(138, 130, 166, 0.30), -6px -6px 14px rgba(244, 239, 243, 0.95);
-    --neu-sombra-chica: 4px 4px 10px rgba(138, 130, 166, 0.30), -4px -4px 10px rgba(244, 239, 243, 0.95);
-    --neu-inset:        inset 3px 3px 6px rgba(138, 130, 166, 0.28), inset -3px -3px 6px rgba(244, 239, 243, 0.95);
-    --lila: #8A82A6; --lila-dark: #585272; --lila-shadow: rgba(138, 130, 166, 0.45);
+    --azul-acento:  #7C3AED;
+    --azul-glow:    #6D28D9;
+    --blanco-puro:  #1B1740;
+    --crema-clean:  #2E2A55;
+    --gris-tenue:   #5F5C80;
+    --ok: #047857; --alerta: #92400E; --error: #B91C1C;
+    --neu-sombra:       6px 6px 14px rgba(124, 58, 237, 0.16), -6px -6px 14px rgba(255, 255, 255, 0.95);
+    --neu-sombra-chica: 4px 4px 10px rgba(124, 58, 237, 0.16), -4px -4px 10px rgba(255, 255, 255, 0.95);
+    --neu-inset:        inset 3px 3px 6px rgba(124, 58, 237, 0.16), inset -3px -3px 6px rgba(255, 255, 255, 0.95);
+    --lila: #8B5CF6; --lila-dark: #7C3AED; --lila-shadow: rgba(124, 58, 237, 0.40);
     --menta: #A9DCC2; --menta-dark: #6FBF97;
     --dorado: #EFDCAE; --dorado-dark: #C9A23F;
     --coral: #EEBAC3; --coral-dark: #C25A67;
     --ok-bg: rgba(169, 220, 194, 0.55); --ok-border: rgba(111, 191, 151, 0.45);
     --alerta-bg: rgba(239, 220, 174, 0.55);
     --error-bg: rgba(238, 186, 195, 0.55); --error-border: rgba(238, 186, 195, 0.70);
-    --lila-tenue: rgba(138, 130, 166, 0.28);
-    --gris-tenue-bg: rgba(58, 53, 80, 0.08);
-    --texto-sobre-acento: #3A3550;
+    --lila-tenue: rgba(124, 58, 237, 0.18);
+    --gris-tenue-bg: rgba(27, 23, 64, 0.07);
+    --texto-sobre-acento: #FFFFFF;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-tema="claro"]) {
-      --fondo-grad:   linear-gradient(135deg, #00030E 0%, #0B0E1A 48%, #2C1B2F 100%);
-      --superficie:   #0B0E1A;
-      --glass-bg:     rgba(44, 27, 47, 0.55);
-      --glass-border: rgba(243, 233, 236, 0.10);
-      --glass-shadow: 0 10px 30px rgba(0, 3, 14, 0.55);
-      --divisor:      rgba(243, 233, 236, 0.09);
-      --azul-deep:    #00030E;
-      --azul-acento:  #B47A9A;
-      --azul-glow:    #CDA6BB;
-      --blanco-puro:  #F3E9EC;
-      --crema-clean:  #DFD3D9;
-      --gris-tenue:   #A9959F;
-      --ok: #7ED6A4; --alerta: #E3BE6E; --error: #F4545F;
-      --neu-sombra:       6px 6px 14px rgba(0, 0, 0, 0.6), -6px -6px 14px rgba(243, 233, 236, 0.035);
-      --neu-sombra-chica: 4px 4px 10px rgba(0, 0, 0, 0.6), -4px -4px 10px rgba(243, 233, 236, 0.035);
-      --neu-inset:        inset 3px 3px 6px rgba(0, 0, 0, 0.55), inset -3px -3px 6px rgba(243, 233, 236, 0.03);
-      --lila: #B47A9A; --lila-dark: #895A7B; --lila-shadow: rgba(94, 58, 92, 0.55);
+  color-scheme: dark;
+      --fondo-grad:   linear-gradient(135deg, #0B0F19 0%, #0F172A 55%, #16123A 100%);
+      --superficie:   #1E1B4B;
+      --glass-bg:     rgba(30, 27, 75, 0.62);
+      --glass-border: rgba(167, 139, 250, 0.20);
+      --glass-shadow: 0 10px 30px rgba(2, 6, 23, 0.55);
+      --divisor:      rgba(167, 139, 250, 0.14);
+      --azul-deep:    #0B0F19;
+      --azul-acento:  #A78BFA;
+      --azul-glow:    #C4B5FD;
+      --blanco-puro:  #F1F5F9;
+      --crema-clean:  #E2E8F0;
+      --gris-tenue:   #A5B0C4;
+      --ok: #34D399; --alerta: #FBBF24; --error: #F87171;
+      --neu-sombra:       6px 6px 14px rgba(2, 6, 23, 0.60), -6px -6px 14px rgba(139, 92, 246, 0.06);
+      --neu-sombra-chica: 4px 4px 10px rgba(2, 6, 23, 0.60), -4px -4px 10px rgba(139, 92, 246, 0.06);
+      --neu-inset:        inset 3px 3px 6px rgba(2, 6, 23, 0.55), inset -3px -3px 6px rgba(139, 92, 246, 0.06);
+      --lila: #8B5CF6; --lila-dark: #7C3AED; --lila-shadow: rgba(2, 6, 23, 0.60);
       --menta: #4FA97D; --menta-dark: #3E8E67;
       --dorado: #E3BE6E; --dorado-dark: #C09A42;
-      --coral: #D9737F; --coral-dark: #BC5462;
+      --coral: #DE7E8A; --coral-dark: #C25462;
       --ok-bg: rgba(126, 214, 164, 0.14); --ok-border: rgba(126, 214, 164, 0.28);
       --alerta-bg: rgba(227, 190, 110, 0.13);
-      --error-bg: rgba(244, 84, 95, 0.17); --error-border: rgba(244, 84, 95, 0.38);
-      --lila-tenue: rgba(180, 122, 154, 0.20);
-      --gris-tenue-bg: rgba(243, 233, 236, 0.06);
-      --texto-sobre-acento: #00030E;
+      --error-bg: rgba(244, 134, 143, 0.15); --error-border: rgba(244, 134, 143, 0.32);
+      --lila-tenue: rgba(139, 92, 246, 0.22);
+      --gris-tenue-bg: rgba(241, 245, 249, 0.07);
+      --texto-sobre-acento: #FFFFFF;
     }
   }
   :root[data-tema="oscuro"] {
-    --fondo-grad:   linear-gradient(135deg, #00030E 0%, #0B0E1A 48%, #2C1B2F 100%);
-    --superficie:   #0B0E1A;
-    --glass-bg:     rgba(44, 27, 47, 0.55);
-    --glass-border: rgba(243, 233, 236, 0.10);
-    --glass-shadow: 0 10px 30px rgba(0, 3, 14, 0.55);
-    --divisor:      rgba(243, 233, 236, 0.09);
-    --azul-deep:    #00030E;
-    --azul-acento:  #B47A9A;
-    --azul-glow:    #CDA6BB;
-    --blanco-puro:  #F3E9EC;
-    --crema-clean:  #DFD3D9;
-    --gris-tenue:   #A9959F;
-    --ok: #7ED6A4; --alerta: #E3BE6E; --error: #F4545F;
-    --neu-sombra:       6px 6px 14px rgba(0, 0, 0, 0.6), -6px -6px 14px rgba(243, 233, 236, 0.035);
-    --neu-sombra-chica: 4px 4px 10px rgba(0, 0, 0, 0.6), -4px -4px 10px rgba(243, 233, 236, 0.035);
-    --neu-inset:        inset 3px 3px 6px rgba(0, 0, 0, 0.55), inset -3px -3px 6px rgba(243, 233, 236, 0.03);
-    --lila: #B47A9A; --lila-dark: #895A7B; --lila-shadow: rgba(94, 58, 92, 0.55);
+  color-scheme: dark;
+    --fondo-grad:   linear-gradient(135deg, #0B0F19 0%, #0F172A 55%, #16123A 100%);
+    --superficie:   #1E1B4B;
+    --glass-bg:     rgba(30, 27, 75, 0.62);
+    --glass-border: rgba(167, 139, 250, 0.20);
+    --glass-shadow: 0 10px 30px rgba(2, 6, 23, 0.55);
+    --divisor:      rgba(167, 139, 250, 0.14);
+    --azul-deep:    #0B0F19;
+    --azul-acento:  #A78BFA;
+    --azul-glow:    #C4B5FD;
+    --blanco-puro:  #F1F5F9;
+    --crema-clean:  #E2E8F0;
+    --gris-tenue:   #A5B0C4;
+    --ok: #34D399; --alerta: #FBBF24; --error: #F87171;
+    --neu-sombra:       6px 6px 14px rgba(2, 6, 23, 0.60), -6px -6px 14px rgba(139, 92, 246, 0.06);
+    --neu-sombra-chica: 4px 4px 10px rgba(2, 6, 23, 0.60), -4px -4px 10px rgba(139, 92, 246, 0.06);
+    --neu-inset:        inset 3px 3px 6px rgba(2, 6, 23, 0.55), inset -3px -3px 6px rgba(139, 92, 246, 0.06);
+    --lila: #8B5CF6; --lila-dark: #7C3AED; --lila-shadow: rgba(2, 6, 23, 0.60);
     --menta: #4FA97D; --menta-dark: #3E8E67;
     --dorado: #E3BE6E; --dorado-dark: #C09A42;
-    --coral: #D9737F; --coral-dark: #BC5462;
+    --coral: #DE7E8A; --coral-dark: #C25462;
     --ok-bg: rgba(126, 214, 164, 0.14); --ok-border: rgba(126, 214, 164, 0.28);
     --alerta-bg: rgba(227, 190, 110, 0.13);
-    --error-bg: rgba(244, 84, 95, 0.17); --error-border: rgba(244, 84, 95, 0.38);
-    --lila-tenue: rgba(180, 122, 154, 0.20);
-    --gris-tenue-bg: rgba(243, 233, 236, 0.06);
-    --texto-sobre-acento: #00030E;
+    --error-bg: rgba(244, 134, 143, 0.15); --error-border: rgba(244, 134, 143, 0.32);
+    --lila-tenue: rgba(139, 92, 246, 0.22);
+    --gris-tenue-bg: rgba(241, 245, 249, 0.07);
+    --texto-sobre-acento: #FFFFFF;
   }
   *{box-sizing:border-box; margin:0; padding:0;}
   /* Reserva el canal de la barra de scroll siempre. Sin esto, cuando el modal
@@ -148,7 +151,7 @@
   }
   .user-chip:hover{ box-shadow: var(--neu-sombra); }
   .user-chip:active{ transform: translateY(1px); }
-  .user-chip:focus-visible{ outline:2px solid var(--lila-dark); outline-offset:3px; }
+  .user-chip:focus-visible{ outline:2px solid var(--azul-acento); outline-offset:3px; }
   .user-chip .chevron{ color:var(--gris-tenue); font-size:10px; margin-left:2px; }
   .user-chip .avatar{ width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,var(--coral),var(--coral-dark)); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color: var(--blanco-puro); }
   .user-chip .info{ display:block; font-size:12.5px; line-height:1.25; color: var(--gris-tenue); }
@@ -173,7 +176,7 @@
   }
   .btn-topbar:hover{ box-shadow: var(--neu-sombra); color: var(--blanco-puro); }
   .btn-topbar:active{ transform: translateY(1px); }
-  .btn-topbar:focus-visible{ outline:2px solid var(--lila-dark); outline-offset:3px; }
+  .btn-topbar:focus-visible{ outline:2px solid var(--azul-acento); outline-offset:3px; }
 
   /* Toggle de tema, junto al user-chip */
   .toggle-tema{
@@ -202,7 +205,7 @@
   }
   .kpi-card::after{
     content:""; position:absolute; top:-40%; right:-20%; width:140px; height:140px; border-radius:50%;
-    background: radial-gradient(circle, var(--kpi-glow, rgba(184,127,217,0.18)), transparent 70%);
+    background: radial-gradient(circle, var(--kpi-glow, rgba(139,92,246,0.18)), transparent 70%);
   }
   .kpi-top{ display:flex; justify-content:space-between; align-items:flex-start; }
   .kpi-label{ font-size:12px; color:var(--gris-tenue); font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
@@ -225,7 +228,7 @@
   }
 </style>
 <script src="config.js?v=1"></script>
-<script src="auth.js?v=5"></script>
+<script src="auth.js?v=6"></script>
 <script>
   // Sincrónico y a propósito: corta el render de la página antes de mostrar
   // nada si no hay sesión válida (o si el usuario no es administrador).
@@ -250,6 +253,7 @@
       </span>
     </button>
     <button type="button" class="btn-topbar" onclick="menuNegocio.abrirFlotante('carteles.html','🏷 Carteles de góndola')">Carteles</button>
+    <button type="button" class="btn-topbar" onclick="menuNegocio.abrirFlotante('precios_inflacion.html','💲 Precios e inflación')">Precios</button>
     <button type="button" class="btn-topbar" onclick="menuNegocio.abrirFlotante('equipo.html','👥 Equipo')">Equipo</button>
     <button type="button" class="btn-topbar" onclick="menuNegocio.abrirFlotante('ajustes.html','Ajustes')">Ajustes</button>
     <button type="button" class="user-chip" id="btn-negocio"
@@ -287,16 +291,16 @@
 <script src="vendor/chart.umd.min.js"></script>
 <script src="vendor/jspdf.umd.min.js"></script>
 <script src="plegable.js?v=1"></script>
-<script src="inventario_tabla.js?v=11"></script>
+<script src="inventario_tabla.js?v=13"></script>
 <script src="image_utils.js?v=2"></script>
 <script src="foto_producto.js?v=3"></script>
 <script src="prediccion_tabla.js?v=2"></script>
-<script src="costos_tabla.js?v=3"></script>
+<script src="costos_tabla.js?v=4"></script>
 <script src="metricas_ia.js?v=4"></script>
-<script src="reposicion_tabla.js?v=3"></script>
-<script src="graficos.js?v=6"></script>
-<script src="preferencias.js?v=5"></script>
-<script src="menu_negocio.js?v=6"></script>
+<script src="reposicion_tabla.js?v=4"></script>
+<script src="graficos.js?v=7"></script>
+<script src="preferencias.js?v=6"></script>
+<script src="menu_negocio.js?v=7"></script>
 <script>
 /* ---------------- KPIs (datos reales de MySQL vía consultar_inventario.php) ---------------- */
 function renderKPIs(datos){
@@ -400,7 +404,6 @@ menuNegocio.pintarSesion(usuarioSesion);
     }
   });
   insertarChatbotWidget(usuarioSesion);
-  insertarMascotaTour(usuarioSesion);
   inicializarLectorCodigoBarras();
 </script>
 

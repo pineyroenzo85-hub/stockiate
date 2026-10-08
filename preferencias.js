@@ -36,6 +36,12 @@
  * Clases con prefijo "prf-" por la misma razón que "cst-" en costos_tabla.js
  * y "invt-" en inventario_tabla.js: no chocar con styles.css ni con el
  * Tailwind de administrador.html.
+ *
+ * El historial de notificaciones se puede plegar con el mismo mecanismo
+ * que Inventario/Costos: el plegado vive en plegable.js, compartido con
+ * inventario_tabla.js y costos_tabla.js. A diferencia de esos dos, acá NO
+ * se pliega el panel entero -- sólo la tabla -- porque los campos de
+ * ajuste tienen que quedar siempre visibles.
  */
 
 const URL_PRF_CONSULTAR = "consultar_preferencias.php";
@@ -50,6 +56,8 @@ const URL_PRF_SEED = "seed_demo.php";
 // inventario_tabla.js, costos_tabla.js y prediccion_tabla.js, que ya declaran
 // los suyos.
 const PRF_HEADERS_NGROK = STOCKIATE_HEADERS; // definido en config.js
+
+const PRF_CLAVE_HISTORIAL_PLEGADO = "stockiate_historial_notif_plegado";
 
 const PRF_ESTILOS_ID = "prf-estilos";
 const PRF_CSS = `
@@ -79,13 +87,24 @@ const PRF_CSS = `
 .prf-switch input:checked::after{ left:20px; background:var(--lila-dark); }
 .prf-switch input:disabled{ opacity:.6; cursor:default; }
 .prf-btn{ background:var(--superficie); box-shadow:var(--neu-sombra-chica); border:none; color:var(--blanco-puro); border-radius:10px; padding:9px 14px; font-size:12.5px; font-weight:700; cursor:pointer; font-family:inherit; transition:all .15s; margin-top:18px; }
-.prf-btn:hover:not(:disabled){ color:var(--lila-dark); }
+.prf-btn:hover:not(:disabled){ color:var(--azul-acento); }
 .prf-btn:disabled{ opacity:.5; cursor:default; }
 .prf-aviso{ border-radius:10px; padding:10px 13px; font-size:12.5px; line-height:1.5; }
 .prf-aviso-warn{ background:var(--alerta-bg); border:1px solid rgba(232,196,104,0.4); color:var(--alerta); }
 .prf-aviso-ok{ background:var(--ok-bg); border:1px solid var(--ok-border); color:var(--ok); }
 .prf-aviso-error{ background:var(--error-bg); border:1px solid var(--error-border); color:var(--error); }
 .prf-separador{ height:1px; background:var(--divisor); margin:0 -20px; }
+.prf-tabla-head{ display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.prf-toggle-pleg{ background:var(--superficie); box-shadow:var(--neu-sombra-chica); border:none; color:var(--gris-tenue); border-radius:10px; padding:8px 12px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; transition:all .15s; white-space:nowrap; }
+.prf-toggle-pleg:hover{ color:var(--blanco-puro); }
+.prf-tabla-seccion.prf-plegado .prf-tabla-wrap{ display:none; }
+.prf-stepper{ display:flex; align-items:stretch; border-radius:10px; box-shadow:var(--neu-inset); overflow:hidden; width:100%; max-width:130px; }
+.prf-stepper-btn{ flex:0 0 28px; border:none; background:var(--superficie); color:var(--gris-tenue); font-size:16px; font-weight:800; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; touch-action:manipulation; transition:background-color .12s ease, color .12s ease; }
+.prf-stepper-btn:hover{ color:var(--blanco-puro); }
+.prf-stepper-btn:active{ background:var(--lila-tenue); }
+.prf-campo .prf-stepper input[type=number]{ border-radius:0; box-shadow:none; max-width:none; -moz-appearance:textfield; }
+.prf-campo .prf-stepper input[type=number]::-webkit-outer-spin-button,
+.prf-campo .prf-stepper input[type=number]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
 .prf-tabla-wrap{ overflow-x:auto; border-top:1px solid var(--divisor); margin:0 -20px -18px; }
 .prf-tabla{ width:100%; border-collapse:collapse; font-size:12.5px; }
 .prf-tabla th{ text-align:left; padding:11px 20px; font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--gris-tenue); border-bottom:1px solid var(--divisor); font-weight:700; white-space:nowrap; }
@@ -134,11 +153,17 @@ const PRF_ETIQUETA_TIPO = {
 function initPreferencias(contenedor) {
   asegurarEstilosPreferencias();
 
+  // Sólo la tabla de historial se pliega -- leído antes de armar el
+  // innerHTML para que el primer render ya nazca en el estado correcto
+  // (mismo motivo que invt-plegado/cst-plegado: evita el flash de
+  // abierto-y-después-cerrado).
+  const historialPlegado = plegableLeer(PRF_CLAVE_HISTORIAL_PLEGADO, true);
+
   contenedor.innerHTML = `
     <div class="prf-panel">
       <div class="prf-panel-head">
         <h2>Preferencias del negocio</h2>
-        <p>A quién avisar, cada cuánto, y con qué umbrales trabaja el sistema.</p>
+        <p>A quién avisar y con qué reglas.</p>
       </div>
       <div class="prf-body">
         <div id="prfAvisoServidor"></div>
@@ -188,7 +213,7 @@ function initPreferencias(contenedor) {
             <div class="prf-campo">
               <label for="prfHora">Hora del resumen</label>
               <input type="time" id="prfHora">
-              <span class="prf-hint">Una vez por día, al cierre. Vale para los dos canales.</span>
+              <span class="prf-hint">Una vez por día, al cierre.</span>
             </div>
             <button type="button" class="prf-btn" id="prfProbar">Mandar aviso de prueba</button>
           </div>
@@ -202,18 +227,30 @@ function initPreferencias(contenedor) {
           <div class="prf-campos">
             <div class="prf-campo">
               <label for="prfVencimiento">Vencimientos: días de aviso</label>
-              <input type="number" id="prfVencimiento" min="1" max="365" step="1">
-              <span class="prf-hint">Con cuánta anticipación avisar que un lote vence.</span>
+              <div class="prf-stepper">
+                <button type="button" class="prf-stepper-btn" data-prf-stepper-menos aria-label="Restar">&minus;</button>
+                <input type="number" id="prfVencimiento" min="1" max="365" step="1">
+                <button type="button" class="prf-stepper-btn" data-prf-stepper-mas aria-label="Sumar">+</button>
+              </div>
+              <span class="prf-hint">Anticipación del aviso de vencimiento.</span>
             </div>
             <div class="prf-campo">
               <label for="prfVentana">Horas entre avisos repetidos</label>
-              <input type="number" id="prfVentana" min="1" max="168" step="1">
-              <span class="prf-hint">Si un producto queda en stock crítico, no se vuelve a avisar por él hasta que pasen estas horas.</span>
+              <div class="prf-stepper">
+                <button type="button" class="prf-stepper-btn" data-prf-stepper-menos aria-label="Restar">&minus;</button>
+                <input type="number" id="prfVentana" min="1" max="168" step="1">
+                <button type="button" class="prf-stepper-btn" data-prf-stepper-mas aria-label="Sumar">+</button>
+              </div>
+              <span class="prf-hint">Espera antes de repetir un aviso del mismo producto.</span>
             </div>
             <div class="prf-campo">
               <label for="prfStockMinimo">Stock mínimo por defecto</label>
-              <input type="number" id="prfStockMinimo" min="0" max="9999" step="1">
-              <span class="prf-hint">Con qué mínimo nacen los productos nuevos. No cambia los que ya existen.</span>
+              <div class="prf-stepper">
+                <button type="button" class="prf-stepper-btn" data-prf-stepper-menos aria-label="Restar">&minus;</button>
+                <input type="number" id="prfStockMinimo" min="0" max="9999" step="1">
+                <button type="button" class="prf-stepper-btn" data-prf-stepper-mas aria-label="Sumar">+</button>
+              </div>
+              <span class="prf-hint">Mínimo con el que nacen los productos nuevos.</span>
             </div>
           </div>
         </div>
@@ -225,18 +262,30 @@ function initPreferencias(contenedor) {
           <div class="prf-campos">
             <div class="prf-campo">
               <label for="prfDiasEntrega">Días de entrega</label>
-              <input type="number" id="prfDiasEntrega" min="1" max="120" step="1">
-              <span class="prf-hint">Cuánto tarda el proveedor desde que le pedís hasta que llega.</span>
+              <div class="prf-stepper">
+                <button type="button" class="prf-stepper-btn" data-prf-stepper-menos aria-label="Restar">&minus;</button>
+                <input type="number" id="prfDiasEntrega" min="1" max="120" step="1">
+                <button type="button" class="prf-stepper-btn" data-prf-stepper-mas aria-label="Sumar">+</button>
+              </div>
+              <span class="prf-hint">Tiempo de entrega del proveedor.</span>
             </div>
             <div class="prf-campo">
               <label for="prfDiasObjetivo">Días de mercadería a pedir</label>
-              <input type="number" id="prfDiasObjetivo" min="1" max="365" step="1">
-              <span class="prf-hint">Para cuántos días de venta se pide. 30 = un mes.</span>
+              <div class="prf-stepper">
+                <button type="button" class="prf-stepper-btn" data-prf-stepper-menos aria-label="Restar">&minus;</button>
+                <input type="number" id="prfDiasObjetivo" min="1" max="365" step="1">
+                <button type="button" class="prf-stepper-btn" data-prf-stepper-mas aria-label="Sumar">+</button>
+              </div>
+              <span class="prf-hint">Días de venta que cubre cada pedido.</span>
             </div>
             <div class="prf-campo">
               <label for="prfFactorSeguridad">Colchón de seguridad</label>
-              <input type="number" id="prfFactorSeguridad" min="0" max="5" step="0.1">
-              <span class="prf-hint">Extra sobre lo que se vende durante la entrega. 1.5 = pedí con un 50% de margen.</span>
+              <div class="prf-stepper">
+                <button type="button" class="prf-stepper-btn" data-prf-stepper-menos aria-label="Restar">&minus;</button>
+                <input type="number" id="prfFactorSeguridad" min="0" max="5" step="0.1">
+                <button type="button" class="prf-stepper-btn" data-prf-stepper-mas aria-label="Sumar">+</button>
+              </div>
+              <span class="prf-hint">Margen extra sobre la venta esperada.</span>
             </div>
           </div>
         </div>
@@ -246,28 +295,33 @@ function initPreferencias(contenedor) {
           <div class="prf-grupo" style="margin-top:18px;">
             <p class="prf-grupo-titulo">Modo demostración</p>
             <div class="prf-aviso prf-aviso-warn">
-              Estás trabajando contra <b>stockiate_demo</b>, una base aparte con datos
-              inventados. Los datos reales del comercio no se tocan.
+              Base de demo — los datos reales no se tocan.
             </div>
             <div class="prf-campos">
               <button type="button" class="prf-btn" id="prfRegenerar">Regenerar datos de demo</button>
             </div>
             <span class="prf-hint">
-              Borra y vuelve a sembrar la base de demo desde cero. Siempre genera lo mismo
-              (es determinístico), así que sirve para dejarla como estaba después de una
-              demostración. Te va a pedir que vuelvas a entrar: los usuarios se recrean.
+              Reinicia la demo desde cero. Vas a tener que volver a iniciar sesión.
             </span>
             <div id="prfResultadoDemo"></div>
           </div>
         </div>
 
-        <div class="prf-tabla-wrap">
-          <table class="prf-tabla">
-            <thead>
-              <tr><th>Cuándo</th><th>Aviso</th><th>Estado</th><th>Detalle</th></tr>
-            </thead>
-            <tbody id="prfTbody"></tbody>
-          </table>
+        <div class="prf-grupo prf-tabla-seccion${historialPlegado ? " prf-plegado" : ""}">
+          <div class="prf-tabla-head">
+            <p class="prf-grupo-titulo">Historial de notificaciones</p>
+            <button type="button" class="prf-toggle-pleg" data-prf-toggle-pleg
+                    aria-expanded="${historialPlegado ? "false" : "true"}"
+                    aria-controls="prfTablaWrap"></button>
+          </div>
+          <div class="prf-tabla-wrap" id="prfTablaWrap">
+            <table class="prf-tabla">
+              <thead>
+                <tr><th>Cuándo</th><th>Aviso</th><th>Estado</th><th>Detalle</th></tr>
+              </thead>
+              <tbody id="prfTbody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -293,6 +347,7 @@ function initPreferencias(contenedor) {
   const bloqueDemo = contenedor.querySelector("#prfBloqueDemo");
   const botonRegenerar = contenedor.querySelector("#prfRegenerar");
   const resultadoDemo = contenedor.querySelector("#prfResultadoDemo");
+  const botonPlegarHistorial = contenedor.querySelector("[data-prf-toggle-pleg]");
 
   // `window.STOCKIATE_MODO_DEMO` lo pone auth.js con lo que contestó
   // sesion_actual.php. El botón es sólo comodidad: seed_demo.php rechaza por
@@ -301,6 +356,48 @@ function initPreferencias(contenedor) {
   if (window.STOCKIATE_MODO_DEMO) {
     bloqueDemo.hidden = false;
   }
+
+  if (botonPlegarHistorial) {
+    plegableConectar({
+      panel: contenedor.querySelector(".prf-tabla-seccion"),
+      boton: botonPlegarHistorial,
+      clave: PRF_CLAVE_HISTORIAL_PLEGADO,
+      clasePlegada: "prf-plegado",
+      etiqueta: "historial",
+    });
+  }
+
+  /**
+   * Botones +/- alrededor de un <input type="number">: sólo un atajo, el
+   * campo sigue aceptando texto tipeado a mano igual que antes. Dispara
+   * "change" (no "input") a propósito -- guardarNumero()/guardarCampo()
+   * ya escuchan ese evento (ver más abajo), así que un click guarda
+   * exactamente igual que salir del campo después de editarlo.
+   */
+  function prfWireStepper(input) {
+    const contenedorStepper = input.closest(".prf-stepper");
+    if (!contenedorStepper) return;
+    const paso = parseFloat(input.step) || 1;
+    const decimales = (String(paso).split(".")[1] || "").length;
+    const min = input.min !== "" ? parseFloat(input.min) : -Infinity;
+    const max = input.max !== "" ? parseFloat(input.max) : Infinity;
+
+    function mover(delta) {
+      const actual = parseFloat(input.value);
+      const base = Number.isFinite(actual) ? actual : 0;
+      const nuevo = Math.min(max, Math.max(min, base + delta));
+      // toFixed evita el 1.5 - 0.1 = 1.4000000000000001 de punto flotante
+      // en Colchón de seguridad (el único campo con step decimal).
+      input.value = decimales ? nuevo.toFixed(decimales) : String(nuevo);
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+
+    contenedorStepper.querySelector("[data-prf-stepper-menos]").addEventListener("click", () => mover(-paso));
+    contenedorStepper.querySelector("[data-prf-stepper-mas]").addEventListener("click", () => mover(paso));
+  }
+
+  [inputVencimiento, inputVentana, inputStockMinimo, inputDiasEntrega, inputDiasObjetivo, inputFactorSeguridad]
+    .forEach(prfWireStepper);
 
   // Últimas preferencias conocidas del servidor. Sirven para no gastar un
   // request cuando se sale de un campo sin haberlo cambiado, y para poder

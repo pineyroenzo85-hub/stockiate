@@ -45,7 +45,7 @@ const REP_CSS = `
 .rep-info{ cursor:help; color:var(--gris-tenue); font-weight:600; font-size:13px; margin-left:4px; }
 .rep-panel-head p:empty{ display:none; }
 .rep-btn{ background:var(--superficie); box-shadow:var(--neu-sombra-chica); border:none; color:var(--blanco-puro); border-radius:10px; padding:8px 13px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; transition:all .15s; }
-.rep-btn:hover:not(:disabled){ color:var(--lila-dark); }
+.rep-btn:hover:not(:disabled){ color:var(--azul-acento); }
 .rep-btn:disabled{ opacity:.5; cursor:default; }
 .rep-select{ background:var(--superficie); box-shadow:var(--neu-inset); border:none; border-radius:10px; padding:8px 11px; color:var(--blanco-puro); font-size:12.5px; font-family:inherit; outline:none; max-width:210px; }
 

@@ -1,30 +1,31 @@
 :root {
+  color-scheme: light;
   /* ---------- Paleta gris-lavanda — modo claro (default) ---------- */
-  --fondo-grad:   linear-gradient(160deg, #F4EFF3 0%, #DCD3E0 45%, #B7AEC9 100%);
-  --superficie:   #DCD3E0;   /* base de cards, inputs, botones secundarios */
-  --glass-bg:     rgba(220, 211, 224, 0.72);
-  --glass-border: rgba(244, 239, 243, 0.75);
-  --glass-shadow: 0 10px 30px rgba(88, 82, 114, 0.16);
-  --divisor:      rgba(58, 53, 80, 0.12);
+  --fondo-grad:   linear-gradient(160deg, #F5F3FF 0%, #EDE9FE 50%, #DDD6FE 100%);
+  --superficie:   #EDE9FE;   /* base de cards, inputs, botones secundarios */
+  --glass-bg:     rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(124, 58, 237, 0.20);
+  --glass-shadow: 0 10px 30px rgba(76, 29, 149, 0.14);
+  --divisor:      rgba(27, 23, 64, 0.12);
 
-  --azul-deep:    #F4EFF3;   /* alias legado: fondo de página */
+  --azul-deep:    #F5F3FF;   /* alias legado: fondo de página */
   --azul-card:    var(--superficie);
   --azul-input:   var(--superficie);
-  --azul-acento:  #585272;   /* acción primaria */
-  --azul-glow:    #453E6B;   /* hover / resaltados */
-  --blanco-puro:  #3A3550;   /* texto de mayor jerarquía */
-  --crema-clean:  #474352;   /* texto de lectura general */
-  --gris-tenue:   #6E6A7A;   /* texto secundario / leyendas */
+  --azul-acento:  #7C3AED;   /* acción primaria */
+  --azul-glow:    #6D28D9;   /* hover / resaltados */
+  --blanco-puro:  #1B1740;   /* texto de mayor jerarquía */
+  --crema-clean:  #2E2A55;   /* texto de lectura general */
+  --gris-tenue:   #5F5C80;   /* texto secundario / leyendas */
 
-  --ok:           #356E4F;
-  --alerta:       #7D6218;
-  --error:        #A8414F;
+  --ok:           #047857;
+  --alerta:       #92400E;
+  --error:        #B91C1C;
 
-  --neu-sombra:       6px 6px 14px rgba(138, 130, 166, 0.30), -6px -6px 14px rgba(244, 239, 243, 0.95);
-  --neu-sombra-chica: 4px 4px 10px rgba(138, 130, 166, 0.30), -4px -4px 10px rgba(244, 239, 243, 0.95);
-  --neu-inset:        inset 3px 3px 6px rgba(138, 130, 166, 0.28), inset -3px -3px 6px rgba(244, 239, 243, 0.95);
+  --neu-sombra:       6px 6px 14px rgba(124, 58, 237, 0.16), -6px -6px 14px rgba(255, 255, 255, 0.95);
+  --neu-sombra-chica: 4px 4px 10px rgba(124, 58, 237, 0.16), -4px -4px 10px rgba(255, 255, 255, 0.95);
+  --neu-inset:        inset 3px 3px 6px rgba(124, 58, 237, 0.16), inset -3px -3px 6px rgba(255, 255, 255, 0.95);
 
-  --lila: #8A82A6; --lila-dark: #585272; --lila-shadow: rgba(138, 130, 166, 0.45);
+  --lila: #8B5CF6; --lila-dark: #7C3AED; --lila-shadow: rgba(124, 58, 237, 0.40);
   --menta: #A9DCC2; --menta-dark: #6FBF97;
   --dorado: #EFDCAE; --dorado-dark: #C9A23F;
   --coral: #EEBAC3; --coral-dark: #C25A67;
@@ -32,9 +33,9 @@
   --ok-bg: rgba(169, 220, 194, 0.55); --ok-border: rgba(111, 191, 151, 0.45);
   --alerta-bg: rgba(239, 220, 174, 0.55);
   --error-bg: rgba(238, 186, 195, 0.55); --error-border: rgba(238, 186, 195, 0.70);
-  --lila-tenue: rgba(138, 130, 166, 0.28);
-  --gris-tenue-bg: rgba(58, 53, 80, 0.08);
-  --texto-sobre-acento: #3A3550;
+  --lila-tenue: rgba(124, 58, 237, 0.18);
+  --gris-tenue-bg: rgba(27, 23, 64, 0.07);
+  --texto-sobre-acento: #FFFFFF;
 
   --radio: 18px;
   --radio-chico: 12px;
@@ -43,73 +44,75 @@
 /* ---------- Modo oscuro: automático por sistema, salvo override manual ---------- */
 @media (prefers-color-scheme: dark) {
   :root:not([data-tema="claro"]) {
-    --fondo-grad:   linear-gradient(160deg, #00030E 0%, #0B0E1A 45%, #2C1B2F 100%);
-    --superficie:   #0B0E1A;
-    --glass-bg:     rgba(44, 27, 47, 0.55);
-    --glass-border: rgba(243, 233, 236, 0.10);
-    --glass-shadow: 0 10px 30px rgba(0, 3, 14, 0.55);
-    --divisor:      rgba(243, 233, 236, 0.09);
+  color-scheme: dark;
+    --fondo-grad:   linear-gradient(160deg, #0B0F19 0%, #0F172A 55%, #16123A 100%);
+    --superficie:   #1E1B4B;
+    --glass-bg:     rgba(30, 27, 75, 0.62);
+    --glass-border: rgba(167, 139, 250, 0.20);
+    --glass-shadow: 0 10px 30px rgba(2, 6, 23, 0.55);
+    --divisor:      rgba(167, 139, 250, 0.14);
 
-    --azul-deep:    #00030E;
-    --azul-acento:  #B47A9A;
-    --azul-glow:    #CDA6BB;
-    --blanco-puro:  #F3E9EC;
-    --crema-clean:  #DFD3D9;
-    --gris-tenue:   #A9959F;
+    --azul-deep:    #0B0F19;
+    --azul-acento:  #A78BFA;
+    --azul-glow:    #C4B5FD;
+    --blanco-puro:  #F1F5F9;
+    --crema-clean:  #E2E8F0;
+    --gris-tenue:   #A5B0C4;
 
-    --ok: #7ED6A4; --alerta: #E3BE6E; --error: #F4545F;
+    --ok: #34D399; --alerta: #FBBF24; --error: #F87171;
 
-    --neu-sombra:       6px 6px 14px rgba(0, 0, 0, 0.6), -6px -6px 14px rgba(243, 233, 236, 0.035);
-    --neu-sombra-chica: 4px 4px 10px rgba(0, 0, 0, 0.6), -4px -4px 10px rgba(243, 233, 236, 0.035);
-    --neu-inset:        inset 3px 3px 6px rgba(0, 0, 0, 0.55), inset -3px -3px 6px rgba(243, 233, 236, 0.03);
+    --neu-sombra:       6px 6px 14px rgba(2, 6, 23, 0.60), -6px -6px 14px rgba(139, 92, 246, 0.06);
+    --neu-sombra-chica: 4px 4px 10px rgba(2, 6, 23, 0.60), -4px -4px 10px rgba(139, 92, 246, 0.06);
+    --neu-inset:        inset 3px 3px 6px rgba(2, 6, 23, 0.55), inset -3px -3px 6px rgba(139, 92, 246, 0.06);
 
-    --lila: #B47A9A; --lila-dark: #895A7B; --lila-shadow: rgba(94, 58, 92, 0.55);
+    --lila: #8B5CF6; --lila-dark: #7C3AED; --lila-shadow: rgba(2, 6, 23, 0.60);
     --menta: #4FA97D; --menta-dark: #3E8E67;
     --dorado: #E3BE6E; --dorado-dark: #C09A42;
-    --coral: #D9737F; --coral-dark: #BC5462;
+    --coral: #DE7E8A; --coral-dark: #C25462;
 
     --ok-bg: rgba(126, 214, 164, 0.14); --ok-border: rgba(126, 214, 164, 0.28);
     --alerta-bg: rgba(227, 190, 110, 0.13);
-    --error-bg: rgba(244, 84, 95, 0.17); --error-border: rgba(244, 84, 95, 0.38);
-    --lila-tenue: rgba(180, 122, 154, 0.20);
-    --gris-tenue-bg: rgba(243, 233, 236, 0.06);
-    --texto-sobre-acento: #00030E;
+    --error-bg: rgba(244, 134, 143, 0.15); --error-border: rgba(244, 134, 143, 0.32);
+    --lila-tenue: rgba(139, 92, 246, 0.22);
+    --gris-tenue-bg: rgba(241, 245, 249, 0.07);
+    --texto-sobre-acento: #FFFFFF;
   }
 }
 
 /* Override manual: gana siempre, sin importar el sistema */
 :root[data-tema="oscuro"] {
-  --fondo-grad:   linear-gradient(160deg, #00030E 0%, #0B0E1A 45%, #2C1B2F 100%);
-  --superficie:   #0B0E1A;
-  --glass-bg:     rgba(44, 27, 47, 0.55);
-  --glass-border: rgba(243, 233, 236, 0.10);
-  --glass-shadow: 0 10px 30px rgba(0, 3, 14, 0.55);
-  --divisor:      rgba(243, 233, 236, 0.09);
+  color-scheme: dark;
+  --fondo-grad:   linear-gradient(160deg, #0B0F19 0%, #0F172A 55%, #16123A 100%);
+  --superficie:   #1E1B4B;
+  --glass-bg:     rgba(30, 27, 75, 0.62);
+  --glass-border: rgba(167, 139, 250, 0.20);
+  --glass-shadow: 0 10px 30px rgba(2, 6, 23, 0.55);
+  --divisor:      rgba(167, 139, 250, 0.14);
 
-  --azul-deep:    #00030E;
-  --azul-acento:  #B47A9A;
-  --azul-glow:    #CDA6BB;
-  --blanco-puro:  #F3E9EC;
-  --crema-clean:  #DFD3D9;
-  --gris-tenue:   #A9959F;
+  --azul-deep:    #0B0F19;
+  --azul-acento:  #A78BFA;
+  --azul-glow:    #C4B5FD;
+  --blanco-puro:  #F1F5F9;
+  --crema-clean:  #E2E8F0;
+  --gris-tenue:   #A5B0C4;
 
-  --ok: #7ED6A4; --alerta: #E3BE6E; --error: #F4545F;
+  --ok: #34D399; --alerta: #FBBF24; --error: #F87171;
 
-  --neu-sombra:       6px 6px 14px rgba(0, 0, 0, 0.6), -6px -6px 14px rgba(243, 233, 236, 0.035);
-  --neu-sombra-chica: 4px 4px 10px rgba(0, 0, 0, 0.6), -4px -4px 10px rgba(243, 233, 236, 0.035);
-  --neu-inset:        inset 3px 3px 6px rgba(0, 0, 0, 0.55), inset -3px -3px 6px rgba(243, 233, 236, 0.03);
+  --neu-sombra:       6px 6px 14px rgba(2, 6, 23, 0.60), -6px -6px 14px rgba(139, 92, 246, 0.06);
+  --neu-sombra-chica: 4px 4px 10px rgba(2, 6, 23, 0.60), -4px -4px 10px rgba(139, 92, 246, 0.06);
+  --neu-inset:        inset 3px 3px 6px rgba(2, 6, 23, 0.55), inset -3px -3px 6px rgba(139, 92, 246, 0.06);
 
-  --lila: #B47A9A; --lila-dark: #895A7B; --lila-shadow: rgba(94, 58, 92, 0.55);
+  --lila: #8B5CF6; --lila-dark: #7C3AED; --lila-shadow: rgba(2, 6, 23, 0.60);
   --menta: #4FA97D; --menta-dark: #3E8E67;
   --dorado: #E3BE6E; --dorado-dark: #C09A42;
-  --coral: #D9737F; --coral-dark: #BC5462;
+  --coral: #DE7E8A; --coral-dark: #C25462;
 
   --ok-bg: rgba(126, 214, 164, 0.14); --ok-border: rgba(126, 214, 164, 0.28);
   --alerta-bg: rgba(227, 190, 110, 0.13);
-  --error-bg: rgba(244, 84, 95, 0.17); --error-border: rgba(244, 84, 95, 0.38);
-  --lila-tenue: rgba(180, 122, 154, 0.20);
-  --gris-tenue-bg: rgba(243, 233, 236, 0.06);
-  --texto-sobre-acento: #00030E;
+  --error-bg: rgba(244, 134, 143, 0.15); --error-border: rgba(244, 134, 143, 0.32);
+  --lila-tenue: rgba(139, 92, 246, 0.22);
+  --gris-tenue-bg: rgba(241, 245, 249, 0.07);
+  --texto-sobre-acento: #FFFFFF;
 }
 
 * { box-sizing: border-box; }
@@ -267,7 +270,7 @@ h1 {
   box-shadow: var(--neu-sombra-chica);
   transition: border-color 0.2s ease, background-color 0.2s ease;
 }
-.zona-captura:hover { border-color: var(--lila-dark); }
+.zona-captura:hover { border-color: var(--azul-acento); }
 .zona-captura:active { transform: scale(0.99); }
 
 .zona-captura img {
@@ -336,6 +339,60 @@ input[type="file"] { display: none; }
   padding: 6px;
 }
 .btn-texto:hover { color: var(--azul-glow); }
+
+/* ---------- Pantalla de captura: marco táctil y botones grandes ----------
+   Sólo #pantalla-captura (repositor y cajero la comparten), para no tocar los
+   .btn de las demás pantallas. */
+#pantalla-captura .zona-captura {
+  border: 2px solid var(--glass-border);
+  background: var(--superficie);
+}
+#pantalla-captura .zona-captura:hover { border-color: var(--lila); }
+#pantalla-captura .zona-captura::before {
+  content: "";
+  position: absolute;
+  inset: 14px;
+  pointer-events: none;
+  z-index: 2;
+  filter: drop-shadow(0 0 6px var(--lila-shadow));
+  background:
+    linear-gradient(var(--lila), var(--lila)) top left / 34px 4px no-repeat,
+    linear-gradient(var(--lila), var(--lila)) top left / 4px 34px no-repeat,
+    linear-gradient(var(--lila), var(--lila)) top right / 34px 4px no-repeat,
+    linear-gradient(var(--lila), var(--lila)) top right / 4px 34px no-repeat,
+    linear-gradient(var(--lila), var(--lila)) bottom left / 34px 4px no-repeat,
+    linear-gradient(var(--lila), var(--lila)) bottom left / 4px 34px no-repeat,
+    linear-gradient(var(--lila), var(--lila)) bottom right / 34px 4px no-repeat,
+    linear-gradient(var(--lila), var(--lila)) bottom right / 4px 34px no-repeat;
+}
+#pantalla-captura .icono-camara {
+  width: 64px; height: 64px;
+  background: linear-gradient(135deg, var(--lila) 0%, var(--lila-dark) 100%);
+  box-shadow: 0 8px 22px var(--lila-shadow);
+}
+#pantalla-captura .icono-camara svg, #pantalla-captura .icono-camara i { width: 28px; height: 28px; }
+#pantalla-captura #btn-procesar {
+  min-height: 72px;
+  font-size: 18px;
+  font-weight: 800;
+  border-radius: 22px;
+}
+#pantalla-captura #btn-manual {
+  width: 100%;
+  min-height: 60px;
+  border: 1.5px solid var(--glass-border);
+  border-radius: 22px;
+  color: var(--blanco-puro);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  padding: 0 20px;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+#pantalla-captura #btn-manual:hover { border-color: var(--lila); background: var(--lila-tenue); color: var(--blanco-puro); }
+#pantalla-captura #btn-manual:focus-visible, #pantalla-captura #btn-procesar:focus-visible { outline: 3px solid var(--azul-glow); outline-offset: 3px; }
+
 
 /* ---------- Procesando ---------- */
 .procesando-wrap {
@@ -477,6 +534,29 @@ select:focus, input:focus {
   box-shadow: var(--neu-inset), 0 0 0 2px var(--lila);
 }
 
+/* Controles de formulario más grandes y táctiles (diseño aprobado en la demo):
+   alto mínimo de 52px, esquinas redondeadas y una flecha violeta en los select. */
+select, input[type="number"], input[type="date"],
+input[type="text"], input[type="email"], input[type="password"] {
+  min-height: 52px;
+  border-radius: 16px;
+  padding: 12px 16px;
+  font-size: 15px;
+}
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 44px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%238B5CF6' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+}
+select option { color: #1B1740; background: #fff; }
+select:focus-visible, input:focus-visible, button:focus-visible { outline: 3px solid var(--azul-glow); outline-offset: 2px; }
+#btn-confirmar { min-height: 64px; font-size: 17px; font-weight: 800; border-radius: 22px; }
+.btn { border-radius: 18px; }
+
+
 .fila-doble { display: flex; gap: 10px; }
 .fila-doble > div { flex: 1; }
 
@@ -512,6 +592,16 @@ label {
 }
 .resumen-total span:first-child { color: var(--gris-tenue); font-size: 13px; }
 .resumen-total span:last-child { font-size: 20px; font-weight: 800; color: var(--azul-acento); }
+
+/* Ley 27.743 (Transparencia Fiscal al Consumidor): línea chica debajo del
+   total, no compite visualmente con el número que el cajero de verdad tiene
+   que mirar para cobrar. */
+.resumen-iva {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 0 4px;
+}
+.resumen-iva span:first-child { color: var(--gris-tenue); font-size: 11.5px; }
+.resumen-iva span:last-child { font-size: 12.5px; font-weight: 600; color: var(--gris-tenue); }
 
 /* ---------- Confirmación ---------- */
 .confirmacion-wrap {
@@ -602,7 +692,7 @@ footer {
 }
 
 .menu-desplegable button:hover{
-    background: rgba(139, 122, 168, 0.1);
+    background: rgba(139, 92, 246, 0.1);
 }
 
 .menu-desplegable.activo{
@@ -905,7 +995,7 @@ footer {
   text-align: center;
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
-  box-shadow: 0 8px 24px rgba(139, 122, 168, 0.25);
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.25);
   pointer-events: auto;
 }
 
@@ -931,7 +1021,7 @@ footer {
    hizo su trabajo. */
 .toast-info {
   background: rgba(217, 191, 234, 0.35);
-  border: 1px solid rgba(184, 127, 217, 0.4);
+  border: 1px solid rgba(139, 92, 246, 0.4);
   color: var(--azul-acento);
 }
 #graficoVentas{
@@ -1020,7 +1110,7 @@ footer {
   border-radius: 999px;
   cursor: pointer;
   transition: background 0.2s ease;
-  border: 1px solid rgba(139, 122, 168, 0.2);
+  border: 1px solid rgba(139, 92, 246, 0.2);
 }
 
 .switch .track::before {
@@ -1037,7 +1127,7 @@ footer {
 
 .switch input:checked + .track {
   background: var(--lila);
-  box-shadow: 0 0 12px rgba(184, 127, 217, 0.3);
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.3);
 }
 
 .switch input:checked + .track::before {
@@ -1090,7 +1180,7 @@ footer {
 
 select#modo-entrada {
   background: var(--azul-input);
-  border: 1px solid rgba(139, 122, 168, 0.2);
+  border: 1px solid rgba(139, 92, 246, 0.2);
   border-radius: var(--radio-chico);
   color: var(--blanco-puro);
   font-family: 'Plus Jakarta Sans', sans-serif;
@@ -1114,8 +1204,8 @@ select#modo-entrada:disabled {
   width: 100%;
   padding: 12px;
   border-radius: var(--radio-chico);
-  border: 1px solid rgba(184, 127, 217, 0.3);
-  background: rgba(184, 127, 217, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  background: rgba(139, 92, 246, 0.1);
   color: var(--azul-glow);
   font-size: 13px;
   font-weight: 600;
@@ -1130,7 +1220,7 @@ select#modo-entrada:disabled {
 }
 
 .btn-conectar-serial:hover {
-  background: rgba(184, 127, 217, 0.18);
+  background: rgba(139, 92, 246, 0.18);
 }
 
 .btn-conectar-serial:active {
@@ -1187,3 +1277,18 @@ select#modo-entrada:disabled {
   -webkit-appearance: none;
   margin: 0;
 }
+
+/* Stepper de cantidad: va al final para ganarle a las reglas base de arriba. */
+.stepper-cantidad { border-radius: 16px; }
+.btn-stepper { flex: 0 0 60px; min-width: 60px; font-size: 26px; }
+.stepper-cantidad .input-cantidad { font-size: 18px; font-weight: 800; }
+
+/* Header de equipo.html: sus botones eran .btn a secas (ancho completo, sin fondo)
+   y se veían como botones blancos del navegador apilados sobre la página. */
+.header-derecha { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.header-derecha .btn {
+  width: auto; min-height: 44px; padding: 0 16px; font-size: 13px; border-radius: 99px;
+  background: var(--superficie); color: var(--blanco-puro); border: 1px solid var(--glass-border);
+  box-shadow: var(--neu-sombra-chica);
+}
+.header-derecha .btn:hover { border-color: var(--lila); }

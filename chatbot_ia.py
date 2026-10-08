@@ -24,6 +24,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+from pathlib import Path
 
 import requests
 
@@ -417,12 +418,14 @@ Respondés en español rioplatense (vos), corto y directo, como si le \
 hablaras a alguien del local mientras trabaja.
 
 Solo respondés preguntas sobre el negocio (stock, ventas, vencimientos, \
-catálogo, costos), usando las herramientas disponibles para traer datos \
-reales -- nunca inventes números ni nombres de productos que no te haya \
-devuelto una herramienta. Si te preguntan algo que no podés resolver con \
-las herramientas que tenés habilitadas, decilo con onda y sugerí desde qué \
-pantalla del sistema se consulta eso. Si te preguntan algo totalmente ajeno \
-al negocio, decí que no podés ayudar con eso.
+catálogo, costos) y sobre cómo se usa el sistema. Las del negocio las \
+resolvés con las herramientas disponibles para traer datos reales -- nunca \
+inventes números ni nombres de productos que no te haya devuelto una \
+herramienta. Las de cómo se usa el sistema las resolvés con la guía de uso \
+que viene más abajo, si la hay. Si te preguntan algo que no podés resolver \
+con las herramientas que tenés habilitadas, decilo con onda y sugerí desde \
+qué pantalla del sistema se consulta eso. Si te preguntan algo totalmente \
+ajeno al negocio y al sistema, decí que no podés ayudar con eso.
 
 Cuando des números, redondeá a algo legible y aclará la unidad ($ o \
 unidades). Si una herramienta no devuelve resultados, decilo tal cual -- no \
@@ -492,6 +495,95 @@ consultado -- no lo confundas con "no hay ventas" ni inventes un motivo.\
 """
 
 
+# ---------------------------------------------------------------------------
+# Guía de uso del sistema
+#
+# El contenido vive en ayuda.json, que también lee mascota_tour.js (modo
+# "señalar" y respaldo cuando la IA no responde): una sola fuente, sin tercera
+# copia que se desfase. Acá se arma el texto que se le da al modelo.
+#
+# Recorta por SECCIÓN igual que CONTEXT_TOOLS: parado en Caja, el asistente no
+# conoce -- y por lo tanto no describe -- el panel de costos. No es control de
+# acceso (eso es PHP); es no ofrecerle al modelo lo que no corresponde.
+# ---------------------------------------------------------------------------
+_RUTA_AYUDA = Path(__file__).resolve().parent / "ayuda.json"
+_ayuda_cache: tuple[float, dict] | None = None
+
+
+def _cargar_ayuda() -> dict:
+    """
+    Lee ayuda.json, cacheado por fecha de modificación. uvicorn --reload sólo
+    vigila los .py, así que sin la fecha un cambio en el JSON pediría reiniciar
+    el servicio. Si el archivo no se puede leer, se sigue con la última copia
+    buena (o vacía): la ayuda es un extra, no puede tirar abajo el chat.
+    """
+    global _ayuda_cache
+    try:
+        mtime = _RUTA_AYUDA.stat().st_mtime
+        if _ayuda_cache is None or _ayuda_cache[0] != mtime:
+            with _RUTA_AYUDA.open(encoding="utf-8") as f:
+                _ayuda_cache = (mtime, json.load(f))
+    except (OSError, ValueError) as e:
+        logger.warning("No se pudo leer %s: %s", _RUTA_AYUDA.name, e)
+    return _ayuda_cache[1] if _ayuda_cache else {}
+
+
+def _seccion(contexto: str | None) -> str:
+    return (contexto or "").strip().lower()
+
+
+def _guia_de_uso(contexto: str | None) -> str:
+    """Bloque de prompt con cómo se usa la sección. '' si no hay nada que decir."""
+    seccion = _seccion(contexto)
+    ayuda = _cargar_ayuda()
+    paneles = ayuda.get("senalables", {}).get(seccion, [])
+    frecuentes = [f for f in ayuda.get("faq", []) if seccion in f.get("contextos", [])]
+    if not paneles and not frecuentes:
+        return ""
+
+    lineas = [
+        "Guía de uso del sistema para esta pantalla. Cuando te pregunten CÓMO SE "
+        "USA el sistema, para qué sirve un panel o un botón, o dónde se hace algo, "
+        "respondé usando SOLO esta guía y SIN llamar a ninguna herramienta. "
+        "Respondé en texto plano, máximo 3 frases, sin negritas ni listas "
+        "numeradas, y copiando de cerca lo que dice la guía. Si la guía solo "
+        "cuenta para qué sirve algo, decí eso y no inventes los pasos para "
+        "usarlo. No deduzcas ni agregues pasos o funciones que no estén "
+        "escritos, y no generalices: si la guía dice que algo lo tiene un "
+        "panel, no digas que lo tienen todos.\n"
+        "Si lo que preguntan NO figura en la guía, respondé únicamente algo como: "
+        "\"Eso no lo tengo a mano. Puedo ayudarte con los paneles de esta pantalla "
+        "o con los datos de tu negocio.\" y nada más: sin sugerir dónde buscarlo, "
+        "sin nombrar soporte ni a otra persona, y sin afirmar que la función no "
+        "existe (puede existir y no estar en la guía)."
+    ]
+    if paneles:
+        lineas.append("Paneles y botones de esta pantalla:")
+        lineas += [f"- {p['titulo']}: {p['texto']}" for p in paneles]
+    if frecuentes:
+        lineas.append("Preguntas frecuentes:")
+        lineas += [f"- {f['respuesta']}" for f in frecuentes]
+    return "\n".join(lineas)
+
+
+def _texto_de_foco(contexto: str | None, foco: str | None) -> str:
+    """
+    Qué panel señaló la persona con el 🎯. El cliente manda sólo el ID y el
+    texto sale de ayuda.json: aceptar texto libre del navegador y pegarlo en el
+    prompt sería dejar que cualquiera le escriba instrucciones al modelo. Un id
+    desconocido se ignora sin error.
+    """
+    if not foco:
+        return ""
+    for p in _cargar_ayuda().get("senalables", {}).get(_seccion(contexto), []):
+        if p.get("id") == foco:
+            return (
+                f"La persona acaba de señalar en pantalla «{p['titulo']}»: {p['texto']} "
+                "Si pregunta por \"esto\" o por \"acá\", se refiere a eso."
+            )
+    return ""
+
+
 def _nombres_permitidos(rol: str, contexto: str | None = None) -> set[str]:
     """
     Intersección entre lo que puede el ROL y lo que corresponde a la SECCIÓN.
@@ -535,12 +627,20 @@ def _tools_openai(permitidas: set[str]) -> list[dict]:
     ]
 
 
-def _prompt_sistema(rol: str, contexto: str | None = None) -> str:
+def _prompt_sistema(rol: str, contexto: str | None = None, foco: str | None = None) -> str:
     partes = [_SYSTEM_PROMPT_BASE]
 
-    nota = _NOTA_POR_CONTEXTO.get((contexto or "").strip().lower())
+    nota = _NOTA_POR_CONTEXTO.get(_seccion(contexto))
     if nota:
         partes.append(nota)
+
+    guia = _guia_de_uso(contexto)
+    if guia:
+        partes.append(guia)
+
+    texto_foco = _texto_de_foco(contexto, foco)
+    if texto_foco:
+        partes.append(texto_foco)
 
     if "consultar_rentabilidad" in _nombres_permitidos(rol, contexto):
         partes.append(_GUIA_RENTABILIDAD)
@@ -633,6 +733,7 @@ def responder_pregunta(
     historial: list[dict] | None = None,
     cookie: str | None = None,
     contexto: str | None = None,
+    foco: str | None = None,
 ) -> tuple[str, list[str]]:
     """
     Responde una pregunta en lenguaje natural usando Groq con tool-use
@@ -641,7 +742,12 @@ def responder_pregunta(
     `contexto` es la sección desde la que se abrió el chat ("repositor",
     "cajero", "admin"), que manda el frontend. Recorta las herramientas por
     intersección con las del rol: parado en el depósito, ni el dueño pregunta
-    de facturación. Como sólo recorta, falsearlo no habilita nada.
+    de facturación. Como sólo recorta, falsearlo no habilita nada. También
+    elige la guía de uso del sistema que se le da al modelo (ver ayuda.json).
+
+    `foco` es el ID del panel que la persona señaló con el 🎯 (ver
+    _texto_de_foco): un ID desconocido se ignora, y el texto nunca viene del
+    cliente.
 
     `cookie` es el header Cookie del navegador, que main.py reenvía tal cual.
     Se propaga a cada llamada PHP para que el negocio y el usuario salgan de
@@ -667,7 +773,7 @@ def responder_pregunta(
     permitidas = _nombres_permitidos(rol, contexto)
     tools = _tools_openai(permitidas)
 
-    mensajes: list[dict] = [{"role": "system", "content": _prompt_sistema(rol, contexto)}]
+    mensajes: list[dict] = [{"role": "system", "content": _prompt_sistema(rol, contexto, foco)}]
     mensajes.extend(historial or [])
     mensajes.append({"role": "user", "content": pregunta})
 

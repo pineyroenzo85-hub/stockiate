@@ -8,14 +8,51 @@
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script src="tema.js?v=1"></script>
+    <script src="embebido.js?v=1"></script>
     <script src="config.js?v=1"></script>
-    <script src="auth.js?v=5"></script>
+    <script src="auth.js?v=6"></script>
     <script>
       // Sincrónico y en <head>, igual que el resto de las páginas de rol.
       // Cualquier rol logueado puede entrar: es la configuración de sus
       // propias herramientas, no un módulo restringido.
       var usuarioSesion = exigirSesion(["repositor", "cajero", "dueño"]);
     </script>
+    <style>
+    /* Card "Cajita": controles táctiles grandes (prefijo aj-). El <select> original sigue en el
+       DOM —mascota_tour.js lo lee y lo guarda por id— pero se muestra como botones tipo píldora;
+       ver el script de abajo. */
+    #mtour-panel-configuracion .grupo-control {
+      display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+      padding: 16px 0; border-top: 1px solid var(--divisor);
+    }
+    #mtour-panel-configuracion .grupo-control:first-child { border-top: 0; padding-top: 6px; }
+    #mtour-panel-configuracion .fila-ajuste { width: 100%; border: 0; padding: 0; }
+    #mtour-panel-configuracion .fila-ajuste-texto .titulo { font-size: 15px; }
+    #mtour-panel-configuracion .fila-ajuste-texto .desc { font-size: 12.5px; }
+    #mtour-panel-configuracion .grupo-control > .fila-ajuste-texto { flex: 1 1 160px; }
+    #mtour-panel-configuracion .grupo-control > .fila-ajuste-texto .titulo { font-size: 15px; }
+    #mtour-panel-configuracion .switch { width: 64px; height: 36px; }
+    #mtour-panel-configuracion .switch .track::before { width: 28px; height: 28px; left: 3px; top: 3px; }
+    #mtour-panel-configuracion .switch input:checked + .track::before { transform: translateX(28px); }
+    #mtour-panel-configuracion .switch input:checked + .track { box-shadow: 0 0 16px var(--lila-shadow); }
+    #mtour-panel-configuracion .btn { min-height: 54px; border-radius: 99px; }
+    .aj-seg {
+      display: inline-flex; gap: 4px; padding: 5px; border-radius: 99px; flex-wrap: wrap;
+      background: var(--superficie); box-shadow: var(--neu-inset); border: 1px solid var(--glass-border);
+    }
+    .aj-seg button {
+      min-height: 44px; padding: 0 18px; border: 0; border-radius: 99px; background: transparent;
+      color: var(--gris-tenue); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 700;
+      cursor: pointer; transition: all .15s ease; white-space: nowrap;
+    }
+    .aj-seg button:hover { color: var(--blanco-puro); }
+    .aj-seg button[aria-checked="true"] {
+      background: linear-gradient(135deg, var(--lila), var(--lila-dark)); color: #fff; box-shadow: 0 6px 16px var(--lila-shadow);
+    }
+    .aj-seg button:focus-visible { outline: 3px solid var(--azul-glow); outline-offset: 2px; }
+    .aj-oculto { display: none !important; }
+    @media (prefers-reduced-motion: reduce) { .aj-seg button { transition: none; } }
+    </style>
 </head>
 <body>
 
@@ -53,6 +90,44 @@
     <div>
       <h1>Ajustes</h1>
       <p class="sub">Herramientas y periféricos del negocio.</p>
+    </div>
+
+    <!-- ================= CAJITA (ASISTENTE) ================= -->
+    <div class="item-card">
+      <div class="panel-header">
+        <h2 class="ajustes-titulo">Cajita</h2>
+      </div>
+      <p class="sub" style="margin-top:0;">Tu asistente de stockIAte: te recibe en cada pantalla, te explica los paneles y contesta tus preguntas.</p>
+
+      <div id="mtour-panel-configuracion">
+        <div class="grupo-control">
+          <button type="button" class="btn btn-secundario" id="mtour-btn-repetir-tour" style="width:100%;">🔁 Repetir recorrido de bienvenida</button>
+        </div>
+
+        <div class="grupo-control">
+          <div class="fila-ajuste">
+            <div class="fila-ajuste-texto">
+              <div class="titulo">Mostrar a Cajita</div>
+              <div class="desc">Si lo apagás, el asistente sigue disponible como un botón 🤖 simple y no aparece el recorrido.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="mtour-toggle-visible">
+              <span class="track"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="grupo-control">
+          <div class="fila-ajuste-texto">
+            <div class="titulo">Tamaño</div>
+          </div>
+          <select id="mtour-select-tamano">
+            <option value="chico">Pequeño</option>
+            <option value="mediano">Mediano</option>
+            <option value="grande">Grande</option>
+          </select>
+        </div>
+      </div>
     </div>
 
     <!-- ================= PERIFÉRICOS Y HERRAMIENTAS ================= -->
@@ -204,6 +279,51 @@
     });
     btnConectarSerial.addEventListener("click", () => barcodeManager.conectarPuertoSerial());
   });
+</script>
+
+<!-- Cajita se carga a mano ANTES de insertarChatbotWidget() para que el panel de arriba
+     quede conectado apenas carga la página; auth.js ve que window.Cajita ya existe y no la
+     inyecta de nuevo. Acá no hay tour (la página no es una sección): Cajita es sólo el botón
+     del chat. -->
+<script src="mascota_tour.js?v=8"></script>
+
+<script>
+  // El <select> de tamaño se ve como botones tipo píldora.
+  // El <select> sigue mandando: el botón le pone el value y dispara "change", que es lo
+  // que escucha mascota_tour.js para guardar en localStorage.
+  (function () {
+    ["mtour-select-tamano"].forEach(function (id) {
+      var sel = document.getElementById(id);
+      if (!sel) return;
+      var titulo = sel.closest(".grupo-control").querySelector(".titulo");
+      var seg = document.createElement("div");
+      seg.className = "aj-seg";
+      seg.setAttribute("role", "radiogroup");
+      seg.setAttribute("aria-label", titulo ? titulo.textContent : id);
+      Array.prototype.forEach.call(sel.options, function (o) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.setAttribute("role", "radio");
+        b.dataset.v = o.value;
+        b.textContent = o.textContent;
+        b.addEventListener("click", function () {
+          sel.value = o.value;
+          sel.dispatchEvent(new Event("change", { bubbles: true }));
+        });
+        seg.appendChild(b);
+      });
+      sel.classList.add("aj-oculto");
+      sel.after(seg);
+      function sync() {
+        Array.prototype.forEach.call(seg.children, function (b) {
+          b.setAttribute("aria-checked", String(b.dataset.v === sel.value));
+        });
+      }
+      sel.addEventListener("change", sync);
+      sync();
+      document.addEventListener("DOMContentLoaded", sync);
+    });
+  })();
 </script>
 
 <script>

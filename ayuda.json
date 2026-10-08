@@ -1,0 +1,71 @@
+{
+  "_comentario": "Fuente ÚNICA de la ayuda de Cajita. La leen mascota_tour.js (modo señalar y respaldo cuando la IA no responde) y chatbot_ia.py (guía de uso que se le da al modelo). Si cambia un texto acá, cambia en los dos lados: no hay una tercera copia. 'selector' es solo para el navegador; Python lo ignora. 'contextos' recorta igual que CONTEXT_TOOLS: una sección solo habla de lo que le corresponde. Los ids son estables: el navegador manda 'foco' por id y el servidor lo resuelve acá, nunca se acepta texto del cliente.",
+  "senalables": {
+    "repositor": [
+      { "id": "zona_captura", "selector": "#zona-captura", "titulo": "Cargar por foto", "texto": "Sacá una foto de la góndola y la IA cuenta los productos por vos. Si preferís, también podés cargar manualmente." },
+      { "id": "red_seguridad", "selector": "#pantalla-validacion", "titulo": "Red de Seguridad", "texto": "Revisá el conteo antes de guardar: confirmá o corregí cantidad, producto y vencimiento de cada línea." },
+      { "id": "resumen_lote", "selector": "#resumen-cantidad", "titulo": "Resumen del lote", "texto": "Acá ves el total de unidades que se van a cargar en este lote." },
+      { "id": "guardar_stock", "selector": "#btn-confirmar", "titulo": "Guardar stock", "texto": "Confirmá acá para escribir el lote en la base de datos." }
+    ],
+    "cajero": [
+      { "id": "zona_captura", "selector": "#zona-captura", "titulo": "Registrar venta", "texto": "Sacá una foto de lo que se está vendiendo (o buscalo a mano) y la IA lo identifica." },
+      { "id": "red_seguridad", "selector": "#pantalla-validacion", "titulo": "Revisá el ticket", "texto": "Antes de cobrar, confirmá que cada producto y cantidad estén bien." },
+      { "id": "total_cobrar", "selector": "#resumen-total-dinero", "titulo": "Total a cobrar", "texto": "Este es el monto final del ticket, calculado siempre con el precio de venta real del servidor." },
+      { "id": "confirmar_venta", "selector": "#btn-confirmar", "titulo": "Confirmar venta", "texto": "Al confirmar se descuenta del inventario y se registra la venta." }
+    ],
+    "admin": [
+      { "id": "kpis", "selector": "#kpiGrid", "titulo": "Indicadores clave", "texto": "Stock total, eficiencia del escáner y alertas de quiebre, de un vistazo." },
+      { "id": "riesgo_quiebre", "selector": "#prediccionContenedor", "titulo": "Riesgo de quiebre", "texto": "Productos que se van a quedar sin stock pronto, según su ritmo de venta." },
+      { "id": "costos", "selector": "#costosContenedor", "titulo": "Costos y márgenes", "texto": "Margen por producto y por proveedor, para saber qué tan rentable es cada uno." },
+      { "id": "reposicion", "selector": "#reposicionContenedor", "titulo": "Reposición", "texto": "Qué pedirle a cada proveedor y cuánto, calculado según tu ritmo de venta y el stock actual." },
+      { "id": "graficos", "selector": "#graficosContenedor", "titulo": "Gráficos", "texto": "Ventas por día, top productos y estado del stock, en un vistazo visual." },
+      { "id": "inventario", "selector": "#inventarioContenedor", "titulo": "Inventario en tiempo real", "texto": "Todo tu catálogo con stock, precio y estado, buscable y editable." }
+    ]
+  },
+  "faq": [
+    { "id": "repositor_foto", "contextos": ["repositor", "admin"],
+      "palabras": ["repositor", "góndola", "gondola", "foto", "cámara", "camara", "sacar foto"],
+      "estado": "explicando",
+      "respuesta": "En Modo Repositor: acomodá los productos, abrí la cámara y sacale una foto a la góndola. La IA cuenta todo en segundos y después confirmás en la Red de Seguridad." },
+    { "id": "panel_admin", "contextos": ["admin"],
+      "palabras": ["dashboard", "kpi", "alerta", "administrador", "admin", "panel"],
+      "estado": "explicando",
+      "respuesta": "El panel de Administrador muestra tus KPIs (stock total, eficiencia del escáner) y alertas de quiebre en rojo. Desde ahí también accedés a costos, reposición y gráficos." },
+    { "id": "buscar_producto", "contextos": ["admin"],
+      "palabras": ["buscar", "buscador", "encontrar"],
+      "estado": "explicando",
+      "respuesta": "Tanto el Inventario como Costos y márgenes tienen su propio buscador arriba de la tabla, así no hace falta recorrer toda la lista." },
+    { "id": "caja_venta", "contextos": ["cajero", "admin"],
+      "palabras": ["caja", "venta", "vender", "cobrar", "escanear", "ticket"],
+      "estado": "explicando",
+      "respuesta": "En Modo Caja buscás, escaneás o le sacás una foto a lo vendido; al confirmar se descuenta solo del inventario." },
+    { "id": "equipo_invitar", "contextos": ["admin"],
+      "palabras": ["invitar", "empleado", "equipo", "link", "qr"],
+      "estado": "idle",
+      "respuesta": "Al equipo se lo invita por un link compartible desde el panel del dueño (menú del negocio → Equipo), no por mail automático — hoy se copia a mano." },
+    { "id": "negocios_aislados", "contextos": ["repositor", "cajero", "admin"],
+      "palabras": ["negocio", "aislad", "multi", "otro cliente", "mezcl"],
+      "estado": "idle",
+      "respuesta": "Cada negocio que se registra queda aislado del resto: su propio inventario, dueño y empleados, sin cruces con otras cuentas." },
+    { "id": "red_seguridad", "contextos": ["repositor", "cajero", "admin"],
+      "palabras": ["red de seguridad", "error de conteo", "corregir"],
+      "estado": "exito",
+      "respuesta": "La Red de Seguridad te muestra el conteo antes de guardarlo. Si algo está mal, lo tocás y lo corregís vos mismo antes de que se guarde en la base." },
+    { "id": "costos_margenes", "contextos": ["admin"],
+      "palabras": ["costo", "margen", "rentabilidad", "ganancia"],
+      "estado": "explicando",
+      "respuesta": "En \"Costos y márgenes\" cargás el precio de costo de cada producto y ahí mismo ves el margen. El asistente usa esos mismos números para responder sobre rentabilidad." },
+    { "id": "reposicion", "contextos": ["admin"],
+      "palabras": ["reposición", "reposicion", "pedido", "proveedor"],
+      "estado": "explicando",
+      "respuesta": "El panel de Reposición te dice qué pedirle a cada proveedor y cuánto, agrupado por proveedor para que el texto salga listo para mandar por WhatsApp." },
+    { "id": "carteles", "contextos": ["admin"],
+      "palabras": ["cartel", "oferta", "imprimir", "góndola precio"],
+      "estado": "idle",
+      "respuesta": "Los carteles de góndola se arman y se imprimen desde \"Carteles\", en el menú del negocio — elegís productos, ponés precio de oferta y listo." },
+    { "id": "vencimientos", "contextos": ["repositor", "admin"],
+      "palabras": ["vencimiento", "vence", "caduc"],
+      "estado": "idle",
+      "respuesta": "El vencimiento de cada producto se carga en la Red de Seguridad al confirmar. Para saber qué vence pronto, preguntámelo y lo consulto en el inventario. El dueño además puede recibir avisos automáticos (WhatsApp o mail) desde las Preferencias del negocio." }
+  ]
+}

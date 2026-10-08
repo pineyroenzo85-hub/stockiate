@@ -58,6 +58,14 @@ try {
             'reposicion_dias_objetivo' => leer_config_int($pdo, $negocio_id, 'reposicion_dias_objetivo'),
             // El único decimal de la tabla: ver leer_config_float().
             'reposicion_factor_seguridad' => leer_config_float($pdo, $negocio_id, 'reposicion_factor_seguridad'),
+            // Precios e inflación (precios_inflacion.html). Los cuatro son
+            // decimales: hasta alicuota_iva, que hoy sólo toma 21/10.5/27,
+            // pasa por leer_config_float() para no duplicar un lector sólo
+            // para éste.
+            'inflacion_mensual' => leer_config_float($pdo, $negocio_id, 'inflacion_mensual'),
+            'alicuota_iva' => leer_config_float($pdo, $negocio_id, 'alicuota_iva'),
+            'alicuota_iibb' => leer_config_float($pdo, $negocio_id, 'alicuota_iibb'),
+            'umbral_atraso_precio' => leer_config_float($pdo, $negocio_id, 'umbral_atraso_precio'),
         ],
         // Esto NO es configuración del negocio sino del servidor (el `.env`),
         // y es igual para todos los negocios. Se informa para que el panel

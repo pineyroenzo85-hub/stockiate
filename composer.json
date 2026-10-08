@@ -1,0 +1,12 @@
+{
+    "name": "stockiate/tesis",
+    "description": "stockIAte - sistema de gestion de inventario asistido por IA",
+    "type": "project",
+    "require": {
+        "php": "^8.2",
+        "ext-pdo_mysql": "*",
+        "ext-gd": "*",
+        "ext-mbstring": "*",
+        "ext-openssl": "*"
+    }
+}

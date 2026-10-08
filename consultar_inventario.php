@@ -48,12 +48,31 @@ try {
     // Los archivados se ordenan por fecha de baja descendente: lo último que
     // archivaste es lo que más probablemente quieras restaurar (te
     // equivocaste recién).
-    $orden = $archivados ? "archivado_en DESC, nombre ASC" : "nombre ASC";
+    // Calificado con p.: desde que el SELECT suma un LEFT JOIN a proveedores,
+    // "nombre" a secas es ambiguo (existe en las dos tablas).
+    $orden = $archivados ? "p.archivado_en DESC, p.nombre ASC" : "p.nombre ASC";
     $stmtProductos = $pdo->prepare(
-        "SELECT id, sku, nombre, marca, variante, categoria, precio_venta, stock_actual,
-                stock_minimo, activo, archivado_en, foto
-         FROM productos
-         WHERE negocio_id = :negocio_id AND activo = :activo
+        "SELECT p.id, p.sku, p.nombre, p.marca, p.variante, p.categoria, p.precio_venta, p.stock_actual,
+                p.stock_minimo, p.activo, p.archivado_en, p.foto, p.proveedor_id, p.creado_en,
+                pr.nombre AS proveedor_nombre,
+                -- Última vez que ENTRÓ mercadería de este producto. La usa el
+                -- selector de orden de la tabla (\"Cargados recientemente\").
+                -- Sale de lotes_stock y no de movimientos_stock porque esa
+                -- tabla arranca vacía (ver CLAUDE.md, \"el libro mayor del
+                -- inventario\"): con ella, todo lo anterior a la migración
+                -- quedaría sin fecha.
+                -- Subconsulta y no LEFT JOIN + GROUP BY: así no hay que tocar
+                -- el JOIN a proveedores que ya está ni cuidar que un producto
+                -- con tres lotes no multiplique su fila. El catálogo de un
+                -- negocio son decenas de productos, no miles.
+                -- El negocio_id no es decorativo acá: es la misma regla de
+                -- aislamiento que lleva toda query del proyecto.
+                (SELECT MAX(l.fecha_carga)
+                   FROM lotes_stock l
+                  WHERE l.producto_id = p.id AND l.negocio_id = p.negocio_id) AS ultima_carga
+         FROM productos p
+         LEFT JOIN proveedores pr ON pr.id = p.proveedor_id AND pr.negocio_id = p.negocio_id
+         WHERE p.negocio_id = :negocio_id AND p.activo = :activo
          ORDER BY $orden"
     );
     $stmtProductos->execute([

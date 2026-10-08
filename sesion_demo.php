@@ -30,11 +30,19 @@
  *          {"ok":true,"usuario":{id,nombre,apellido,email,rol}}
  */
 
-// ⬇⬇⬇ EL INTERRUPTOR: poner en false para desactivar el skip. ⬇⬇⬇
-const MODO_PRUEBA = true;
-
-require_once 'sesion.php'; // trae también conexion.php ($pdo)
+require_once 'sesion.php'; // trae también conexion.php ($pdo) y env.php
 require_once 'configuracion.php'; // sembrar_config_inicial()
+
+// ⬇⬇⬇ EL INTERRUPTOR ⬇⬇⬇
+// En local queda encendido, como siempre. En Heroku (donde existe la variable
+// DYNO) arranca APAGADO y hay que prenderlo a propósito con
+// `heroku config:set STOCKIATE_MODO_PRUEBA=1`: es el despliegue público, y este
+// endpoint regala una sesión de "dueño" sin contraseña. Para forzarlo apagado
+// en cualquier lado: STOCKIATE_MODO_PRUEBA=0.
+$_prueba_env = leer_env('STOCKIATE_MODO_PRUEBA');
+define('MODO_PRUEBA', $_prueba_env !== null
+    ? !in_array(strtolower($_prueba_env), ['0', 'false', 'no', 'off'], true)
+    : getenv('DYNO') === false);
 
 cabeceras_json('GET, POST, OPTIONS');
 

@@ -352,6 +352,38 @@ CREATE TABLE ofertas (
 );
 
 -- ------------------------------------------------------------
+-- HISTORIAL DE PRECIOS (una fila por cada cambio de precio_venta)
+-- ------------------------------------------------------------
+-- La usa el módulo "Precios e inflación" del panel: sin esto no hay forma de
+-- saber CUÁNDO fue el último aumento de un producto, que es el dato que hace
+-- falta para calcular cuánta inflación acumuló desde entonces (¿está
+-- atrasado o no?).
+--
+-- `precio_anterior` y `precio_nuevo` son SNAPSHOT, mismo motivo que
+-- `ventas.costo_unitario` y `ofertas.precio_anterior`: la fila tiene que
+-- quedar fija en el tiempo aunque el producto vuelva a cambiar de precio
+-- después.
+CREATE TABLE historial_precios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    negocio_id INT NOT NULL,
+    producto_id INT NOT NULL,
+    precio_anterior DECIMAL(10,2) NOT NULL,
+    precio_nuevo DECIMAL(10,2) NOT NULL,
+    -- 'ajuste_inflacion' (el botón "Aplicar precio sugerido") |
+    -- 'manual' (se tocó desde otra pantalla) | 'carga_inicial' (fila
+    -- sembrada por la migración para productos que ya existían).
+    motivo VARCHAR(30) NOT NULL,
+    usuario_id INT NULL,
+    fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (negocio_id) REFERENCES negocios(id),
+    FOREIGN KEY (producto_id, negocio_id) REFERENCES productos(id, negocio_id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
+    -- Lo pide la subconsulta MAX(fecha) de consultar_precios.php, una por
+    -- producto en cada carga del panel.
+    KEY idx_historial_precios_producto (negocio_id, producto_id, fecha)
+);
+
+-- ------------------------------------------------------------
 -- CONFIGURACIÓN GENERAL (umbral de vencimiento, etc.)
 -- Tabla clave-valor simple para ajustes editables desde el dashboard
 -- ------------------------------------------------------------

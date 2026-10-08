@@ -290,6 +290,10 @@ class PreguntaChatbot(BaseModel):
     # herramientas (intersección con las del rol), nunca las amplía. Ver
     # CONTEXT_TOOLS en chatbot_ia.py.
     contexto: str | None = None
+    # ID del panel que la persona señaló con el 🎯 de Cajita. Es solo un ID: el
+    # texto lo resuelve el servidor contra ayuda.json, así que un valor falso
+    # o desconocido simplemente se ignora (ver _texto_de_foco).
+    foco: str | None = None
     # `rol` y `usuario_id` YA NO se aceptan del cliente: salen de la sesión.
     # Ver el docstring de /chatbot.
 
@@ -340,6 +344,7 @@ async def chatbot(payload: PreguntaChatbot, request: Request):
             historial=payload.historial,
             cookie=cookie,
             contexto=payload.contexto,
+            foco=payload.foco,
         )
     except ChatbotIALimitError as e:
         # 429 y no 502: la key esta bien y el servicio anda, lo que se acabo

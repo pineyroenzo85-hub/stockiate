@@ -7,8 +7,9 @@
 <link rel="stylesheet" href="styles.css">
 <script src="tema.js?v=1"></script>
 <script src="embebido.js?v=1"></script>
+<script src="plegable.js?v=1"></script>
 <script src="config.js?v=1"></script>
-<script src="auth.js?v=5"></script>
+<script src="auth.js?v=6"></script>
 <script>
   // Guardia optimista: los precios de cara al público los decide el dueño.
   // La contraparte real son consultar_carteles.php y guardar_oferta.php, que
@@ -32,13 +33,20 @@
 .crt-panel-head p{ font-size:12px; color:var(--gris-tenue); margin:2px 0 0; }
 
 .crt-acciones{ display:flex; gap:9px; flex-wrap:wrap; align-items:center; }
+.crt-acciones-filtros{ display:flex; gap:9px; flex-wrap:wrap; align-items:center; }
 .crt-btn{ background:var(--superficie); box-shadow:var(--neu-sombra-chica); border:none; color:var(--blanco-puro); border-radius:10px; padding:9px 14px; font-size:12.5px; font-weight:700; cursor:pointer; font-family:inherit; transition:all .15s; }
-.crt-btn:hover:not(:disabled){ color:var(--lila-dark); }
+.crt-btn:hover:not(:disabled){ color:var(--azul-acento); }
 .crt-btn:disabled{ opacity:.45; cursor:default; }
 .crt-btn-primario{ background:var(--lila-dark); color:#fff; }
 .crt-btn-primario:hover:not(:disabled){ background:var(--azul-glow); color:#fff; }
 .crt-campo{ background:var(--superficie); box-shadow:var(--neu-inset); border:none; border-radius:10px; padding:9px 12px; color:var(--blanco-puro); font-size:12.5px; font-family:inherit; outline:none; }
 .crt-campo::placeholder{ color:var(--gris-tenue); }
+
+.crt-toggle-pleg{ background:var(--superficie); box-shadow:var(--neu-sombra-chica); border:none; color:var(--gris-tenue); border-radius:10px; padding:8px 12px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; transition:all .15s; white-space:nowrap; }
+.crt-toggle-pleg:hover{ color:var(--blanco-puro); }
+.crt-panel.crt-plegado #crtAvisoCaja,
+.crt-panel.crt-plegado .crt-tabla-wrap,
+.crt-panel.crt-plegado .crt-acciones-filtros{ display:none; }
 
 .crt-tabla-wrap{ max-height:60vh; overflow:auto; }
 .crt-tabla{ width:100%; border-collapse:collapse; font-size:12.5px; color:var(--blanco-puro); }
@@ -56,7 +64,30 @@
 .crt-nota{ font-size:12px; color:var(--gris-tenue); line-height:1.5; margin:0; }
 .crt-aviso{ margin:0 20px 16px; border-radius:10px; padding:10px 13px; font-size:12.5px; line-height:1.5; background:var(--alerta-bg); border:1px solid rgba(232,196,104,0.4); color:var(--alerta); }
 
-.crt-disenio{ padding:18px 20px; display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:20px; }
+/* El panel "Diseño del cartel" tiene dos columnas: los controles (grilla de
+   siempre) y, al lado, la muestra en vivo de la hoja -- así se ve el efecto
+   de cada cambio sin bajar hasta el final de la página. En pantallas
+   angostas se apilan (la muestra queda debajo). */
+.crt-disenio-layout{ padding:18px 20px; display:flex; flex-wrap:wrap; gap:24px; align-items:flex-start; }
+.crt-disenio{ flex:2 1 460px; display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:20px; }
+
+.crt-preview{ flex:1 1 260px; display:flex; flex-direction:column; gap:10px; min-width:0; }
+.crt-preview-barra{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.crt-preview-barra label{ font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--gris-tenue); font-weight:700; }
+/* Fondo gris neutro para que la hoja blanca se note como una hoja de papel
+   apoyada encima, no como un rectángulo blanco flotando sobre el tema. */
+.crt-preview-marco{
+  overflow:hidden; max-height:420px; border-radius:14px;
+  background:#e5e5e5; display:flex; justify-content:center; align-items:flex-start; padding-top:14px;
+}
+/* transform:scale() no achica el lugar que el elemento reserva en el layout
+   (sólo cambia cómo se pinta), así que con overflow:auto quedaría un tramo
+   de scroll vacío larguísimo antes de llegar al final real. Con "hidden" y
+   un alto máximo generoso, si hay más carteles de los que entran en la
+   muestra se recortan prolijos abajo -- es una MUESTRA, no hace falta que
+   entren todos: #crtResumenHoja ya dice cuántas hojas van a salir en total,
+   y "Imprimir" abre la vista previa real del navegador con todo completo. */
+.crt-preview-marco #crtHoja{ transform:scale(.42); transform-origin:top center; flex:none; }
 .crt-grupo{ display:flex; flex-direction:column; gap:7px; }
 .crt-grupo > label:first-child{ font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--gris-tenue); font-weight:700; }
 .crt-slider{ display:flex; align-items:center; gap:10px; }
@@ -260,6 +291,17 @@
     margin:0;
     box-shadow:none;
   }
+
+  /* #crtHoja vive ahora adentro del panel "Diseño del cartel" (para
+     mostrarse como muestra chiquita en pantalla), pero ese panel entero NO
+     es .no-imprimir -- si lo fuera, #crtHoja quedaría atrapado en un
+     display:none del que ningún hijo puede salir. En cambio se resetea acá
+     el achicado y el envoltorio gris de la muestra, para que lo que sale
+     impreso sea exactamente la hoja real, sin achicar y sin el marco de
+     pantalla alrededor. */
+  .crt-panel:has(#crtHoja){ background:none; border:none; box-shadow:none; padding:0; border-radius:0; }
+  .crt-preview-marco{ all:unset; display:block; }
+  .crt-preview-marco #crtHoja{ transform:none; }
 }
 </style>
 </head>
@@ -322,16 +364,23 @@
         <p id="crtSubtitulo">Cargando catálogo...</p>
       </div>
       <div class="crt-acciones">
-        <input type="search" class="crt-campo" id="crtBuscar" placeholder="Buscar producto o marca" autocomplete="off">
-        <button type="button" class="crt-btn" id="crtSoloOfertas">Los que tienen oferta</button>
-        <button type="button" class="crt-btn" id="crtTodos">Todos</button>
-        <button type="button" class="crt-btn" id="crtNinguno">Ninguno</button>
+        <div class="crt-acciones-filtros">
+          <input type="search" class="crt-campo" id="crtBuscar" placeholder="Buscar producto o marca" autocomplete="off">
+          <button type="button" class="crt-btn" id="crtSoloOfertas">Los que tienen oferta</button>
+          <button type="button" class="crt-btn" id="crtTodos">Todos</button>
+          <button type="button" class="crt-btn" id="crtNinguno">Ninguno</button>
+        </div>
+        <!-- Fuera de .crt-acciones-filtros a propósito: ese es justo lo que
+             se esconde al plegar, y un botón que se esconde a sí mismo no se
+             puede volver a apretar para desplegar. -->
+        <button type="button" class="crt-toggle-pleg" data-crt-toggle-pleg
+                aria-expanded="true" aria-controls="crtTablaWrap"></button>
       </div>
     </div>
 
     <div id="crtAvisoCaja"></div>
 
-    <div class="crt-tabla-wrap">
+    <div class="crt-tabla-wrap" id="crtTablaWrap">
       <table class="crt-tabla">
         <thead>
           <tr>
@@ -347,90 +396,91 @@
     </div>
   </div>
 
-  <!-- Diseño del cartel -->
-  <div class="crt-panel no-imprimir">
-    <div class="crt-panel-head">
+  <!-- Diseño del cartel: los controles a la izquierda, la muestra en vivo
+       de la hoja a la derecha -- ver como queda un cambio ya no requiere
+       bajar hasta el final de la página. -->
+  <div class="crt-panel">
+    <div class="crt-panel-head no-imprimir">
       <div>
         <h2>Diseño del cartel</h2>
         <p class="crt-nota">Se guarda para tu negocio: la próxima vez que entres está como lo dejaste.</p>
       </div>
     </div>
 
-    <div class="crt-disenio">
-      <div class="crt-grupo">
-        <label for="crtDiseno">Diseño</label>
-        <select class="crt-campo" id="crtDiseno"></select>
-        <span class="crt-nota" id="crtDisenoNota"></span>
-      </div>
-
-      <div class="crt-grupo">
-        <label for="crtPrecioPt">Tamaño del precio</label>
-        <div class="crt-slider">
-          <input type="range" id="crtPrecioPt" step="1">
-          <output id="crtPrecioPtValor"></output>
+    <div class="crt-disenio-layout">
+      <div class="crt-disenio no-imprimir">
+        <div class="crt-grupo">
+          <label for="crtDiseno">Diseño</label>
+          <select class="crt-campo" id="crtDiseno"></select>
+          <span class="crt-nota" id="crtDisenoNota"></span>
         </div>
-        <span class="crt-nota" id="crtPrecioPtNota"></span>
-      </div>
 
-      <div class="crt-grupo">
-        <label for="crtNombrePt">Tamaño del nombre</label>
-        <div class="crt-slider">
-          <input type="range" id="crtNombrePt" step="1">
-          <output id="crtNombrePtValor"></output>
+        <div class="crt-grupo">
+          <label for="crtPrecioPt">Tamaño del precio</label>
+          <div class="crt-slider">
+            <input type="range" id="crtPrecioPt" step="1">
+            <output id="crtPrecioPtValor"></output>
+          </div>
+          <span class="crt-nota" id="crtPrecioPtNota"></span>
         </div>
-        <span class="crt-nota" id="crtNombrePtNota"></span>
-      </div>
 
-      <div class="crt-grupo">
-        <label>Qué mostrar</label>
-        <label class="crt-switch"><input type="checkbox" id="crtVerMarca"><span>Marca</span></label>
-        <label class="crt-switch"><input type="checkbox" id="crtVerSku"><span>Código (SKU)</span></label>
-        <label class="crt-switch"><input type="checkbox" id="crtVerVencimiento"><span>Vigencia de la oferta</span></label>
-      </div>
-
-      <div class="crt-grupo">
-        <label for="crtTextoPie">Texto al pie</label>
-        <input type="text" class="crt-campo" id="crtTextoPie" placeholder="Perfumería Aroma · Precios con IVA" autocomplete="off">
-        <span class="crt-nota" id="crtTextoPieNota"></span>
-      </div>
-
-      <div class="crt-grupo">
-        <label for="crtLogoArchivo">Logo del negocio</label>
-        <div class="crt-logo-caja">
-          <img id="crtLogoPreview" alt="Logo del negocio" hidden>
-          <span class="crt-nota" id="crtLogoVacio">Todavía no cargaste ninguno.</span>
+        <div class="crt-grupo">
+          <label for="crtNombrePt">Tamaño del nombre</label>
+          <div class="crt-slider">
+            <input type="range" id="crtNombrePt" step="1">
+            <output id="crtNombrePtValor"></output>
+          </div>
+          <span class="crt-nota" id="crtNombrePtNota"></span>
         </div>
-        <input type="file" class="crt-campo" id="crtLogoArchivo" accept="image/png,image/jpeg">
-        <div class="crt-acciones" style="margin-top:8px;">
-          <select class="crt-campo" id="crtLogoPosicion"></select>
-          <button type="button" class="crt-btn" id="crtLogoQuitar" hidden>Quitar logo</button>
+
+        <div class="crt-grupo">
+          <label>Qué mostrar</label>
+          <label class="crt-switch"><input type="checkbox" id="crtVerMarca"><span>Marca</span></label>
+          <label class="crt-switch"><input type="checkbox" id="crtVerSku"><span>Código (SKU)</span></label>
+          <label class="crt-switch"><input type="checkbox" id="crtVerVencimiento"><span>Vigencia de la oferta</span></label>
         </div>
-        <span class="crt-nota" id="crtLogoNota">PNG o JPG, hasta 3 MB. Se achica y se convierte a PNG en el servidor.</span>
+
+        <div class="crt-grupo">
+          <label for="crtTextoPie">Texto al pie</label>
+          <input type="text" class="crt-campo" id="crtTextoPie" placeholder="Perfumería Aroma · Precios con IVA" autocomplete="off">
+          <span class="crt-nota" id="crtTextoPieNota"></span>
+        </div>
+
+        <div class="crt-grupo">
+          <label for="crtLogoArchivo">Logo del negocio</label>
+          <div class="crt-logo-caja">
+            <img id="crtLogoPreview" alt="Logo del negocio" hidden>
+            <span class="crt-nota" id="crtLogoVacio">Todavía no cargaste ninguno.</span>
+          </div>
+          <input type="file" class="crt-campo" id="crtLogoArchivo" accept="image/png,image/jpeg">
+          <div class="crt-acciones" style="margin-top:8px;">
+            <select class="crt-campo" id="crtLogoPosicion"></select>
+            <button type="button" class="crt-btn" id="crtLogoQuitar" hidden>Quitar logo</button>
+          </div>
+          <span class="crt-nota" id="crtLogoNota">PNG o JPG, hasta 3 MB. Se achica y se convierte a PNG en el servidor.</span>
+        </div>
+      </div>
+
+      <!-- La muestra: #crtHoja es la hoja real que se manda a imprimir, así
+           que este bloque NO puede ser .no-imprimir (ver el @media print de
+           arriba) -- sólo lo que la rodea en pantalla (la barra y el
+           resumen) es pantalla-only. -->
+      <div class="crt-preview">
+        <div class="crt-preview-barra no-imprimir">
+          <label for="crtPorHoja">Carteles por hoja</label>
+          <select class="crt-campo" id="crtPorHoja">
+            <option value="6" selected>6 (más grandes)</option>
+            <option value="8">8 (entran más)</option>
+          </select>
+          <button type="button" class="crt-btn crt-btn-primario" id="crtImprimir">Imprimir</button>
+        </div>
+        <div class="crt-nota no-imprimir" id="crtResumenHoja"></div>
+        <div class="crt-preview-marco">
+          <div class="crt-hoja" id="crtHoja" data-por-hoja="6"></div>
+        </div>
       </div>
     </div>
   </div>
-
-  <!-- Vista previa e impresión -->
-  <div class="crt-panel no-imprimir">
-    <div class="crt-panel-head">
-      <div>
-        <h2>La hoja</h2>
-        <p class="crt-nota">Así va a salir impresa. Se ve en blanco porque es papel, no porque falle el tema.</p>
-      </div>
-      <div class="crt-acciones">
-        <label class="crt-nota" for="crtPorHoja">Carteles por hoja</label>
-        <select class="crt-campo" id="crtPorHoja">
-          <option value="6" selected>6 (más grandes)</option>
-          <option value="8">8 (entran más)</option>
-        </select>
-        <button type="button" class="crt-btn crt-btn-primario" id="crtImprimir">Imprimir</button>
-      </div>
-    </div>
-    <div class="crt-nota" style="padding:0 20px 14px;" id="crtResumenHoja"></div>
-  </div>
-
-  <!-- Lo único que se imprime -->
-  <div class="crt-hoja" id="crtHoja" data-por-hoja="6"></div>
 
 </div>
 
@@ -848,6 +898,32 @@ async function guardarDiseno(cambios) {
     renderHoja();
   } catch (err) {
     alert(mensajeDeError(err));
+  }
+}
+
+/* ------------------------------------------------------------------
+   Plegado de "Qué imprimir"
+   ------------------------------------------------------------------
+   Mismo mecanismo que inventario_tabla.js/costos_tabla.js (plegable.js).
+   Arranca DESPLEGADO por defecto (a diferencia de esos dos): acá es el
+   primer paso del flujo -- elegir productos -- y tiene que verse de
+   entrada. Plegarlo es útil recién después, para liberar pantalla para
+   "Diseño del cartel" con productos ya elegidos. */
+const CRT_CLAVE_TABLA_PLEGADA = "stockiate_carteles_tabla_plegado";
+{
+  const panelTabla = document.querySelector(".crt-panel:has(#crtTbody)");
+  const botonPlegarTabla = document.querySelector("[data-crt-toggle-pleg]");
+  if (panelTabla && botonPlegarTabla) {
+    if (plegableLeer(CRT_CLAVE_TABLA_PLEGADA, false)) {
+      panelTabla.classList.add("crt-plegado");
+    }
+    plegableConectar({
+      panel: panelTabla,
+      boton: botonPlegarTabla,
+      clave: CRT_CLAVE_TABLA_PLEGADA,
+      clasePlegada: "crt-plegado",
+      etiqueta: "productos",
+    });
   }
 }
 

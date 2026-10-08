@@ -1,0 +1,118 @@
+{
+  "version": "1.0",
+  "inputs": [
+    {
+      "type": "WorkflowImage",
+      "name": "image"
+    }
+  ],
+  "steps": [
+    {
+      "type": "roboflow_core/roboflow_object_detection_model@v3",
+      "name": "model",
+      "images": "$inputs.image",
+      "model_id": "cooppers-workspace/products-vweue-1d62m-1-yolov8n-t1"
+    },
+    {
+      "type": "roboflow_core/continue_if@v1",
+      "name": "si_no_detecto",
+      "condition_statement": {
+        "type": "StatementGroup",
+        "statements": [
+          {
+            "type": "BinaryStatement",
+            "left_operand": {
+              "type": "DynamicOperand",
+              "operand_name": "detecciones",
+              "operations": [
+                {
+                  "type": "SequenceLength"
+                }
+              ]
+            },
+            "comparator": {
+              "type": "(Number) =="
+            },
+            "right_operand": {
+              "type": "StaticOperand",
+              "value": 0
+            }
+          }
+        ]
+      },
+      "evaluation_parameters": {
+        "detecciones": "$steps.model.predictions"
+      },
+      "next_steps": [
+        "$steps.model_abierto"
+      ]
+    },
+    {
+      "type": "roboflow_core/yolo_world_model@v1",
+      "name": "model_abierto",
+      "images": "$inputs.image",
+      "class_names": [
+        "package",
+        "bag",
+        "box",
+        "bottle"
+      ],
+      "version": "v2-s",
+      "confidence": 0.1
+    },
+    {
+      "type": "roboflow_core/first_non_empty_or_default@v1",
+      "name": "predicciones_finales",
+      "data": [
+        "$steps.model_abierto.predictions",
+        "$steps.model.predictions"
+      ]
+    },
+    {
+      "type": "roboflow_core/bounding_box_visualization@v1",
+      "name": "detection_visualization",
+      "image": "$inputs.image",
+      "predictions": "$steps.predicciones_finales.output"
+    },
+    {
+      "type": "roboflow_core/dynamic_crop@v1",
+      "name": "dynamic_crop",
+      "images": "$inputs.image",
+      "predictions": "$steps.predicciones_finales.output"
+    },
+    {
+      "type": "roboflow_core/glm_ocr@v1",
+      "name": "glm_ocr",
+      "images": "$steps.dynamic_crop.crops",
+      "task_type": "text-recognition",
+      "model_version": "glm-ocr",
+      "max_new_tokens": 200
+    }
+  ],
+  "outputs": [
+    {
+      "type": "JsonField",
+      "name": "predictions",
+      "coordinates_system": "own",
+      "selector": "$steps.predicciones_finales.output"
+    },
+    {
+      "type": "JsonField",
+      "name": "dynamic_crop",
+      "coordinates_system": "own",
+      "selector": "$steps.dynamic_crop.crops"
+    },
+    {
+      "type": "JsonField",
+      "name": "recognized_text",
+      "coordinates_system": "own",
+      "selector": "$steps.glm_ocr.parsed_output"
+    },
+    {
+      "type": "JsonField",
+      "name": "detection_visualization_output",
+      "coordinates_system": "own",
+      "selector": "$steps.detection_visualization.image"
+    }
+  ]
+}

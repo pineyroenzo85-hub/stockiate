@@ -32,7 +32,8 @@
  *     $body = cuerpo_json();
  */
 
-require_once 'conexion.php'; // expone $pdo (PDO conectado a MySQL/XAMPP)
+require_once 'conexion.php';
+require_once 'sesion_db.php'; // sesiones en MySQL cuando el disco es efímero // expone $pdo (PDO conectado a MySQL/XAMPP)
 
 /**
  * Orígenes que pueden mandar requests con credenciales.
@@ -81,8 +82,18 @@ function iniciar_sesion_stockiate(): void
         'path' => '/',
         'httponly' => true,
         'samesite' => 'Lax',
-        'secure' => !empty($_SERVER['HTTPS']),
+        // Detrás del router de Heroku el PHP ve HTTP plano y el TLS lo termina
+        // el router: lo único que delata el https es X-Forwarded-Proto.
+        'secure' => !empty($_SERVER['HTTPS'])
+            || strtolower($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https',
     ]);
+
+    // Con disco efímero (Heroku) la sesión va a MySQL; ver sesion_db.php.
+    if (sesiones_en_base()) {
+        global $pdo;
+        session_set_save_handler(new SesionEnBase($pdo), true);
+    }
+
     session_start();
 }
 

@@ -76,6 +76,23 @@ const CONFIG_INICIAL_NEGOCIO = [
     'whatsapp_telefono' => '',
     'whatsapp_activo' => '0',
     'whatsapp_hora_resumen' => '20:00',
+    // --- Precios e inflación (precios_inflacion.html) ---
+    // Inflación mensual estimada, en %. Se puede cargar a mano o traer del
+    // último IPC del INDEC (consultar_ipc_indec.php). Es el único dato que
+    // alimenta todas las proyecciones y el cálculo de atraso del módulo.
+    'inflacion_mensual' => '2.0',
+    // IVA que YA incluye productos.precio_venta (el precio de lista es "con
+    // IVA", como en cualquier cartel de góndola). Sólo puede valer 21, 10.5 o
+    // 27 -- las tres alícuotas vigentes en Argentina -- ver guardar_preferencias.php.
+    'alicuota_iva' => '21',
+    // Ingresos Brutos, en % sobre el neto. Varía por jurisdicción y rubro; el
+    // dueño lo ajusta una vez para su comercio.
+    'alicuota_iibb' => '3.5',
+    // A partir de qué % de atraso (inflación acumulada desde el último
+    // aumento) un producto se marca "Atrasado" en ámbar. El corte en rojo no
+    // tiene clave propia: precios_inflacion.js lo calcula como el doble de
+    // ésta, para no sumar un segundo número sin config.
+    'umbral_atraso_precio' => '5',
 ];
 
 /**

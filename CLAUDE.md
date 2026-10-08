@@ -666,6 +666,51 @@ Puntos importantes de este diseño:
   `consultar_ventas` desde el contexto repositor), así que `_ejecutar_tool()`
   lo rechaza antes de pegarle a PHP. Filtrando sólo la oferta, el recorte era
   una sugerencia.
+- **Cajita (la mascota) y el chatbot son UN solo asistente.** Antes eran dos
+  widgets en la misma esquina, con dos inputs, y el tour le prometía al
+  usuario que el chatbot explicaba "cómo se usa algo" cuando su prompt no
+  sabía nada de eso. Ahora Cajita **es** el botón del chat: `chatbot_widget.js`
+  es dueño del botón y del panel, y `mascota_tour.js` es el personaje y la guía
+  visual (tour con spotlight, modo 🎯, burbuja de avisos, reacciones a la
+  captura por IA) que se engancha con `window.Cajita.montar()`. Si la mascota
+  se apaga en Ajustes (o el script no cargó) el botón vuelve a ser el 🤖: el
+  chat nunca depende de Cajita para ser alcanzable. Ajustes quedó en tres
+  controles (repetir recorrido, mostrar, tamaño). Seis cosas que parecen de más
+  y no lo son:
+  **`ayuda.json` es la fuente única** de los textos de ayuda (`senalables` y
+  `faq`, ambos con `contextos`). Lo lee el navegador (el 🎯 y el respaldo) y
+  `chatbot_ia.py` (`_guia_de_uso()`, la guía de uso que se le da al modelo,
+  recortada por sección igual que las herramientas: parado en Caja, el
+  asistente no conoce el panel de costos). Una tercera copia a mano se
+  desfasaba; se cachea por `mtime` porque `--reload` solo vigila `.py`. Cada
+  panel del `.json` lleva `id` estable;
+  **el 🎯 manda el `id` del panel (`foco`), nunca su texto**: el servidor lo
+  resuelve contra su propio `ayuda.json` (`_texto_de_foco()`), un id
+  desconocido se ignora y no hay forma de que el navegador le escriba
+  instrucciones al modelo. Señalar un panel **reinicia el historial**: probado,
+  con una charla previa sobre Reposición, "¿cómo uso esto?" sobre Costos se
+  contestó sobre Reposición;
+  **el FAQ por palabras clave quedó como respaldo, no como primer filtro**: si
+  `/chatbot` responde 429 (sin cupo), 502/503, algo que no es JSON (el 503 en
+  HTML de Apache cuando uvicorn no corre) o no hay red, el chat prueba
+  `Cajita.respuestaLocal()` y la marca como "respuesta guardada". Un 500 real
+  no usa el respaldo. Un match por palabras sueltas puede errarle, y por eso no
+  es lo que contesta con la IA andando;
+  **el prompt de ayuda se calibró contra `gpt-oss-20b` y las prohibiciones
+  no andan**: con "no mandes a soporte, no adivines dónde está" siguió
+  diciendo "avisá al equipo de soporte" y afirmó que el panel no tenía un
+  botón de exportar (sí lo tiene: "Exportar PDF"). Lo que funcionó fue darle la
+  frase exacta de salida cuando algo no figura en la guía, y pedirle texto
+  plano de máximo 3 frases (sin eso inventaba pasos numerados, y el panel
+  muestra `textContent`, así que los `**` se veían crudos). Si se toca
+  `_guia_de_uso()`, volver a probar con una pregunta que NO esté en la guía.
+  Cuesta entre ~300 (cajero) y ~680 (admin) tokens más por llamada;
+  **`insertarChatbotWidget()` carga las dos piezas con `script.async = false`**
+  (Cajita primero). Los `<script>` creados desde JS son async por defecto y sin
+  eso el orden no está garantizado: si el chat corre antes, `window.Cajita` no
+  existe y el botón se queda en 🤖 sin ningún error a la vista.
+  `ajustes.html` carga `mascota_tour.js` a mano para conectar su panel y
+  `auth.js` detecta que ya está.
 - **Costos, márgenes y proveedores** los responde `consultar_rentabilidad.php`
   (herramienta `consultar_rentabilidad`), **sólo para `dueño`**
   (`exigir_sesion(['dueño'])`): expone la estructura de costos del negocio.

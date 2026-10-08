@@ -57,7 +57,7 @@ const CST_CSS = `
 .cst-head-acciones{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 .cst-toggle{ background:var(--superficie); box-shadow:var(--neu-sombra-chica); border:none; color:var(--gris-tenue); border-radius:10px; padding:8px 12px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; transition:all .15s; }
 .cst-toggle:hover{ color:var(--blanco-puro); }
-.cst-toggle.activo{ background:var(--lila-tenue); color:var(--lila-dark); box-shadow:var(--neu-inset); }
+.cst-toggle.activo{ background:var(--lila-tenue); color:var(--azul-acento); box-shadow:var(--neu-inset); }
 /* Plegado: se esconde la tabla y los controles que sólo sirven teniéndola a la
    vista. El .cst-resumen SE QUEDA -- capital inmovilizado, margen promedio y
    cuántos productos tienen costo cargado son justo el número que uno quiere ver

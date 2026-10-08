@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="styles.css">
     <script src="tema.js?v=1"></script>
     <script src="config.js?v=1"></script>
-    <script src="auth.js?v=5"></script>
+    <script src="auth.js?v=6"></script>
     <script>
       // Sincrónico y en <head> a propósito: corta el render de la página
       // antes de mostrar nada si no hay sesión válida para este módulo.
@@ -42,7 +42,7 @@
         <button type="button" onclick="window.location.href='repositor.html'">Repositor</button>
         <button type="button" id="btn-menu-cajero" onclick="window.location.href='cajero.html'">Cajero</button>
         <button type="button" id="btn-menu-administrador" onclick="window.location.href='administrador.html'">Administrador</button>
-        <button type="button" onclick="window.location.href='ajustes.html'">Ajustes</button>
+        <button type="button" onclick="abrirAjustesFlotante()">Ajustes</button>
         <button type="button" id="btn-menu-cerrar-sesion">Cerrar sesión</button>
       </div>
     </div>
@@ -65,7 +65,7 @@
       <label class="zona-captura" id="zona-captura">
         <div class="zona-captura-contenido" id="zona-captura-vacia">
           <div class="icono-camara">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c9a24b" stroke-width="1.6">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.6">
               <path d="M4 8a2 2 0 0 1 2-2h1.5l1-1.6h7l1 1.6H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8Z"/>
               <circle cx="12" cy="13" r="3.4"/>
             </svg>
@@ -77,7 +77,7 @@
       </label>
 
       <button class="btn btn-primario" id="btn-procesar" disabled>Analizar con IA</button>
-      <button class="btn btn-texto" id="btn-manual">Prefiero cargar manualmente</button>
+      <button class="btn btn-texto" id="btn-manual">Cargar manualmente</button>
     </section>
 
     <!-- ================= PANTALLA 2: PROCESANDO ================= -->
@@ -149,10 +149,25 @@
 </div>
 
 <datalist id="lista-proveedores"></datalist>
+
+<!-- Ventana flotante de Ajustes: la página completa en un iframe (ver
+     embebido.js), sin salir de la pantalla de carga en curso. -->
+<div id="ajustes-flot-overlay" class="vflot-overlay" hidden>
+  <div class="vflot-ventana" role="dialog" aria-modal="true" aria-labelledby="ajustesFlotTitulo" tabindex="-1">
+    <div class="vflot-cabecera">
+      <h2 id="ajustesFlotTitulo">Ajustes</h2>
+      <button type="button" class="vflot-cerrar" id="btn-ajustes-flot-cerrar" aria-label="Cerrar">&#10005;</button>
+    </div>
+    <div class="vflot-marco" id="ajustes-flot-marco">
+      <div class="vflot-cargando">Cargando…</div>
+    </div>
+  </div>
+</div>
+
 <div id="toast-container" class="toast-container"></div>
 
 <script src="plegable.js?v=1"></script>
-<script src="inventario_tabla.js?v=10"></script>
+<script src="inventario_tabla.js?v=13"></script>
 <script src="foto_producto.js?v=3"></script>
 <script src="image_utils.js?v=2"></script>
 <script src="recorte_imagen.js?v=3"></script>
@@ -436,6 +451,10 @@
     if (!archivoSeleccionado) return;
     mostrarPantalla("procesando");
     bannerOffline.classList.remove("activo");
+    // La mascota guía (mascota_tour.js) escucha este evento para reflejar
+    // pensando/éxito/error con la respuesta REAL del backend, sin ningún
+    // setTimeout simulado.
+    window.dispatchEvent(new CustomEvent("stockiate:captura-ia", { detail: { estado: "pensando" } }));
 
     const formData = new FormData();
     formData.append("imagen", archivoSeleccionado, "captura.jpg");
@@ -447,14 +466,17 @@
       if (data.modo_offline) {
         bannerOffline.classList.add("activo");
         mostrarPantalla("captura");
+        window.dispatchEvent(new CustomEvent("stockiate:captura-ia", { detail: { estado: "error" } }));
         return;
       }
 
       await renderizarValidacion(data.detecciones || [], { desdeFoto: true });
       mostrarPantalla("validacion");
+      window.dispatchEvent(new CustomEvent("stockiate:captura-ia", { detail: { estado: "exito" } }));
     } catch (err) {
       bannerOffline.classList.add("activo");
       mostrarPantalla("captura");
+      window.dispatchEvent(new CustomEvent("stockiate:captura-ia", { detail: { estado: "error" } }));
     }
   });
 
@@ -975,6 +997,56 @@ btnMenu.addEventListener("click", () => {
 });
 
 document.getElementById("btn-menu-cerrar-sesion").addEventListener("click", cerrarSesion);
+
+/* ---------------- Ventana flotante de Ajustes ---------------- */
+const ajustesFlotOverlay = document.getElementById("ajustes-flot-overlay");
+const ajustesFlotMarco = document.getElementById("ajustes-flot-marco");
+const ajustesFlotVentana = ajustesFlotOverlay.querySelector(".vflot-ventana");
+let ajustesFlotAbierta = false;
+
+function abrirAjustesFlotante() {
+  menuDesplegable.classList.remove("activo");
+  if (ajustesFlotAbierta) return;
+  ajustesFlotAbierta = true;
+
+  // Iframe nuevo en cada apertura: Ajustes se lee fresco y al cerrar no
+  // queda una página viva escuchando atrás (mismo criterio que
+  // abrirFlotante() en menu_negocio.js).
+  ajustesFlotMarco.innerHTML = '<div class="vflot-cargando">Cargando…</div>';
+  const iframe = document.createElement("iframe");
+  iframe.title = "Ajustes";
+  iframe.src = "ajustes.html";
+  iframe.addEventListener("load", () => {
+    ajustesFlotMarco.querySelectorAll(".vflot-cargando").forEach(n => n.remove());
+  });
+  ajustesFlotMarco.appendChild(iframe);
+
+  ajustesFlotOverlay.hidden = false;
+  document.documentElement.classList.add("vflot-sin-scroll");
+  ajustesFlotVentana.focus();
+}
+
+function cerrarAjustesFlotante() {
+  if (!ajustesFlotAbierta) return;
+  ajustesFlotAbierta = false;
+  ajustesFlotOverlay.hidden = true;
+  ajustesFlotMarco.innerHTML = "";
+  document.documentElement.classList.remove("vflot-sin-scroll");
+  btnMenu.focus();
+}
+
+document.getElementById("btn-ajustes-flot-cerrar").addEventListener("click", cerrarAjustesFlotante);
+ajustesFlotOverlay.addEventListener("click", (e) => {
+  if (e.target === ajustesFlotOverlay) cerrarAjustesFlotante();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && ajustesFlotAbierta) cerrarAjustesFlotante();
+});
+// Escape apretado con el foco adentro del iframe (lo reenvía embebido.js).
+window.addEventListener("message", (e) => {
+  if (e.origin !== window.location.origin) return;
+  if (e.data && e.data.tipo === "stockiate-cerrar-flotante") cerrarAjustesFlotante();
+});
 
 // Sólo el administrador (rol "dueño") puede saltar a los otros módulos.
 if (usuarioSesion.rol !== "dueño") {

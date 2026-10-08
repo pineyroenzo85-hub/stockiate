@@ -4,10 +4,81 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>stockIAte</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="styles.css">
 <script src="tema.js?v=1"></script>
-<script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+/* Clases con prefijo lnd-: selección de rol grande y táctil. Sólo vive en esta
+   página, así que se queda acá y no en styles.css. Usa las variables del tema
+   (violeta #7C3AED/#8B5CF6 como acción principal), no colores sueltos. */
+.app { max-width: 860px; }
+.landing { text-align: left; padding: 34px 20px 40px; }
+.lnd-kicker { font-size: 12px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: var(--azul-glow); }
+.landing h1 { margin: 8px 0 0; font-size: clamp(28px, 6vw, 38px); line-height: 1.1; letter-spacing: -.02em; color: var(--blanco-puro); }
+.lnd-roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 18px; margin-top: 28px; }
+.lnd-rol {
+  position: relative; display: flex; flex-direction: column; gap: 12px; text-align: left;
+  min-height: 200px; padding: 26px 24px; border-radius: 24px; cursor: pointer;
+  background: var(--glass-bg); border: 2px solid var(--glass-border); color: var(--blanco-puro);
+  backdrop-filter: blur(18px) saturate(160%); -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: var(--glass-shadow); font-family: inherit;
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+.lnd-rol:hover { transform: translateY(-3px); border-color: var(--lila); }
+.lnd-rol:focus-visible { outline: 3px solid var(--azul-glow); outline-offset: 3px; }
+.lnd-rol[aria-checked="true"] {
+  border-color: var(--lila); transform: translateY(-3px);
+  box-shadow: 0 0 0 4px var(--lila-tenue), 0 18px 44px var(--lila-shadow);
+}
+.lnd-rol-ico {
+  width: 64px; height: 64px; border-radius: 20px; display: grid; place-items: center;
+  background: var(--lila-tenue); color: var(--azul-acento); border: 1px solid var(--glass-border);
+  transition: background .2s ease, color .2s ease;
+}
+.lnd-rol-ico svg { width: 30px; height: 30px; }
+.lnd-rol[aria-checked="true"] .lnd-rol-ico { background: linear-gradient(135deg, var(--lila), var(--lila-dark)); color: #fff; border-color: transparent; }
+.lnd-rol h2 { margin: 0; font-size: 22px; font-weight: 800; }
+.lnd-rol p { margin: 0; font-size: 15px; color: var(--gris-tenue); }
+.rol-check {
+  position: absolute; top: 18px; right: 18px; width: 34px; height: 34px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--lila-dark); color: #fff;
+  transform: scale(0); opacity: 0; transition: transform .22s cubic-bezier(.3, 1.6, .5, 1), opacity .15s;
+}
+.rol-check svg { width: 18px; height: 18px; }
+.lnd-rol[aria-checked="true"] .rol-check { transform: scale(1); opacity: 1; }
+.lnd-comenzar {
+  display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; max-width: 440px;
+  margin: 26px auto 0; min-height: 64px; border: 0; border-radius: 22px; cursor: pointer;
+  font-family: inherit; font-weight: 800; font-size: 19px; color: #fff;
+  background: linear-gradient(135deg, var(--lila), var(--lila-dark));
+  box-shadow: 0 10px 28px var(--lila-shadow); transition: transform .15s ease, filter .15s ease, opacity .2s ease;
+}
+.lnd-comenzar:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.08); }
+.lnd-comenzar:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
+.lnd-comenzar svg { width: 22px; height: 22px; }
+.lnd-admin {
+  margin-top: 44px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding: 18px 22px; border-radius: 20px; text-decoration: none; color: var(--blanco-puro);
+  background: var(--gris-tenue-bg); border: 1px dashed var(--glass-border);
+  transition: border-color .2s ease, background .2s ease;
+}
+.lnd-admin:hover { border-color: var(--lila); }
+.lnd-admin:focus-visible { outline: 3px solid var(--azul-glow); outline-offset: 3px; }
+.lnd-admin-ico { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; background: var(--lila-tenue); color: var(--azul-acento); }
+.lnd-admin-ico svg { width: 24px; height: 24px; }
+.lnd-admin-txt { flex: 1; min-width: 190px; }
+.lnd-admin-txt small { display: block; font-size: 11px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: var(--gris-tenue); }
+.lnd-admin-txt strong { font-size: 17px; }
+.lnd-admin-txt span { display: block; font-size: 14px; color: var(--gris-tenue); }
+.lnd-admin-btn {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 46px; padding: 0 20px;
+  border-radius: 99px; font-weight: 700; border: 1.5px solid var(--glass-border); color: var(--blanco-puro);
+}
+.lnd-admin:hover .lnd-admin-btn { border-color: var(--lila); }
+.lnd-admin-btn svg { width: 18px; height: 18px; }
+@media (prefers-reduced-motion: reduce) { .lnd-rol, .lnd-comenzar, .rol-check { transition: none; } }
+</style>
 </head>
 <body>
 
@@ -30,71 +101,44 @@
 <main>
 <section class="landing">
 
-    <h1>Gestión inteligente para tu negocio</h1>
+    <span class="lnd-kicker">Bienvenido</span>
+    <h1>¿Cómo vas a trabajar hoy?</h1>
 
-    <p>
-        Controlá stock, ventas y administración desde un solo lugar.
-    </p>
+    <!-- ===== Elegir Rol: tarjetas grandes con estado activo ===== -->
+    <div id="elegir-rol" class="lnd-roles" role="radiogroup" aria-label="Elegí tu rol">
 
-    <!-- ===== Elegir Rol: paneles Tailwind con estado activo ===== -->
-    <div id="elegir-rol" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 max-w-2xl">
-
-        <button
-            type="button"
-            class="rol-panel group relative flex flex-col items-start gap-3 rounded-2xl border border-[var(--glass-border)] bg-[var(--glass-bg)] backdrop-blur-xl p-5 text-left shadow-sm transition hover:border-[var(--lila)] focus:outline-none"
-            data-rol="repositor"
-            data-href="repositor.html"
-        >
-            <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--lila-tenue)] text-[var(--lila-dark)]">
-                <i data-lucide="package" class="h-6 w-6"></i>
-            </span>
-            <div>
-                <h2 class="text-base font-semibold text-[var(--blanco-puro)]">Módulo Repositor</h2>
-                <p class="mt-1 text-sm text-[var(--gris-tenue)]">Carga de stock con foto + IA</p>
-            </div>
-            <span class="rol-check absolute top-4 right-4 hidden h-5 w-5 items-center justify-center rounded-full bg-[var(--lila-dark)] text-white">
-                <i data-lucide="check" class="h-3.5 w-3.5"></i>
-            </span>
+        <button type="button" class="rol-panel lnd-rol" role="radio" aria-checked="false"
+                data-rol="repositor" data-href="repositor.html">
+            <span class="rol-check"><i data-lucide="check"></i></span>
+            <span class="lnd-rol-ico"><i data-lucide="package"></i></span>
+            <h2>Repositor / Depósito</h2>
+            <p>Cargá mercadería y controlá el stock.</p>
         </button>
 
-        <button
-            type="button"
-            class="rol-panel group relative flex flex-col items-start gap-3 rounded-2xl border border-[var(--glass-border)] bg-[var(--glass-bg)] backdrop-blur-xl p-5 text-left shadow-sm transition hover:border-[var(--lila)] focus:outline-none"
-            data-rol="cajero"
-            data-href="cajero.html"
-        >
-            <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--lila-tenue)] text-[var(--lila-dark)]">
-                <i data-lucide="shopping-cart" class="h-6 w-6"></i>
-            </span>
-            <div>
-                <h2 class="text-base font-semibold text-[var(--blanco-puro)]">Módulo Caja / Ventas</h2>
-                <p class="mt-1 text-sm text-[var(--gris-tenue)]">Ventas con foto + IA</p>
-            </div>
-            <span class="rol-check absolute top-4 right-4 hidden h-5 w-5 items-center justify-center rounded-full bg-[var(--lila-dark)] text-white">
-                <i data-lucide="check" class="h-3.5 w-3.5"></i>
-            </span>
+        <button type="button" class="rol-panel lnd-rol" role="radio" aria-checked="false"
+                data-rol="cajero" data-href="cajero.html">
+            <span class="rol-check"><i data-lucide="check"></i></span>
+            <span class="lnd-rol-ico"><i data-lucide="shopping-cart"></i></span>
+            <h2>Cajero / Ventas</h2>
+            <p>Registrá ventas y descontá el stock.</p>
         </button>
 
     </div>
 
-    <button
-        id="btn-continuar-rol"
-        type="button"
-        disabled
-        class="mt-5 inline-flex items-center gap-2 rounded-xl bg-[var(--lila-dark)] px-5 py-3 text-sm font-semibold text-white opacity-40 pointer-events-none transition disabled:opacity-40 hover:brightness-105"
-    >
-        Continuar <i data-lucide="arrow-right" class="h-4 w-4"></i>
+    <button id="btn-continuar-rol" type="button" class="lnd-comenzar" disabled>
+        Comenzar turno <i data-lucide="arrow-right"></i>
     </button>
 
-    <div class="cards-modulos" style="margin-top:28px;">
-
-        <a href="administrador.html" class="card-modulo" id="card-administrador">
-            <span>⚙️</span>
-            <h2>Administrador</h2>
-            <p>Panel y estadísticas</p>
-        </a>
-
-    </div>
+    <!-- Panel ejecutivo: sólo lo ve el dueño (ver script). -->
+    <a href="administrador.html" class="lnd-admin" id="card-administrador">
+        <span class="lnd-admin-ico"><i data-lucide="shield-check"></i></span>
+        <span class="lnd-admin-txt">
+            <small>Panel ejecutivo</small>
+            <strong>Administrador</strong>
+            <span>Precios, costos y reportes del negocio.</span>
+        </span>
+        <span class="lnd-admin-btn">Entrar al panel <i data-lucide="arrow-right"></i></span>
+    </a>
 
     <div class="user-chip-sesion">
         <span>Sesión: <strong id="texto-usuario-sesion"></strong></span>
@@ -107,7 +151,7 @@
 </div>
 
 <script src="config.js?v=1"></script>
-<script src="auth.js?v=5"></script>
+<script src="auth.js?v=6"></script>
 <script>
 const usuarioSesion = exigirSesion();
 // Capa autoritativa: el caché de localStorage se contrasta contra el
@@ -134,27 +178,16 @@ document.getElementById("btn-inicio").addEventListener("click", () => {
     window.location.href = "landing_page.html";
 });
 
-// ===== Selección de rol (estado activo entre los dos paneles) =====
+// ===== Selección de rol (estado activo entre las dos tarjetas) =====
 const panelesRol = document.querySelectorAll(".rol-panel");
 const btnContinuar = document.getElementById("btn-continuar-rol");
 let rolSeleccionado = null;
 
 panelesRol.forEach(panel => {
     panel.addEventListener("click", () => {
-        panelesRol.forEach(p => {
-            p.classList.remove("ring-2", "ring-[var(--lila-dark)]", "border-[var(--lila-dark)]");
-            p.querySelector(".rol-check").classList.add("hidden");
-            p.querySelector(".rol-check").classList.remove("flex");
-        });
-
-        panel.classList.add("ring-2", "ring-[var(--lila-dark)]", "border-[var(--lila-dark)]");
-        const check = panel.querySelector(".rol-check");
-        check.classList.remove("hidden");
-        check.classList.add("flex");
-
+        panelesRol.forEach(p => p.setAttribute("aria-checked", String(p === panel)));
         rolSeleccionado = panel.dataset.href;
         btnContinuar.disabled = false;
-        btnContinuar.classList.remove("opacity-40", "pointer-events-none");
     });
 });
 

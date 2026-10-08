@@ -31,16 +31,44 @@
 require_once __DIR__ . '/env.php';
 
 if (!defined('STOCKIATE_BASE_NORMAL')) {
-    define('STOCKIATE_BASE_NORMAL', 'stockiate');
-    define('STOCKIATE_BASE_DEMO', 'stockiate_demo');
+    // BASE ADMINISTRADA (Heroku): el add-on de MySQL (JawsDB, ClearDB) entrega
+    // UNA base con nombre fijo y una URL `mysql://usuario:clave@host:puerto/base`
+    // en una variable de entorno. No se puede crear una segunda base, así que
+    // ahí la "base real" y la "base de demo" son la misma, y lo que las
+    // distingue es sólo STOCKIATE_MODO (la banda naranja, el seed). Por eso
+    // seed_demo.php, además de comparar las bases, exige MODO_DEMO: sin eso,
+    // un seed corrido sobre una base administrada en modo normal borraría los
+    // datos reales.
+    $url_base = leer_env('JAWSDB_URL') ?? leer_env('CLEARDB_DATABASE_URL') ?? leer_env('DATABASE_URL');
+    $partes_base = $url_base ? parse_url($url_base) : false;
+    $es_remota = is_array($partes_base)
+        && ($partes_base['scheme'] ?? '') === 'mysql'
+        && isset($partes_base['host'], $partes_base['path'])
+        && trim($partes_base['path'], '/') !== '';
 
-    // Credenciales de XAMPP: root sin password. Siguen hardcodeadas a
-    // propósito (son iguales en todas las máquinas de desarrollo y no son un
-    // secreto), pero pasan a ser constantes para que seed_demo.php pueda
-    // abrir su propia conexión sin duplicarlas.
-    define('STOCKIATE_DB_HOST', 'localhost');
-    define('STOCKIATE_DB_USER', 'root');
-    define('STOCKIATE_DB_PASS', '');
+    define('STOCKIATE_DB_REMOTA', $es_remota);
+
+    if ($es_remota) {
+        $base_remota = rawurldecode(trim($partes_base['path'], '/'));
+        define('STOCKIATE_BASE_NORMAL', $base_remota);
+        define('STOCKIATE_BASE_DEMO', $base_remota);
+        define('STOCKIATE_DB_HOST', $partes_base['host']);
+        define('STOCKIATE_DB_PORT', (int) ($partes_base['port'] ?? 3306));
+        define('STOCKIATE_DB_USER', rawurldecode($partes_base['user'] ?? ''));
+        define('STOCKIATE_DB_PASS', rawurldecode($partes_base['pass'] ?? ''));
+    } else {
+        define('STOCKIATE_BASE_NORMAL', 'stockiate');
+        define('STOCKIATE_BASE_DEMO', 'stockiate_demo');
+
+        // Credenciales de XAMPP: root sin password. Siguen hardcodeadas a
+        // propósito (son iguales en todas las máquinas de desarrollo y no son un
+        // secreto), pero pasan a ser constantes para que seed_demo.php pueda
+        // abrir su propia conexión sin duplicarlas.
+        define('STOCKIATE_DB_HOST', 'localhost');
+        define('STOCKIATE_DB_PORT', 3306);
+        define('STOCKIATE_DB_USER', 'root');
+        define('STOCKIATE_DB_PASS', '');
+    }
     define('STOCKIATE_DB_CHARSET', 'utf8mb4');
 
     define('STOCKIATE_MODO_DEMO', strtolower(trim((string) leer_env('STOCKIATE_MODO', 'normal'))) === 'demo');
@@ -64,7 +92,7 @@ function opciones_pdo_stockiate(): array
  */
 function conectar_mysql(?string $base): PDO
 {
-    $dsn = "mysql:host=" . STOCKIATE_DB_HOST;
+    $dsn = "mysql:host=" . STOCKIATE_DB_HOST . ";port=" . STOCKIATE_DB_PORT;
     if ($base !== null) {
         $dsn .= ";dbname=$base";
     }

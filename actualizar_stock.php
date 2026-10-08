@@ -10,8 +10,14 @@
  * Espera un body tipo:
  * {
  *   "producto_id": 12,
- *   "delta": 1         // o -1
+ *   "delta": 1         // cualquier entero distinto de cero, con signo
  * }
+ *
+ * Antes sólo aceptaba +1/-1 (los botones de la tabla). El input numérico
+ * manual del flotante de detalle necesita mandar un delta arbitrario (pasar
+ * de 12 a 20 manda delta: 8), así que la validación quedó en "entero != 0"
+ * en vez de "1 o -1". El resto del endpoint (transacción, libro mayor,
+ * chequeo de que no quede negativo) no cambia.
  *
  * `usuario_id` ya no viene en el body (el frontend lo mandaba hardcodeado en
  * 1): quién hace el ajuste sale de la sesión.
@@ -35,8 +41,8 @@ if (!isset($body['producto_id'], $body['delta'])) {
 $producto_id = (int) $body['producto_id'];
 $delta = (int) $body['delta'];
 
-if ($delta !== 1 && $delta !== -1) {
-    responder(["ok" => false, "mensaje" => "delta debe ser 1 o -1"], 400);
+if ($delta === 0) {
+    responder(["ok" => false, "mensaje" => "delta no puede ser 0"], 400);
 }
 
 try {
